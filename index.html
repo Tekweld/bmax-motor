@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BMax — Motor PCI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#050e1c; --bg2:#091525; --bg3:#0e3a7d; --acc:#00c2e0; --acc2:#00e5b0;
+  --gold:#f5a623; --sil:#94a3b8; --red:#f56565; --whi:#e8f4ff; --mut:#3d5a80;
+  --bdr:rgba(0,194,224,.16); --card:rgba(14,58,125,.12); --r:13px;
+  --shadow:0 4px 24px rgba(0,194,224,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--whi);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 92% 2%,rgba(0,194,224,.10) 0%,transparent 55%),
+    radial-gradient(ellipse 55% 65% at 2% 90%,rgba(14,58,125,.25) 0%,transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%,rgba(14,58,125,.06) 0%,transparent 60%)}
+
+/* ── LOGIN ── */
+#loginPage{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);backdrop-filter:blur(8px)}
+.login-card{background:rgba(9,21,37,.95);border:1px solid var(--bdr);border-radius:16px;
+  padding:40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.login-logo-i{width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--acc),var(--bg3));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:16px;
+  box-shadow:0 0 20px rgba(0,194,224,.3)}
+.login-logo-t{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+.login-logo-t span{color:var(--acc)}
+.login-logo-sub{font-size:11px;color:var(--mut);margin-top:1px}
+.login-title{font-size:13px;color:var(--mut);margin-bottom:22px;line-height:1.6}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:11px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--mut);margin-bottom:5px}
+.lf input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:10px 14px;color:var(--whi);font-family:'DM Sans',sans-serif;
+  font-size:14px;transition:border-color .15s}
+.lf input:focus{outline:none;border-color:var(--acc)}
+.login-err{background:rgba(245,101,101,.1);border:1px solid rgba(245,101,101,.25);
+  color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.login-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--acc),#0091aa);
+  color:#fff;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;
+  font-weight:600;font-size:14px;cursor:pointer;transition:opacity .18s}
+.login-btn:hover{opacity:.9}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:20px;right:20px;z-index:8000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;
+  font-weight:500;animation:tIn .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.25);max-width:320px}
+.toast-ok{background:rgba(0,229,176,.15);border:1px solid rgba(0,229,176,.3);color:var(--acc2)}
+.toast-err{background:rgba(245,101,101,.15);border:1px solid rgba(245,101,101,.3);color:var(--red)}
+.toast-info{background:rgba(0,194,224,.12);border:1px solid rgba(0,194,224,.25);color:var(--acc)}
+@keyframes tIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.6);
+  align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-ov.show{display:flex}
+.modal-box{background:#0b1829;border:1px solid var(--bdr);border-radius:14px;
+  padding:28px;width:100%;max-width:440px;box-shadow:0 16px 60px rgba(0,0,0,.5)}
+.modal-box h3{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;
+  color:var(--whi);margin-bottom:10px}
+.modal-box p{font-size:13px;color:var(--mut);line-height:1.6;margin-bottom:20px}
+.modal-acts{display:flex;gap:9px;justify-content:flex-end}
+
+/* ── SHELL ── */
+#appPage{position:relative;z-index:1}
+.shell{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+@media(max-width:780px){.shell{grid-template-columns:1fr}}
+aside{background:var(--bg2);border-right:1px solid var(--bdr);padding:24px 18px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:20px;
+  box-shadow:4px 0 32px rgba(0,194,224,.04)}
+@media(max-width:780px){aside{display:none}}
+.logo{display:flex;align-items:center;gap:12px;padding-bottom:20px;border-bottom:1px solid var(--bdr)}
+.logo-i{width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--acc),var(--bg3));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:15px;flex-shrink:0;
+  box-shadow:0 0 16px rgba(0,194,224,.3)}
+.logo-t{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.3px}
+.logo-t span{color:var(--acc)}
+.logo-sub{font-size:10px;color:var(--mut);margin-top:1px;letter-spacing:.5px}
+.nl{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
+.ni{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:9px;
+  cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;
+  border:1px solid transparent;background:none;color:var(--sil);width:100%;text-align:left}
+.ni:hover{background:rgba(0,194,224,.06);color:var(--whi);border-color:rgba(0,194,224,.08)}
+.ni.on{background:rgba(0,194,224,.12);color:var(--acc);border-color:rgba(0,194,224,.22);
+  box-shadow:0 0 12px rgba(0,194,224,.08)}
+.ni-ic{font-size:16px;width:20px;text-align:center}
+.sbox{margin-top:auto;background:linear-gradient(135deg,rgba(0,194,224,.08),rgba(0,229,176,.05));
+  border:1px solid rgba(0,194,224,.18);border-radius:11px;padding:14px}
+.sbox-l{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--acc2);margin-bottom:5px}
+.sbox-n{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--whi)}
+.sbox-s{font-size:11px;color:var(--mut);margin-top:3px}
+.sbox-u{font-size:11px;color:var(--sil);margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)}
+main{padding:30px 32px;overflow-y:auto}
+@media(max-width:780px){main{padding:18px 14px}}
+.pg{display:none}
+.pg.on{display:block;animation:fi .28s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.mnav{display:none;position:sticky;top:0;z-index:100;background:var(--bg2);
+  border-bottom:1px solid var(--bdr);padding:11px 14px;justify-content:space-between;align-items:center}
+@media(max-width:780px){.mnav{display:flex}}
+.mnav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px}
+.mnav-logo span{color:var(--acc)}
+.mtabs{display:flex;gap:4px}
+.mtab{padding:6px 11px;border-radius:7px;border:none;background:none;
+  font-size:11px;font-weight:500;cursor:pointer;color:var(--mut);transition:all .15s}
+.mtab.on{background:rgba(0,180,216,.12);color:var(--acc)}
+.ph{margin-bottom:28px}
+.ph-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--acc);margin-bottom:7px}
+.ph-title{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.4px;margin-bottom:5px}
+.ph-sub{font-size:13px;color:var(--mut);line-height:1.6}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);
+  padding:22px;margin-bottom:14px;backdrop-filter:blur(6px);box-shadow:var(--shadow)}
+.ct{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;color:var(--whi)}
+.ws{display:none}
+.ws.on{display:block;animation:fi .22s ease}
+.step-n{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.pbar{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.pfill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px;transition:width .4s ease}
+.sq{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;line-height:1.4;margin-bottom:5px}
+.sh{font-size:13px;color:var(--mut);margin-bottom:18px;line-height:1.6}
+.og{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+@media(max-width:480px){.og{grid-template-columns:1fr}}
+.ob{background:rgba(14,58,125,.15);border:1.5px solid rgba(0,194,224,.1);
+  border-radius:11px;padding:14px 16px;cursor:pointer;text-align:left;
+  transition:all .18s;font-family:'DM Sans',sans-serif;color:var(--whi)}
+.ob:hover{border-color:var(--acc);background:rgba(0,194,224,.1);transform:translateY(-2px);
+  box-shadow:0 4px 16px rgba(0,194,224,.12)}
+.ob.sel{border-color:var(--acc);background:rgba(0,194,224,.15);
+  box-shadow:0 0 0 1px var(--acc),0 4px 16px rgba(0,194,224,.15)}
+.on-name{font-weight:600;font-size:13px;margin-bottom:3px}
+.on-desc{font-size:11px;color:var(--mut);line-height:1.5}
+.fr{display:grid;gap:12px;margin-bottom:12px}
+.fr.c2{grid-template-columns:1fr 1fr}
+.fr.c3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:560px){.fr.c2,.fr.c3{grid-template-columns:1fr}}
+.fi label{display:block;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+.fi input,.fi select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:8px;padding:10px 13px;color:var(--whi);font-family:'DM Sans',sans-serif;
+  font-size:14px;transition:border-color .15s}
+.fi input:focus,.fi select:focus{outline:none;border-color:var(--acc)}
+.fi select option{background:#0b1829}
+.fi input[readonly]{opacity:.55}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:20px;margin-top:5px}
+.pill-ok{background:rgba(0,229,176,.1);color:var(--acc2)}
+.pill-err{background:rgba(245,101,101,.1);color:var(--red)}
+.pill-load{background:rgba(0,180,216,.1);color:var(--acc)}
+.pill-warn{background:rgba(245,166,35,.1);color:var(--gold)}
+.dtable{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+.dtable th{padding:7px 10px;text-align:left;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--mut);border-bottom:1px solid var(--bdr)}
+.dtable td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr.near td{background:rgba(0,229,176,.04)}
+.dchip{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
+.din{background:rgba(0,229,176,.12);color:var(--acc2)}
+.dout{background:rgba(245,101,101,.1);color:var(--red)}
+.chip{display:inline-block;padding:3px 9px;border-radius:18px;font-size:11px;font-weight:600}
+.chip-o{background:rgba(245,166,35,.14);color:var(--gold);border:1px solid rgba(245,166,35,.28)}
+.chip-p{background:rgba(148,163,184,.1);color:var(--sil);border:1px solid rgba(148,163,184,.22)}
+.chip-n{background:rgba(255,255,255,.05);color:var(--mut);border:1px solid rgba(255,255,255,.09)}
+.res-hero{
+  background:linear-gradient(135deg,rgba(14,58,125,.4),rgba(0,194,224,.08));
+  border:1px solid rgba(0,194,224,.28);border-radius:var(--r);padding:32px;
+  text-align:center;margin-bottom:16px;position:relative;
+  box-shadow:0 8px 40px rgba(0,194,224,.08),inset 0 1px 0 rgba(255,255,255,.06)}
+.res-pci-lbl{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+.res-pci{font-family:'Syne',sans-serif;font-weight:800;font-size:52px;letter-spacing:-2px;line-height:1}
+.res-name{font-size:14px;font-weight:500;margin:8px 0 4px}
+.res-desc{font-size:12px;color:var(--mut);max-width:440px;margin:0 auto 20px}
+.badges{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.badge{display:flex;align-items:center;gap:6px;background:rgba(14,58,125,.3);
+  border:1px solid rgba(0,194,224,.18);border-radius:18px;padding:6px 14px;font-size:12px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.da{background:var(--acc)}.db{background:var(--acc2)}.dg{background:var(--gold)}.dr{background:var(--red)}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:14px}
+@media(max-width:480px){.sgrid{grid-template-columns:1fr 1fr}}
+.sc{background:rgba(14,58,125,.2);border:1px solid var(--bdr);border-radius:10px;padding:16px}
+.sc-l{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--mut);margin-bottom:5px}
+.sc-v{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.sc-s{font-size:11px;color:var(--mut);margin-top:3px}
+.ctbl{width:100%;border-collapse:collapse}
+.ctbl td{padding:11px 14px;border-bottom:1px solid rgba(0,194,224,.08);font-size:13px}
+.ctbl td:last-child{text-align:right;font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.ctbl tr:last-child td{border-bottom:none}
+.cpct{color:var(--acc2)}.czero{color:var(--mut)}
+.al{border-radius:10px;padding:13px 16px;font-size:13px;line-height:1.6;margin-bottom:12px}
+.al-i{background:rgba(0,194,224,.07);border:1px solid rgba(0,194,224,.2);color:var(--acc)}
+.al-w{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);color:var(--gold)}
+.al-g{background:rgba(0,229,176,.06);border:1px solid rgba(0,229,176,.18);color:var(--acc2)}
+.btn{padding:10px 20px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;
+  transition:all .18s;display:inline-flex;align-items:center;gap:7px;letter-spacing:.2px}
+.btn-p{background:linear-gradient(135deg,var(--acc),#0091aa);color:#fff;
+  box-shadow:0 2px 12px rgba(0,194,224,.25)}
+.btn-p:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,194,224,.35)}
+.btn-g{background:rgba(14,58,125,.25);border:1px solid rgba(0,194,224,.15);color:var(--whi)}
+.btn-g:hover{background:rgba(14,58,125,.4);border-color:rgba(0,194,224,.28)}
+.btn-d{background:rgba(245,101,101,.1);border:1px solid rgba(245,101,101,.22);color:var(--red)}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:7px}
+.brow{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.rtbl{width:100%;border-collapse:collapse;font-size:12px}
+.rtbl th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--mut);border-bottom:1px solid var(--bdr)}
+.rtbl td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.rtbl tr:hover td{background:rgba(255,255,255,.015)}
+.rtbl tr:last-child td{border-bottom:none}
+.geo-ok{color:var(--acc2);font-size:12px}.geo-no{color:var(--mut);font-size:12px}
+.ptbl{width:100%;border-collapse:collapse;font-size:12px}
+.ptbl th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--mut);border-bottom:1px solid var(--bdr);white-space:nowrap}
+.ptbl td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;white-space:nowrap}
+.ptbl tr:last-child td{border-bottom:none}
+.ptbl .pci-id{font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.ck-y{color:var(--acc2)}.ck-n{color:var(--red)}.ck-na{color:var(--mut)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-i">BM</div>
+      <div>
+        <div class="login-logo-t"><span>BMax</span> Motor PCI</div>
+        <div class="login-logo-sub">Boxer Soldas · Industrial</div>
+      </div>
+    </div>
+    <p class="login-title">Acesso restrito a colaboradores @boxersoldas.com.br</p>
+    <div class="login-err" id="loginErr"></div>
+    <div class="lf"><label>Email</label><input type="email" id="loginEmail" placeholder="seu@boxersoldas.com.br" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="lf"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="appPage" style="display:none">
+
+<nav class="mnav">
+  <div class="mnav-logo"><span>BMax</span> PCI</div>
+  <div class="mtabs">
+    <button class="mtab on" onclick="nav('classificar',this)">⚡</button>
+    <button class="mtab"    onclick="nav('revendas',this)">🏪</button>
+    <button class="mtab"    onclick="nav('tabela',this)">📊</button>
+    <button class="mtab"    onclick="nav('config',this)">⚙️</button>
+  </div>
+</nav>
+
+<div class="shell">
+<aside>
+  <div class="logo">
+    <div class="logo-i">BM</div>
+    <div>
+      <div class="logo-t"><span>BMax</span> Motor PCI</div>
+      <div class="logo-sub">Boxer Soldas · Industrial</div>
+    </div>
+  </div>
+  <div>
+    <div class="nl">Navegação</div>
+    <button class="ni on" onclick="nav('classificar',this)"><span class="ni-ic">⚡</span>Classificar Lead</button>
+    <button class="ni"    onclick="nav('revendas',this)"><span class="ni-ic">🏪</span>Revendas BMax</button>
+    <button class="ni"    onclick="nav('tabela',this)"><span class="ni-ic">📊</span>Tabela de PCIs</button>
+    <button class="ni"    onclick="nav('config',this)"><span class="ni-ic">⚙️</span>Configurações</button>
+  </div>
+  <div class="sbox">
+    <div class="sbox-l">Revendas ativas</div>
+    <div class="sbox-n" id="sb-n">0</div>
+    <div class="sbox-s" id="sb-s">carregando...</div>
+    <div class="sbox-u" id="sb-user">—</div>
+    <button class="btn btn-g btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="doLogout()">Sair</button>
+  </div>
+</aside>
+
+<main>
+
+<!-- ══════ CLASSIFICAR ══════ -->
+<div class="pg on" id="pg-classificar">
+  <div class="ph">
+    <div class="ph-tag">Motor PCI · 2ª Versão · 17 Perfis</div>
+    <h1 class="ph-title">Classificar Lead Industrial</h1>
+    <p class="ph-sub">Preencha os critérios. O motor consulta distâncias reais e classifica automaticamente conforme a planilha BMax.</p>
+  </div>
+
+  <!-- STEP 1: CEP -->
+  <div class="card ws on" id="ws-cep">
+    <div class="step-n">Passo 1 de 5</div>
+    <div class="pbar"><div class="pfill" style="width:20%"></div></div>
+    <div class="sq">Qual o CEP da indústria (lead)?</div>
+    <div class="sh">O motor calculará a distância até todas as revendas BMax e verificará se alguma está dentro dos <strong id="h-raio">50</strong> km.</div>
+    <div class="fr c2">
+      <div class="fi">
+        <label>CEP da Indústria</label>
+        <input type="text" id="i-cep" placeholder="00000-000" maxlength="9" oninput="mcep(this)" onblur="geocodeLead()">
+        <div id="s-cep"></div>
+      </div>
+      <div class="fi">
+        <label>Endereço identificado</label>
+        <input type="text" id="i-addr" placeholder="Aguardando CEP..." readonly>
+      </div>
+    </div>
+    <div id="dist-block"></div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="goWs('produto')">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: PRODUTO -->
+  <div class="card ws" id="ws-produto">
+    <div class="step-n">Passo 2 de 5</div>
+    <div class="pbar"><div class="pfill" style="width:40%"></div></div>
+    <div class="sq">Qual é o produto / categoria da oportunidade?</div>
+    <div class="sh">Somente Robô, Laser e Máquina Industrial (≥300A) fazem parte do escopo BMax.</div>
+    <div class="og">
+      <button class="ob" data-v="robo" onclick="pick('produto',this)">
+        <div class="on-name">🤖 Robô / Automação</div>
+        <div class="on-desc">Braços robóticos, células automatizadas de soldagem</div>
+      </button>
+      <button class="ob" data-v="laser_multi" onclick="pick('produto',this)">
+        <div class="on-name">⚡ Laser — mais de 2 unidades</div>
+        <div class="on-desc">Operação com mais de 2 máquinas laser (cluster +2)</div>
+      </button>
+      <button class="ob" data-v="laser_single" onclick="pick('produto',this)">
+        <div class="on-name">⚡ Laser — apenas 1 unidade</div>
+        <div class="on-desc">Operação com somente 1 máquina laser (cluster ×1)</div>
+      </button>
+      <button class="ob" data-v="maquina" onclick="pick('produto',this)">
+        <div class="on-name">🔧 Máquina Industrial ≥300A</div>
+        <div class="on-desc">Máquinas de grande amperagem, Plasma ≥80A</div>
+      </button>
+    </div>
+    <div class="brow">
+      <button class="btn btn-g" onclick="goWs('cep')">← Voltar</button>
+      <button class="btn btn-p" onclick="goWs('origem')">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: ORIGEM -->
+  <div class="card ws" id="ws-origem">
+    <div class="step-n">Passo 3 de 5</div>
+    <div class="pbar"><div class="pfill" style="width:60%"></div></div>
+    <div class="sq">Qual é a origem deste lead?</div>
+    <div class="sh">Leads gerados pela Revenda seguem para PCI16 ou PCI17. Leads Boxer seguem o fluxo completo.</div>
+    <div class="og">
+      <button class="ob" data-v="boxer" onclick="pick('origem',this)">
+        <div class="on-name">📡 Gerado pela Boxer</div>
+        <div class="on-desc">Marketing, SDR, SAC, Exact, prospecção direta Boxer</div>
+      </button>
+      <button class="ob" data-v="revenda" onclick="pick('origem',this)">
+        <div class="on-name">🏪 Gerado pela Revenda</div>
+        <div class="on-desc">A revenda prospectou e quer registrar no portal</div>
+      </button>
+    </div>
+    <div class="brow">
+      <button class="btn btn-g" onclick="goWs('produto')">← Voltar</button>
+      <button class="btn btn-p" onclick="goOrigemNext()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3b: CONDUTOR (somente leads revenda) -->
+  <div class="card ws" id="ws-condutor">
+    <div class="step-n">Passo 3b de 5 — Lead Revenda</div>
+    <div class="pbar"><div class="pfill" style="width:70%"></div></div>
+    <div class="sq">Quem conduz a negociação com o cliente final?</div>
+    <div class="sh">Define se é <strong>PCI16</strong> (Boxer participa junto) ou <strong>PCI17</strong> (Revenda conduz sozinha). A revenda escolhe o modelo.</div>
+    <div class="og">
+      <button class="ob" data-v="juntos" onclick="pick('condutor',this)">
+        <div class="on-name">🤝 Boxer + Revenda juntos — PCI16</div>
+        <div class="on-desc">BOX+REV&gt;IND · Rep 3% · Revenda 4–10% · Portal TODOS</div>
+      </button>
+      <button class="ob" data-v="revenda_lidera" onclick="pick('condutor',this)">
+        <div class="on-name">🏪 Revenda conduz sozinha — PCI17</div>
+        <div class="on-desc">BOX&gt;REV · Rep 5% · Revenda Margem · Portal NÃO</div>
+      </button>
+    </div>
+    <div class="brow">
+      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
+      <button class="btn btn-p" onclick="classify()">⚡ Classificar Agora</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: REPRESENTANTE (leads boxer) -->
+  <div class="card ws" id="ws-rep">
+    <div class="step-n">Passo 4 de 5</div>
+    <div class="pbar"><div class="pfill" style="width:80%"></div></div>
+    <div class="sq">Há representante BMax ativo na região do lead?</div>
+    <div class="sh" id="rep-hint">O representante territorial está credenciado e ativo no BMax para esta área?</div>
+    <div id="rep-auto-msg"></div>
+    <div class="og" id="rep-og">
+      <button class="ob" data-v="sim" onclick="pick('rep',this)">
+        <div class="on-name">✅ Sim — há representante BMax</div>
+        <div class="on-desc">Representante credenciado e ativo na área</div>
+      </button>
+      <button class="ob" data-v="nao" onclick="pick('rep',this)">
+        <div class="on-name">❌ Não — sem representante BMax</div>
+        <div class="on-desc">Região sem representante BMax ativo</div>
+      </button>
+    </div>
+    <div class="brow">
+      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
+      <button class="btn btn-p" onclick="goRepNext()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: VALOR NF -->
+  <div class="card ws" id="ws-nf">
+    <div class="step-n">Passo 5 de 5</div>
+    <div class="pbar"><div class="pfill" style="width:100%"></div></div>
+    <div class="sq">Qual o valor estimado da venda?</div>
+    <div class="sh">Para Máquina Industrial, o valor define o cluster: ≥ R$ 50.000 → PCI 10–12 · &lt; R$ 50.000 → PCI 13–15.</div>
+    <div class="og">
+      <button class="ob" data-v="acima" onclick="pick('nf',this)">
+        <div class="on-name" id="lbl-acima">✦ Acima de R$ 50.000</div>
+        <div class="on-desc">Venda de maior valor — Boxer lidera a negociação</div>
+      </button>
+      <button class="ob" data-v="abaixo" onclick="pick('nf',this)">
+        <div class="on-name" id="lbl-abaixo">◇ Abaixo de R$ 50.000</div>
+        <div class="on-desc">Venda menor — revenda e rep têm prioridade</div>
+      </button>
+    </div>
+    <div class="brow">
+      <button class="btn btn-g" onclick="goWs('rep')">← Voltar</button>
+      <button class="btn btn-p" onclick="classify()">⚡ Classificar Agora</button>
+    </div>
+  </div>
+
+  <div id="result" style="display:none"></div>
+</div>
+
+<!-- ══════ REVENDAS ══════ -->
+<div class="pg" id="pg-revendas">
+  <div class="ph">
+    <div class="ph-tag">Gestão de Parceiros</div>
+    <h1 class="ph-title">Revendas BMax</h1>
+    <p class="ph-sub">Revendas carregadas do Supabase. Use o script de enriquecimento ZEN para atualizar CEPs e coordenadas.</p>
+  </div>
+  <div class="card">
+    <div class="ct">➕ Adicionar / Editar Revenda</div>
+    <input type="hidden" id="r-id">
+    <div class="fr c3">
+      <div class="fi"><label>Nome da Revenda</label><input type="text" id="r-nome" placeholder="Ex: Technofer Araraquara"></div>
+      <div class="fi"><label>Representante</label><input type="text" id="r-rep" placeholder="Ex: Victor VLM"></div>
+      <div class="fi"><label>Cidade / UF</label><input type="text" id="r-cidade" placeholder="Ex: Araraquara / SP"></div>
+    </div>
+    <div class="fr c3">
+      <div class="fi">
+        <label>CEP da Revenda</label>
+        <input type="text" id="r-cep" placeholder="00000-000" maxlength="9" oninput="mcep(this)" onblur="geocodeRev()">
+        <div id="sr-cep"></div>
+      </div>
+      <div class="fi"><label>Endereço (auto)</label><input type="text" id="r-end" placeholder="Preenchido pelo CEP" readonly></div>
+      <div class="fi">
+        <label>Classificação BMax</label>
+        <select id="r-class">
+          <option value="Ouro">🥇 Ouro (6+ critérios)</option>
+          <option value="Prata">🥈 Prata (3–5 critérios)</option>
+          <option value="Não Aplica">✗ Não Aplica</option>
+        </select>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveRev()">💾 Salvar no Supabase</button>
+      <button class="btn btn-g" onclick="clearRevForm()">✕ Limpar</button>
+      <button class="btn btn-g btn-sm" onclick="recarregarRevendas()" style="margin-left:auto">🔄 Recarregar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">🏪 Revendas cadastradas</div>
+    <div id="rev-load" class="al al-i" style="display:none">⏳ Carregando revendas do Supabase...</div>
+    <div style="overflow-x:auto">
+      <table class="rtbl" id="rtbl">
+        <thead><tr>
+          <th>Revenda</th><th>Rep</th><th>Cidade / UF</th>
+          <th>CEP</th><th>Coords</th><th>Classe</th><th>Ações</th>
+        </tr></thead>
+        <tbody id="rtbody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:var(--mut);margin-top:12px" id="r-empty">Carregando...</p>
+  </div>
+</div>
+
+<!-- ══════ TABELA PCIs ══════ -->
+<div class="pg" id="pg-tabela">
+  <div class="ph">
+    <div class="ph-tag">Referência Completa</div>
+    <h1 class="ph-title">Tabela de PCIs</h1>
+    <p class="ph-sub">17 perfis da 2ª versão — fonte: planilha BMax_CRITERIOS. PCI16 e PCI17 diferenciados pela condução da venda.</p>
+  </div>
+  <div id="tabela-content"></div>
+</div>
+
+<!-- ══════ CONFIG ══════ -->
+<div class="pg" id="pg-config">
+  <div class="ph">
+    <div class="ph-tag">Parâmetros</div>
+    <h1 class="ph-title">Configurações</h1>
+    <p class="ph-sub">Ajuste thresholds e comissões. Configurações salvas no Supabase e compartilhadas entre usuários.</p>
+  </div>
+  <div class="card">
+    <div class="ct">📐 Thresholds</div>
+    <div class="fr c2">
+      <div class="fi"><label>Raio máximo de revenda (km)</label><input type="number" id="c-raio" value="50"></div>
+      <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="50000"></div>
+      <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="120"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">💰 Comissões padrão (%)</div>
+    <div class="fr c2">
+      <div class="fi"><label>Rep Robô/Laser múltiplo sem revenda</label><input type="number" id="c-rep0" value="0" step="0.1"></div>
+      <div class="fi"><label>Rep Robô/Laser múltiplo com revenda</label><input type="number" id="c-rep1" value="1" step="0.1"></div>
+      <div class="fi"><label>Rep Laser simples com revenda</label><input type="number" id="c-rep3a" value="3" step="0.1"></div>
+      <div class="fi"><label>Rep Máquina ≥50k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
+      <div class="fi"><label>Rep Máquina &lt;50k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
+      <div class="fi"><label>Vendedor Interno (todos os PCIs Boxer)</label><input type="number" id="c-vi" value="1.2" step="0.1"></div>
+    </div>
+  </div>
+  <div class="brow">
+    <button class="btn btn-p" onclick="saveCfg()">💾 Salvar Configurações</button>
+    <button class="btn btn-g" onclick="resetCfg()">↩ Restaurar padrões</button>
+  </div>
+</div>
+
+</main>
+</div><!-- /shell -->
+</div><!-- /appPage -->
+
+<!-- toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- modal -->
+<div class="modal-ov" id="modalOv" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// SUPABASE
+// ════════════════════════════════════════════════════
+const SB_URL  = 'https://bmepxcnrsofofoswubuu.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZXB4Y25yc29mb2Zvc3d1YnV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTczNzMsImV4cCI6MjA5NTI5MzM3M30.S55ouFczRYlUYNFf5PotYKXBPT5idypTSmbzR-x2Pk0';
+
+const { createClient } = supabase;
+const sbClient = createClient(SB_URL, SB_ANON);
+let SESSION = null;
+
+// ════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  const btn   = document.getElementById('loginBtn');
+  err.style.display = 'none';
+  if (!email || !pass) { showLoginErr('Preencha email e senha.'); return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { showLoginErr('Email ou senha incorretos.'); return; }
+  SESSION = data.session;
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display   = 'block';
+  document.getElementById('sb-user').textContent = data.user?.email || '';
+  await initApp();
+}
+
+function showLoginErr(msg) {
+  const e = document.getElementById('loginErr');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+async function doLogout() {
+  await sbClient.auth.signOut();
+  SESSION = null;
+  document.getElementById('appPage').style.display   = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value  = '';
+}
+
+// Verifica sessão existente ao carregar
+(async () => {
+  const { data } = await sbClient.auth.getSession();
+  if (data?.session) {
+    SESSION = data.session;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appPage').style.display   = 'block';
+    document.getElementById('sb-user').textContent = data.session.user?.email || '';
+    await initApp();
+  }
+})();
+
+// ════════════════════════════════════════════════════
+// TABELA EXATA DOS 17 PCIs (planilha BMAX_CRITERIOS — 2ª Versão)
+// PCI16 = BOX+REV>IND (Boxer lidera), PCI17 = BOX>REV (Revenda lidera)
+// ════════════════════════════════════════════════════
+const PCIS = [
+  // ── CLUSTER ROBÔ ────────────────────────────────────────────
+  { id:'PCI1',  grupo:'Robô',
+    robo:true,  laser:null, maq:null,
+    dist:false, rep:false, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+    desc:'Robô · sem revenda no raio · sem representante' },
+
+  { id:'PCI2',  grupo:'Robô',
+    robo:true,  laser:null, maq:null,
+    dist:false, rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Robô · sem revenda no raio · com representante' },
+
+  { id:'PCI3',  grupo:'Robô',
+    robo:true,  laser:null, maq:null,
+    dist:true,  rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Robô · com revenda no raio · com representante' },
+
+  // ── CLUSTER LASER +2 ────────────────────────────────────────
+  { id:'PCI4',  grupo:'Laser +2',
+    robo:false, laser:'+2', maq:null,
+    dist:false, rep:false, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+    desc:'Laser múltiplo · sem revenda · sem representante' },
+
+  { id:'PCI5',  grupo:'Laser +2',
+    robo:false, laser:'+2', maq:null,
+    dist:false, rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Laser múltiplo · sem revenda · com representante' },
+
+  { id:'PCI6',  grupo:'Laser +2',
+    robo:false, laser:'+2', maq:null,
+    dist:true,  rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Laser múltiplo · com revenda · com representante' },
+
+  // ── CLUSTER LASER ×1 ────────────────────────────────────────
+  { id:'PCI7',  grupo:'Laser ×1',
+    robo:false, laser:'1', maq:null,
+    dist:false, rep:false, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+    desc:'Laser unitário · sem revenda · sem representante' },
+
+  { id:'PCI8',  grupo:'Laser ×1',
+    robo:false, laser:'1', maq:null,
+    dist:false, rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Laser unitário · sem revenda · com representante' },
+
+  { id:'PCI9',  grupo:'Laser ×1',
+    robo:false, laser:'1', maq:null,
+    dist:true,  rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX+REV>IND',
+    repPct:3,   viPct:1.2, revPct:'4–10% (classe tabela)', portal:'TODOS',
+    desc:'Laser unitário · com revenda · com representante' },
+
+  // ── MÁQUINA ≥R$50k ─────────────────────────────────────────
+  { id:'PCI10', grupo:'Máquina ≥R$50k',
+    robo:false, laser:null, maq:'>50k',
+    dist:false, rep:false, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+    desc:'Máquina ≥R$50k · sem revenda · sem representante' },
+
+  { id:'PCI11', grupo:'Máquina ≥R$50k',
+    robo:false, laser:null, maq:'>50k',
+    dist:false, rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:3,   viPct:1.2, revPct:null, portal:'ADM + REP',
+    desc:'Máquina ≥R$50k · sem revenda · com representante' },
+
+  { id:'PCI12', grupo:'Máquina ≥R$50k',
+    robo:false, laser:null, maq:'>50k',
+    dist:true,  rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX+REV>IND',
+    repPct:3,   viPct:1.2, revPct:'4–10% (classe tabela)', portal:'TODOS',
+    desc:'Máquina ≥R$50k · com revenda · com representante' },
+
+  // ── MÁQUINA <R$50k ─────────────────────────────────────────
+  { id:'PCI13', grupo:'Máquina <R$50k',
+    robo:false, laser:null, maq:'<50k',
+    dist:false, rep:false, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+    desc:'Máquina <R$50k · sem revenda · sem representante' },
+
+  { id:'PCI14', grupo:'Máquina <R$50k',
+    robo:false, laser:null, maq:'<50k',
+    dist:false, rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>IND',
+    repPct:3,   viPct:1.2, revPct:null, portal:'REP',
+    desc:'Máquina <R$50k · sem revenda · com representante' },
+
+  { id:'PCI15', grupo:'Máquina <R$50k',
+    robo:false, laser:null, maq:'<50k',
+    dist:true,  rep:true, origem:'BOXER',
+    atend:'VI',  modelo:'BOX>REV',
+    repPct:5,   viPct:1.2, revPct:'Margem', portal:'TODOS',
+    desc:'Máquina <R$50k · com revenda · com representante' },
+
+  // ── LEAD REVENDA ─────────────────────────────────────────────
+  { id:'PCI16', grupo:'Lead Revenda',
+    robo:true, laser:true, maq:true,
+    dist:true, rep:true, origem:'REVENDA',
+    atend:'RCA', modelo:'BOX+REV>IND',
+    repPct:3,  viPct:0, revPct:'4–10% (classe tabela)', portal:'TODOS',
+    desc:'Lead Revenda · Boxer + Revenda conduzem juntos' },
+
+  { id:'PCI17', grupo:'Lead Revenda',
+    robo:true, laser:true, maq:true,
+    dist:true, rep:true, origem:'REVENDA',
+    atend:'RCA', modelo:'BOX>REV',
+    repPct:5,  viPct:0, revPct:'Margem', portal:'NÃO',
+    desc:'Lead Revenda · Revenda conduz sozinha (sem Boxer)' },
+];
+
+// ════════════════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════════════════
+let CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+let revendas  = [];
+let leadCoords = null;
+let leadGeo    = null;   // {state, city} para dimensão geográfica
+let distMap    = {};
+let ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+async function initApp() {
+  await Promise.all([loadRevendas(), loadConfig()]);
+  applyConfig();
+  renderRevTable();
+  renderTabela();
+  updateSb();
+}
+
+// ════════════════════════════════════════════════════
+// SUPABASE DATA
+// ════════════════════════════════════════════════════
+async function loadRevendas() {
+  document.getElementById('rev-load').style.display = 'block';
+  try {
+    const { data, error } = await sbClient
+      .from('comercial_revendas_bmax')
+      .select('*')
+      .eq('ativo', true)
+      .order('classe')
+      .order('nome');
+    if (!error && data?.length) {
+      revendas = data;
+    } else {
+      // fallback para a lista embutida (sem coords) se Supabase vazio
+      revendas = BASE_REVENDAS.map((b, i) => ({
+        id: 'base_' + i, ...b,
+        cep: '', lat: null, lng: null, endereco: '',
+        estado: b.cidade.split('/')[1]?.trim() || '',
+        cidade: b.cidade.split('/')[0]?.trim() || b.cidade,
+      }));
+      toast('Supabase vazio — usando lista base sem coordenadas. Execute o script de enriquecimento ZEN.', 'info');
+    }
+  } catch (e) {
+    toast('Erro ao carregar revendas: ' + e.message, 'err');
+  }
+  document.getElementById('rev-load').style.display = 'none';
+}
+
+async function loadConfig() {
+  try {
+    const { data } = await sbClient
+      .from('comercial_bmax_config')
+      .select('chave,valor');
+    if (data?.length) {
+      const map = Object.fromEntries(data.map(r => [r.chave, r.valor]));
+      if (map.raio_km)      CFG.raio   = +map.raio_km;
+      if (map.nf_threshold) CFG.nf     = +map.nf_threshold;
+      if (map.vinculo_dias) CFG.vinculo = +map.vinculo_dias;
+      if (map.rep_pct_r1)   CFG.rep1   = +map.rep_pct_r1;
+      if (map.rep_pct_r3a)  CFG.rep3a  = +map.rep_pct_r3a;
+      if (map.rep_pct_r3b)  CFG.rep3b  = +map.rep_pct_r3b;
+      if (map.rep_pct_r5)   CFG.rep5   = +map.rep_pct_r5;
+      if (map.vi_pct)       CFG.vi     = +map.vi_pct;
+    }
+  } catch {}
+}
+
+async function saveConfigToSb() {
+  const entries = [
+    ['raio_km',      CFG.raio],
+    ['nf_threshold', CFG.nf],
+    ['vinculo_dias', CFG.vinculo],
+    ['rep_pct_r1',   CFG.rep1],
+    ['rep_pct_r3a',  CFG.rep3a],
+    ['rep_pct_r3b',  CFG.rep3b],
+    ['rep_pct_r5',   CFG.rep5],
+    ['vi_pct',       CFG.vi],
+  ];
+  for (const [chave, valor] of entries) {
+    await sbClient.from('comercial_bmax_config')
+      .upsert({ chave, valor: String(valor) }, { onConflict: 'chave' });
+  }
+}
+
+async function logClassificacao(pci) {
+  try {
+    await sbClient.from('comercial_bmax_classificacoes').insert({
+      usuario_email: SESSION?.user?.email,
+      pci_id:   pci.id,
+      produto:  ans.produto,
+      origem:   ans.origem,
+      condutor: ans.condutor,
+      cep_lead: document.getElementById('i-cep').value.replace(/\D/g,'') || null,
+      cidade_lead: leadGeo?.city || null,
+      estado_lead: leadGeo?.state || null,
+      lat_lead: leadCoords?.lat || null,
+      lng_lead: leadCoords?.lng || null,
+      resultado: { pci: pci.id, modelo: pci.modelo, atend: pci.atend, portal: pci.portal },
+    });
+  } catch {}
+}
+
+async function recarregarRevendas() {
+  await loadRevendas();
+  renderRevTable();
+  updateSb();
+  toast('Revendas recarregadas do Supabase.', 'ok');
+}
+
+function updateSb() {
+  const at = revendas.filter(r => r.classe !== 'Não Aplica');
+  document.getElementById('sb-n').textContent = at.length;
+  const o = revendas.filter(r => r.classe === 'Ouro').length;
+  const p = revendas.filter(r => r.classe === 'Prata').length;
+  document.getElementById('sb-s').textContent = `${o} Ouro · ${p} Prata`;
+}
+
+// ════════════════════════════════════════════════════
+// TOAST / MODAL
+// ════════════════════════════════════════════════════
+function toast(msg, type='ok') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function openModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOv').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOv').classList.remove('show');
+}
+
+function confirm2(msg, cb) {
+  openModal(`
+    <h3>Confirmar</h3>
+    <p>${msg}</p>
+    <div class="modal-acts">
+      <button class="btn btn-g" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-d" onclick="closeModal();(${cb.toString()})()">Confirmar</button>
+    </div>`);
+}
+
+// ════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ════════════════════════════════════════════════════
+function nav(id, btn) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  document.querySelectorAll('.ni,.mtab').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+}
+
+function goWs(id) {
+  document.querySelectorAll('.ws').forEach(s => s.classList.remove('on'));
+  const el = document.getElementById('ws-' + id);
+  if (el) { el.classList.add('on'); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+}
+
+function pick(field, btn) {
+  btn.closest('.og').querySelectorAll('.ob').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  ans[field] = btn.dataset.v;
+}
+
+// ════════════════════════════════════════════════════
+// CEP & GEOCODING
+// ════════════════════════════════════════════════════
+function mcep(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,8);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  el.value = v;
+}
+
+async function geocodeViaBrasilAPI(cep) {
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${cep}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    const coords = d.location?.coordinates;
+    if (coords?.latitude && coords?.longitude)
+      return { lat:parseFloat(coords.latitude), lng:parseFloat(coords.longitude),
+               city:d.city, state:d.state,
+               addr:`${d.street||''} ${d.neighborhood||''}`.trim()+', '+d.city+'/'+d.state };
+    return { lat:null, lng:null, city:d.city, state:d.state,
+             street:d.street||'', neighborhood:d.neighborhood||'',
+             addr:`${d.street||''} ${d.neighborhood||''}`.trim()+', '+d.city+'/'+d.state };
+  } catch { return null; }
+}
+
+async function geocodeViaViaCEP(cep) {
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (d.erro) return null;
+    return { city:d.localidade, state:d.uf, street:d.logradouro||'', neighborhood:d.bairro||'',
+             addr:`${d.logradouro||''} ${d.bairro||''}`.trim()+', '+d.localidade+'/'+d.uf };
+  } catch { return null; }
+}
+
+async function nominatimQuery(q) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`;
+    const r = await fetch(url, { headers:{'User-Agent':'BMaxMotorPCI/3.0 (boxersoldas.com.br)'} });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d.length) return null;
+    return { lat:parseFloat(d[0].lat), lng:parseFloat(d[0].lon) };
+  } catch { return null; }
+}
+
+async function geocodeFull(cep) {
+  const clean = cep.replace(/\D/g,'');
+  const b = await geocodeViaBrasilAPI(clean);
+  if (b?.lat) return b;
+  const info = b || await geocodeViaViaCEP(clean);
+  if (!info) return null;
+  let coords = await nominatimQuery(clean + ', Brasil');
+  if (coords) return { ...info, ...coords };
+  if (info.street||info.neighborhood) {
+    coords = await nominatimQuery(`${info.street} ${info.neighborhood} ${info.city} ${info.state} Brasil`);
+    if (coords) return { ...info, ...coords };
+  }
+  coords = await nominatimQuery(`${info.city} ${info.state} Brasil`);
+  if (coords) return { ...info, ...coords };
+  return { ...info, lat:null, lng:null };
+}
+
+async function geocodeLead() {
+  const inp = document.getElementById('i-cep');
+  const s   = document.getElementById('s-cep');
+  const a   = document.getElementById('i-addr');
+  const db  = document.getElementById('dist-block');
+  const cep = inp.value.replace(/\D/g,'');
+  if (cep.length !== 8) { s.innerHTML=''; return; }
+
+  s.innerHTML = '<span class="pill pill-load">⏳ Buscando CEP...</span>';
+  a.value = 'Buscando...';
+  db.innerHTML = '';
+  leadCoords = null; leadGeo = null; distMap = {};
+
+  const geo = await geocodeFull(cep);
+  if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; a.value=''; return; }
+
+  a.value = geo.addr || `${geo.city||''}/${geo.state||''}`;
+  leadGeo = { city: geo.city, state: geo.state };
+
+  if (!geo.lat) {
+    s.innerHTML = '<span class="pill pill-warn">⚠️ Endereço ok · sem coordenadas — distância indisponível</span>';
+    db.innerHTML = '<div class="al al-w">⚠️ Não foi possível geocodificar. O motor classificará sem verificação de distância — responda manualmente a pergunta sobre revenda no raio.</div>';
+    return;
+  }
+
+  leadCoords = { lat:geo.lat, lng:geo.lng };
+  s.innerHTML = `<span class="pill pill-ok">✓ ${geo.city||''}/${geo.state||''} · ${geo.lat.toFixed(5)}, ${geo.lng.toFixed(5)}</span>`;
+
+  const comCoords = revendas.filter(r => r.lat && r.lng && r.classe !== 'Não Aplica');
+  if (!comCoords.length) {
+    db.innerHTML = '<div class="al al-i">ℹ️ Nenhuma revenda com CEP geocodificado. Execute o script de enriquecimento ZEN para ativar cálculo automático.</div>';
+    return;
+  }
+
+  const rows = comCoords.map(r => {
+    const km = hav(leadCoords.lat, leadCoords.lng, r.lat, r.lng);
+    distMap[r.id] = { km, nome:r.nome, classe:r.classe, rep:r.rep };
+    return { r, km };
+  }).sort((a,b) => a.km - b.km);
+
+  const inside = rows.filter(x => x.km <= CFG.raio);
+  let html = `<div style="overflow-x:auto"><table class="dtable">
+    <thead><tr><th>Classe</th><th>Revenda</th><th>Rep</th><th>Distância</th><th>Status</th></tr></thead><tbody>`;
+  rows.slice(0,10).forEach(({r,km}) => {
+    const ok  = km <= CFG.raio;
+    const cls = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : 'chip-n';
+    html += `<tr class="${ok?'near':''}">
+      <td><span class="chip ${cls}">${r.classe}</span></td>
+      <td style="font-weight:500">${r.nome}</td>
+      <td style="color:var(--mut)">${r.rep||'—'}</td>
+      <td style="font-weight:600">${km.toFixed(1)} km</td>
+      <td><span class="dchip ${ok?'din':'dout'}">${ok?'✓ Dentro':'✗ Fora'}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+
+  if (inside.length)
+    html += `<div class="al al-g" style="margin-top:10px">✅ <strong>${inside.length} revenda(s)</strong> dentro dos ${CFG.raio} km: ${inside.map(x=>x.r.nome).join(', ')}.</div>`;
+  else
+    html += `<div class="al al-w" style="margin-top:10px">⚠️ Nenhuma revenda BMax dentro de ${CFG.raio} km.</div>`;
+
+  db.innerHTML = html;
+}
+
+async function geocodeRev() {
+  const inp = document.getElementById('r-cep');
+  const s   = document.getElementById('sr-cep');
+  const e   = document.getElementById('r-end');
+  const c   = document.getElementById('r-cidade');
+  const cep = inp.value.replace(/\D/g,'');
+  if (cep.length !== 8) return;
+  s.innerHTML = '<span class="pill pill-load">⏳ Geocodificando...</span>';
+  const geo = await geocodeFull(cep);
+  if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; return; }
+  e.value = geo.addr || '';
+  if (!c.value && geo.city) c.value = `${geo.city} / ${geo.state}`;
+  if (geo.lat) {
+    inp.dataset.lat = geo.lat; inp.dataset.lng = geo.lng;
+    s.innerHTML = `<span class="pill pill-ok">✓ ${geo.lat.toFixed(5)}, ${geo.lng.toFixed(5)}</span>`;
+  } else {
+    s.innerHTML = '<span class="pill pill-warn">⚠️ Endereço ok · sem coords precisas</span>';
+  }
+}
+
+function hav(lat1,lng1,lat2,lng2) {
+  const R=6371, d2r=Math.PI/180;
+  const dL=(lat2-lat1)*d2r, dN=(lng2-lng1)*d2r;
+  const a = Math.sin(dL/2)**2 + Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dN/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ════════════════════════════════════════════════════
+// MOTOR PCI
+// ════════════════════════════════════════════════════
+function temRevenda() {
+  if (!leadCoords) return false;
+  return Object.values(distMap).some(d => d.km <= CFG.raio);
+}
+
+function revendasDentro() {
+  const ordem = { 'Ouro':0, 'Prata':1 };
+  return Object.values(distMap)
+    .filter(d => d.km <= CFG.raio)
+    .sort((a,b) => {
+      const oa = ordem[a.classe] ?? 2, ob = ordem[b.classe] ?? 2;
+      return oa !== ob ? oa - ob : a.km - b.km;
+    });
+}
+
+function revendaPrincipal() {
+  const l = revendasDentro();
+  return l.length ? l[0] : null;
+}
+
+// Dimensão geográfica: Interior SP → VT1/VT2; outros → V1
+function getAtendLabel(pci) {
+  if (pci.atend === 'RCA') return 'RCA (Representante Comercial Autorizado)';
+  if (leadGeo?.state === 'SP') {
+    const city = (leadGeo.city || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if (city && city !== 'sao paulo') return 'VT1 ou VT2 (Interior SP)';
+    return 'V1 (SP Capital)';
+  }
+  return 'V1';
+}
+
+function goOrigemNext() {
+  if (!ans.origem) { toast('Selecione a origem do lead.', 'err'); return; }
+  if (ans.origem === 'revenda') {
+    goWs('condutor');
+  } else {
+    // Boxer lead: auto-responde rep se revenda detectada no raio
+    const revEmRaio = temRevenda();
+    if (revEmRaio) {
+      ans.rep = 'sim';
+      document.getElementById('rep-auto-msg').innerHTML =
+        '<div class="al al-g" style="margin-bottom:10px">✅ <strong>Representante auto-confirmado:</strong> há revenda BMax no raio — rep é sempre ativo neste caso.</div>';
+      document.querySelectorAll('#rep-og .ob').forEach(b => {
+        b.classList.toggle('sel', b.dataset.v === 'sim');
+      });
+    } else {
+      ans.rep = null;
+      document.getElementById('rep-auto-msg').innerHTML = '';
+      document.querySelectorAll('#rep-og .ob').forEach(b => b.classList.remove('sel'));
+    }
+    goWs('rep');
+  }
+}
+
+function goRepNext() {
+  if (!ans.rep) { toast('Selecione se há representante BMax.', 'err'); return; }
+  const prod = ans.produto;
+  if (prod === 'robo' || prod === 'laser_multi' || prod === 'laser_single') {
+    ans.nf = 'acima';
+    classify();
+  } else {
+    goWs('nf');
+  }
+}
+
+function matchPCI() {
+  const prod     = ans.produto;
+  const orig     = ans.origem;
+  const repAtivo = ans.rep === 'sim';
+  const revProx  = temRevenda();
+  const nfAcima  = ans.nf === 'acima';
+
+  // Lead revenda: PCI16 ou PCI17 conforme condutor
+  if (orig === 'revenda') {
+    return ans.condutor === 'juntos'
+      ? PCIS.find(p => p.id === 'PCI16')
+      : PCIS.find(p => p.id === 'PCI17');
+  }
+
+  // ROBÔ
+  if (prod === 'robo') {
+    if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI1');
+    if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI2');
+    return PCIS.find(p => p.id === 'PCI3');
+  }
+
+  // LASER +2
+  if (prod === 'laser_multi') {
+    if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI4');
+    if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI5');
+    return PCIS.find(p => p.id === 'PCI6');
+  }
+
+  // LASER ×1
+  if (prod === 'laser_single') {
+    if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI7');
+    if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI8');
+    return PCIS.find(p => p.id === 'PCI9');
+  }
+
+  // MÁQUINA
+  if (prod === 'maquina') {
+    if (nfAcima) {
+      if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI10');
+      if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI11');
+      return PCIS.find(p => p.id === 'PCI12');
+    } else {
+      if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI13');
+      if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI14');
+      return PCIS.find(p => p.id === 'PCI15');
+    }
+  }
+  return PCIS[0];
+}
+
+async function classify() {
+  const pci    = matchPCI();
+  const dentro = revendasDentro();
+  const hasCEP = !!leadCoords;
+  const atendLabel = getAtendLabel(pci);
+
+  const mc = {
+    'BOX>IND':'var(--acc)', 'BOX+REV>IND':'var(--acc2)', 'BOX>REV':'var(--gold)'
+  }[pci.modelo] || 'var(--acc)';
+
+  const fmtPct = v => {
+    if (v === null || v === undefined) return '<span class="czero">—</span>';
+    if (typeof v === 'string') return `<span class="cpct">${v}</span>`;
+    if (v === 0) return '<span class="czero">—</span>';
+    return `<span class="cpct">${v}%</span>`;
+  };
+
+  const principal = revendaPrincipal();
+  let revHtml = '';
+  if (hasCEP && dentro.length) {
+    const cls = principal.classe==='Ouro'
+      ? '<span class="chip chip-o">🥇 Ouro</span>'
+      : '<span class="chip chip-p">🥈 Prata</span>';
+    const demais = dentro.filter(r => r !== principal);
+    revHtml = `
+      <div class="al al-g">
+        <div style="margin-bottom:6px"><strong>🏪 Revenda selecionada (prioridade ${principal.classe}):</strong></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${cls}
+          <span style="font-weight:600">${principal.nome}</span>
+          <span style="color:var(--mut);font-size:12px">${principal.rep||''} · ${principal.km.toFixed(1)} km</span>
+        </div>
+        ${demais.length ? `<div style="margin-top:8px;font-size:12px;color:var(--mut)">Também no raio: ${demais.map(r=>`${r.nome} (${r.km.toFixed(1)} km · ${r.classe})`).join(' · ')}</div>` : ''}
+      </div>`;
+  } else if (hasCEP && Object.keys(distMap).length) {
+    revHtml = `<div class="al al-w">⚠️ Nenhuma revenda BMax dentro de ${CFG.raio} km.</div>`;
+  } else if (!hasCEP) {
+    revHtml = `<div class="al al-i">ℹ️ CEP não geocodificado — distância verificada manualmente.</div>`;
+  }
+
+  // Dimensão geográfica
+  const geoTag = leadGeo
+    ? (leadGeo.state === 'SP' && (leadGeo.city||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') !== 'sao paulo'
+        ? '<span class="chip chip-o" style="font-size:10px;letter-spacing:.3px">Interior SP → VT1/VT2</span>'
+        : '<span class="chip chip-p" style="font-size:10px">SP Capital / outros → V1</span>')
+    : '';
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').innerHTML = `
+    <p class="ph-tag" style="margin-bottom:8px">✦ Resultado</p>
+    <div class="res-hero">
+      <div class="res-pci-lbl" style="color:${mc}">Perfil do Cliente Indústria</div>
+      <div class="res-pci" style="color:${mc}">${pci.id}</div>
+      <div class="res-name">${pci.desc}</div>
+      <div class="badges" style="margin-bottom:10px">
+        <div class="badge"><span class="dot da"></span>Modelo: ${pci.modelo}</div>
+        <div class="badge"><span class="dot db"></span>${atendLabel}</div>
+        <div class="badge"><span class="dot dg"></span>Portal: ${pci.portal}</div>
+        <div class="badge"><span class="dot ${pci.dist?'db':'dr'}"></span>Rev. ${pci.dist?'no raio':'fora do raio'}</div>
+      </div>
+      ${geoTag ? `<div style="margin-top:4px">${geoTag}</div>` : ''}
+    </div>
+
+    <div class="sgrid">
+      <div class="sc"><div class="sc-l">Modelo</div>
+        <div class="sc-v" style="font-size:13px">${pci.modelo}</div>
+        <div class="sc-s">${{'BOX>IND':'Boxer → Indústria','BOX+REV>IND':'Boxer + Revenda → Indústria','BOX>REV':'Boxer → Revenda'}[pci.modelo]||''}</div>
+      </div>
+      <div class="sc"><div class="sc-l">Quem Atende</div>
+        <div class="sc-v" style="font-size:11px">${atendLabel}</div>
+        <div class="sc-s">Portal: ${pci.portal}</div>
+      </div>
+      <div class="sc"><div class="sc-l">Vínculo</div>
+        <div class="sc-v">${CFG.vinculo}d</div>
+        <div class="sc-s">Após validação no portal</div>
+      </div>
+    </div>
+
+    <p class="ph-tag" style="margin-bottom:10px">💰 Comissionamento</p>
+    <div class="card" style="padding:14px">
+      <table class="ctbl">
+        <tr><td>🏪 Revenda</td><td>${fmtPct(pci.revPct)}</td></tr>
+        <tr><td>🤝 Representante</td><td>${fmtPct(pci.repPct)}</td></tr>
+        <tr><td>👤 Vendedor Interno</td><td>${fmtPct(pci.viPct)}</td></tr>
+      </table>
+      <p style="font-size:11px;color:var(--mut);margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.06)">
+        Percentuais sobre valor da NF · Liberados após liquidação · Revenda recebe via cashback/bonificação no portal BMax
+      </p>
+    </div>
+
+    ${revHtml}
+
+    <div class="brow">
+      <button class="btn btn-p" onclick="resetWiz()">🔄 Nova Classificação</button>
+      <button class="btn btn-g" onclick="copyRes('${pci.id}','${pci.desc.replace(/'/g,"\\'")}','${pci.modelo}','${atendLabel.replace(/'/g,"\\'")}')">📋 Copiar</button>
+    </div>
+  `;
+  document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // Log assíncrono — não bloqueia o resultado
+  logClassificacao(pci);
+}
+
+function copyRes(id, desc, modelo, atend) {
+  const t = `BMAX — Classificação PCI\n\nPCI: ${id}\nDescrição: ${desc}\nModelo: ${modelo}\nAtendimento: ${atend}`;
+  navigator.clipboard.writeText(t).catch(() => {});
+  const b = event.target; b.textContent = '✅ Copiado!';
+  setTimeout(() => b.textContent = '📋 Copiar', 2000);
+}
+
+function resetWiz() {
+  ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
+  leadCoords = null; leadGeo = null; distMap = {};
+  document.getElementById('i-cep').value  = '';
+  document.getElementById('i-addr').value = '';
+  document.getElementById('s-cep').innerHTML = '';
+  document.getElementById('dist-block').innerHTML = '';
+  document.getElementById('rep-auto-msg').innerHTML = '';
+  document.querySelectorAll('.ob').forEach(b => b.classList.remove('sel'));
+  document.getElementById('result').style.display = 'none';
+  goWs('cep');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ════════════════════════════════════════════════════
+// REVENDAS CRUD
+// ════════════════════════════════════════════════════
+async function saveRev() {
+  const cepEl = document.getElementById('r-cep');
+  const r = {
+    nome:     document.getElementById('r-nome').value.trim(),
+    rep:      document.getElementById('r-rep').value.trim(),
+    cidade:   document.getElementById('r-cidade').value.trim(),
+    cep:      cepEl.value.replace(/\D/g,''),
+    endereco: document.getElementById('r-end').value,
+    lat:      cepEl.dataset.lat ? parseFloat(cepEl.dataset.lat) : null,
+    lng:      cepEl.dataset.lng ? parseFloat(cepEl.dataset.lng) : null,
+    classe:   document.getElementById('r-class').value,
+    ativo:    true,
+  };
+  if (!r.nome) { toast('Informe o nome da revenda.', 'err'); return; }
+
+  const rid = document.getElementById('r-id').value;
+  try {
+    if (rid) {
+      const { error } = await sbClient.from('comercial_revendas_bmax').update(r).eq('id', rid);
+      if (error) throw error;
+      toast('Revenda atualizada.', 'ok');
+    } else {
+      const { error } = await sbClient.from('comercial_revendas_bmax').insert(r);
+      if (error) throw error;
+      toast('Revenda adicionada.', 'ok');
+    }
+    await loadRevendas();
+    renderRevTable(); updateSb(); clearRevForm();
+  } catch (e) {
+    toast('Erro ao salvar: ' + e.message, 'err');
+  }
+}
+
+function clearRevForm() {
+  ['r-id','r-nome','r-rep','r-cidade','r-end'].forEach(id => document.getElementById(id).value = '');
+  const c = document.getElementById('r-cep'); c.value=''; c.dataset.lat=''; c.dataset.lng='';
+  document.getElementById('r-class').value = 'Ouro';
+  document.getElementById('sr-cep').innerHTML = '';
+}
+
+function editRev(id) {
+  const r = revendas.find(x => x.id === id); if (!r) return;
+  document.getElementById('r-id').value    = r.id;
+  document.getElementById('r-nome').value  = r.nome;
+  document.getElementById('r-rep').value   = r.rep  || '';
+  document.getElementById('r-cidade').value= r.cidade || '';
+  const c = document.getElementById('r-cep');
+  const cep = (r.cep||'').replace(/\D/g,'');
+  c.value = cep.length===8 ? cep.slice(0,5)+'-'+cep.slice(5) : cep;
+  c.dataset.lat = r.lat || ''; c.dataset.lng = r.lng || '';
+  document.getElementById('r-end').value   = r.endereco || '';
+  document.getElementById('r-class').value = r.classe;
+  if (r.lat) document.getElementById('sr-cep').innerHTML = '<span class="pill pill-ok">✓ Coords disponíveis</span>';
+  nav('revendas'); window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+async function delRev(id) {
+  confirm2('Remover esta revenda do Supabase?', async () => {
+    try {
+      const { error } = await sbClient.from('comercial_revendas_bmax').update({ ativo:false }).eq('id', id);
+      if (error) throw error;
+      toast('Revenda desativada.', 'ok');
+      await loadRevendas(); renderRevTable(); updateSb();
+    } catch (e) { toast('Erro: ' + e.message, 'err'); }
+  });
+}
+
+function renderRevTable() {
+  const tb = document.getElementById('rtbody');
+  const em = document.getElementById('r-empty');
+  if (!revendas.length) { tb.innerHTML=''; em.style.display='block'; em.textContent='Nenhuma revenda.'; return; }
+  em.style.display = 'none';
+  tb.innerHTML = revendas.map(r => {
+    const cls    = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : 'chip-n';
+    const cep    = (r.cep||'').replace(/\D/g,'');
+    const cepFmt = cep.length===8 ? cep.slice(0,5)+'-'+cep.slice(5) : cep||'—';
+    const geo    = r.lat&&r.lng
+      ? `<span class="geo-ok" title="${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}">✓ OK</span>`
+      : '<span class="geo-no">○ —</span>';
+    const cidUF  = r.estado ? `${r.cidade||''}/${r.estado}` : r.cidade||'—';
+    return `<tr>
+      <td style="font-weight:500">${r.nome}</td>
+      <td>${r.rep||'—'}</td>
+      <td>${cidUF}</td>
+      <td>${cepFmt}</td>
+      <td>${geo}</td>
+      <td><span class="chip ${cls}">${r.classe}</span></td>
+      <td>
+        <button class="btn btn-g btn-sm" onclick="editRev('${r.id}')">✏️</button>
+        <button class="btn btn-d btn-sm" onclick="delRev('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Lista base embutida (fallback quando Supabase vazio)
+const BASE_REVENDAS = [
+  {nome:'MAQ SOLDAS',rep:'Victor VLM',cidade:'Campinas / SP',classe:'Ouro'},
+  {nome:'FERMARCAS',rep:'Weberson',cidade:'Goianésia / GO',classe:'Ouro'},
+  {nome:'SERVWELD',rep:'Weberson',cidade:'Brasília / DF',classe:'Ouro'},
+  {nome:'ELETRORAFA',rep:'Fernando Marques',cidade:'Itajaí / SC',classe:'Ouro'},
+  {nome:'ELETRO SOLDA',rep:'Victor VLM',cidade:'Limeira / SP',classe:'Ouro'},
+  {nome:'TECHNOFER ARARAQUARA',rep:'Victor VLM',cidade:'Araraquara / SP',classe:'Ouro'},
+  {nome:'SUPRIMIG',rep:'Fernando Augusto',cidade:'Bauru / SP',classe:'Ouro'},
+  {nome:'LUITEX',rep:'Victor VLM',cidade:'Americana / SP',classe:'Ouro'},
+  {nome:'LUITEX',rep:'Victor VLM',cidade:"Santa Bárbara d'Oeste / SP",classe:'Ouro'},
+  {nome:'LUITEX',rep:'Victor VLM',cidade:'Sumaré / SP',classe:'Ouro'},
+  {nome:'LUITEX',rep:'Victor VLM',cidade:'Mogi Mirim / SP',classe:'Ouro'},
+  {nome:'OXI-RIO',rep:'Victor VLM',cidade:'Rio Claro / SP',classe:'Ouro'},
+  {nome:'DIAFER',rep:'Fernando Augusto',cidade:'Itapeva / SP',classe:'Ouro'},
+  {nome:'ALPHABRAS POÇOS',rep:'Victor VLM',cidade:'Poços de Caldas / MG',classe:'Ouro'},
+  {nome:'DIAFER PONTA GROSSA',rep:'Fernando Augusto',cidade:'Ponta Grossa / PR',classe:'Ouro'},
+  {nome:'SOLENGE SOLDAS',rep:'Cris',cidade:'Porto Alegre / RS',classe:'Ouro'},
+  {nome:'CASCAVEL SOLDAS',rep:'Hugo Carpanese',cidade:'Cascavel / PR',classe:'Prata'},
+  {nome:'ELETRICA EDP',rep:'Cris',cidade:'Cachoeiro de Itapemirim / ES',classe:'Prata'},
+  {nome:'DOMINIK',rep:'Fernando Marques',cidade:'São José / SC',classe:'Prata'},
+  {nome:'CICAMPO',rep:'Fernando Marques',cidade:'Timbó / SC',classe:'Prata'},
+  {nome:'CORDEIRO',rep:'Fernando Augusto',cidade:'Sorocaba / SP',classe:'Prata'},
+  {nome:'CASA DO SOLDADOR',rep:'Hugo Carpanese',cidade:'Maringá / PR',classe:'Prata'},
+  {nome:'D SOLDAS',rep:'Caio P Mancini',cidade:'Santo André / SP',classe:'Prata'},
+  {nome:'CERTTO FERRAGENS',rep:'Fernando Marques',cidade:'Turvo / SC',classe:'Prata'},
+  {nome:'MEPAR',rep:'Weberson',cidade:'Aparecida de Goiânia / GO',classe:'Prata'},
+  {nome:'IPIRANGA METAIS',rep:'Weberson',cidade:'Goiânia / GO',classe:'Prata'},
+  {nome:'TECNIVALE SOLDATEC',rep:'Cris',cidade:'Lajeado / RS',classe:'Prata'},
+  {nome:'MIL MAQUINAS',rep:'Lucas do Vale',cidade:'Birigui / SP',classe:'Prata'},
+  {nome:'VIA SOLDAS',rep:'Lucas do Vale',cidade:'São José do Rio Preto / SP',classe:'Prata'},
+];
+
+// ════════════════════════════════════════════════════
+// TABELA DE REFERÊNCIA
+// ════════════════════════════════════════════════════
+const GRUPOS_TABELA = [
+  {label:'🤖 Cluster Robô — Lead Boxer',           ids:['PCI1','PCI2','PCI3']},
+  {label:'⚡ Laser +2 (múltiplas unidades)',        ids:['PCI4','PCI5','PCI6']},
+  {label:'⚡ Laser ×1 (unitário)',                  ids:['PCI7','PCI8','PCI9']},
+  {label:'🔧 Máquina Industrial ≥R$50k',           ids:['PCI10','PCI11','PCI12']},
+  {label:'🔧 Máquina Industrial <R$50k',            ids:['PCI13','PCI14','PCI15']},
+  {label:'🏪 Qualquer produto — Lead Revenda',      ids:['PCI16','PCI17']},
+];
+
+function renderTabela() {
+  let html = '';
+  GRUPOS_TABELA.forEach(g => {
+    html += `<div class="card" style="margin-bottom:12px">
+      <div class="ct">${g.label}</div>
+      <div style="overflow-x:auto"><table class="ptbl">
+        <thead><tr>
+          <th>PCI</th><th>Rev ≤${CFG.raio}km</th><th>Rep</th>
+          <th>Origem</th><th>Atende</th><th>Modelo</th>
+          <th>Rep%</th><th>VI%</th><th>Rev%</th><th>Portal</th>
+        </tr></thead><tbody>
+        ${g.ids.map(id => {
+          const p = PCIS.find(x => x.id === id); if (!p) return '';
+          const mc = {'BOX>IND':'var(--acc)','BOX+REV>IND':'var(--acc2)','BOX>REV':'var(--gold)'}[p.modelo]||'var(--acc)';
+          const ck = v => v ? '<span class="ck-y">✓</span>' : '<span class="ck-n">✗</span>';
+          const fP = v => v===null||v===0
+            ? '<span class="ck-na">—</span>'
+            : `<span style="color:var(--acc2);font-weight:700">${typeof v==='number'?v+'%':v}</span>`;
+          const atLabel = p.atend === 'RCA' ? 'RCA' : 'V1/VT';
+          return `<tr>
+            <td class="pci-id" style="color:${mc}">${p.id}</td>
+            <td>${ck(p.dist)}</td>
+            <td>${ck(p.rep)}</td>
+            <td style="font-size:11px">${p.origem}</td>
+            <td style="font-weight:600;font-size:11px">${atLabel}</td>
+            <td style="color:${mc};font-size:11px;font-weight:600">${p.modelo}</td>
+            <td>${fP(p.repPct)}</td>
+            <td>${fP(p.viPct)}</td>
+            <td>${fP(p.revPct)}</td>
+            <td style="font-size:11px;color:var(--mut)">${p.portal}</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  });
+  const el = document.getElementById('tabela-content');
+  if (el) el.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ════════════════════════════════════════════════════
+function applyConfig() {
+  document.getElementById('c-raio').value   = CFG.raio;
+  document.getElementById('c-nf').value     = CFG.nf;
+  document.getElementById('c-vinculo').value= CFG.vinculo;
+  document.getElementById('c-rep0').value   = CFG.rep0;
+  document.getElementById('c-rep1').value   = CFG.rep1;
+  document.getElementById('c-rep3a').value  = CFG.rep3a;
+  document.getElementById('c-rep3b').value  = CFG.rep3b;
+  document.getElementById('c-rep5').value   = CFG.rep5;
+  document.getElementById('c-vi').value     = CFG.vi;
+  const hraio = document.getElementById('h-raio');
+  if (hraio) hraio.textContent = CFG.raio;
+  const la = document.getElementById('lbl-acima');
+  const lb = document.getElementById('lbl-abaixo');
+  if (la) la.textContent = `✦ Acima de R$ ${CFG.nf.toLocaleString('pt-BR')}`;
+  if (lb) lb.textContent = `◇ Abaixo de R$ ${CFG.nf.toLocaleString('pt-BR')}`;
+}
+
+async function saveCfg() {
+  CFG.raio   = +document.getElementById('c-raio').value;
+  CFG.nf     = +document.getElementById('c-nf').value;
+  CFG.vinculo= +document.getElementById('c-vinculo').value;
+  CFG.rep0   = +document.getElementById('c-rep0').value;
+  CFG.rep1   = +document.getElementById('c-rep1').value;
+  CFG.rep3a  = +document.getElementById('c-rep3a').value;
+  CFG.rep3b  = +document.getElementById('c-rep3b').value;
+  CFG.rep5   = +document.getElementById('c-rep5').value;
+  CFG.vi     = +document.getElementById('c-vi').value;
+  try {
+    await saveConfigToSb();
+    applyConfig(); renderTabela();
+    toast('Configurações salvas no Supabase.', 'ok');
+  } catch (e) {
+    toast('Erro ao salvar configurações: ' + e.message, 'err');
+  }
+}
+
+async function resetCfg() {
+  CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+  await saveConfigToSb();
+  applyConfig(); renderTabela();
+  toast('Configurações restauradas para os valores padrão.', 'ok');
+}
+</script>
+</body>
+</html>
