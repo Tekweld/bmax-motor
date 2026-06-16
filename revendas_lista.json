@@ -1,34 +1,467 @@
 {
-  "_comment": "Fonte de verdade para sincronização ZEN → Supabase. Edite aqui para adicionar/remover revendas. O script enrich_revendas_bmax.py detecta mudanças via hash e só chama a ZEN API quando necessário.",
+  "_comment": "Fonte de verdade para sincronização ZEN → Supabase. Gerado automaticamente do BMAX CRITERIOS.xlsx. Apenas revendas Ouro e Prata.",
   "revendas": [
-    {"nome": "MAQ SOLDAS",            "rep": "Victor VLM",        "cidade": "Campinas",                    "estado": "SP", "classe": "Ouro"},
-    {"nome": "FERMARCAS",             "rep": "Weberson",          "cidade": "Goianésia",                   "estado": "GO", "classe": "Ouro"},
-    {"nome": "SERVWELD",              "rep": "Weberson",          "cidade": "Brasília",                    "estado": "DF", "classe": "Ouro"},
-    {"nome": "ELETRORAFA",            "rep": "Fernando Marques",  "cidade": "Itajaí",                      "estado": "SC", "classe": "Ouro"},
-    {"nome": "ELETRO SOLDA",          "rep": "Victor VLM",        "cidade": "Limeira",                     "estado": "SP", "classe": "Ouro"},
-    {"nome": "TECHNOFER ARARAQUARA",  "rep": "Victor VLM",        "cidade": "Araraquara",                  "estado": "SP", "classe": "Ouro"},
-    {"nome": "SUPRIMIG",              "rep": "Fernando Augusto",  "cidade": "Bauru",                       "estado": "SP", "classe": "Ouro"},
-    {"nome": "LUITEX",                "rep": "Victor VLM",        "cidade": "Americana",                   "estado": "SP", "classe": "Ouro"},
-    {"nome": "LUITEX",                "rep": "Victor VLM",        "cidade": "Santa Bárbara d'Oeste",       "estado": "SP", "classe": "Ouro"},
-    {"nome": "LUITEX",                "rep": "Victor VLM",        "cidade": "Sumaré",                      "estado": "SP", "classe": "Ouro"},
-    {"nome": "LUITEX",                "rep": "Victor VLM",        "cidade": "Mogi Mirim",                  "estado": "SP", "classe": "Ouro"},
-    {"nome": "OXI-RIO",               "rep": "Victor VLM",        "cidade": "Rio Claro",                   "estado": "SP", "classe": "Ouro"},
-    {"nome": "DIAFER",                "rep": "Fernando Augusto",  "cidade": "Itapeva",                     "estado": "SP", "classe": "Ouro"},
-    {"nome": "ALPHABRAS POÇOS",       "rep": "Victor VLM",        "cidade": "Poços de Caldas",             "estado": "MG", "classe": "Ouro"},
-    {"nome": "DIAFER PONTA GROSSA",   "rep": "Fernando Augusto",  "cidade": "Ponta Grossa",                "estado": "PR", "classe": "Ouro"},
-    {"nome": "SOLENGE SOLDAS",        "rep": "Cris",              "cidade": "Porto Alegre",                "estado": "RS", "classe": "Ouro"},
-    {"nome": "CASCAVEL SOLDAS",       "rep": "Hugo Carpanese",    "cidade": "Cascavel",                    "estado": "PR", "classe": "Prata"},
-    {"nome": "ELETRICA EDP",          "rep": "Cris",              "cidade": "Cachoeiro de Itapemirim",     "estado": "ES", "classe": "Prata"},
-    {"nome": "DOMINIK",               "rep": "Fernando Marques",  "cidade": "São José",                    "estado": "SC", "classe": "Prata"},
-    {"nome": "CICAMPO",               "rep": "Fernando Marques",  "cidade": "Timbó",                       "estado": "SC", "classe": "Prata"},
-    {"nome": "CORDEIRO",              "rep": "Fernando Augusto",  "cidade": "Sorocaba",                    "estado": "SP", "classe": "Prata"},
-    {"nome": "CASA DO SOLDADOR",      "rep": "Hugo Carpanese",    "cidade": "Maringá",                     "estado": "PR", "classe": "Prata"},
-    {"nome": "D SOLDAS",              "rep": "Caio P Mancini",    "cidade": "Santo André",                 "estado": "SP", "classe": "Prata"},
-    {"nome": "CERTTO FERRAGENS",      "rep": "Fernando Marques",  "cidade": "Turvo",                       "estado": "SC", "classe": "Prata"},
-    {"nome": "MEPAR",                 "rep": "Weberson",          "cidade": "Aparecida de Goiânia",        "estado": "GO", "classe": "Prata"},
-    {"nome": "IPIRANGA METAIS",       "rep": "Weberson",          "cidade": "Goiânia",                     "estado": "GO", "classe": "Prata"},
-    {"nome": "TECNIVALE SOLDATEC",    "rep": "Cris",              "cidade": "Lajeado",                     "estado": "RS", "classe": "Prata"},
-    {"nome": "MIL MAQUINAS",          "rep": "Lucas do Vale",     "cidade": "Birigui",                     "estado": "SP", "classe": "Prata"},
-    {"nome": "VIA SOLDAS",            "rep": "Lucas do Vale",     "cidade": "São José do Rio Preto",       "estado": "SP", "classe": "Prata"}
+    {
+      "nome": "MIL MÁQUINAS",
+      "rep": "Lucas do Vale",
+      "cidade": "Birigui",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "SOLDAPAR",
+      "rep": "Lucas do Vale",
+      "cidade": "São José do Rio Preto",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "VIA SOLDAS",
+      "rep": "Lucas do Vale",
+      "cidade": "São José do Rio Preto",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "TOTAL SOLDAS",
+      "rep": "Lucas do Vale",
+      "cidade": "Presidente Prudente",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ATUAL EQUIPAMENTO",
+      "rep": "Lucas do Vale",
+      "cidade": "São José do Rio Preto",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "ROMAPAR",
+      "rep": "Lucas do Vale",
+      "cidade": "Araçatuba",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "LC FERRAGENS",
+      "rep": "Lucas do Vale",
+      "cidade": "Lins",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "BISMARK",
+      "rep": "Lucas do Vale",
+      "cidade": "Dracena",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "COAMASSA",
+      "rep": "Lucas do Vale",
+      "cidade": "Itajobi",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "WMS",
+      "rep": "Lucas do Vale",
+      "cidade": "Presidente Prudente",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "CASCAVEL SOLDAS",
+      "rep": "Hugo Carpanese",
+      "cidade": "Cascavel",
+      "estado": "PR",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "CASA DO SOLDADOR",
+      "rep": "Hugo Carpanese",
+      "cidade": "Maringá",
+      "estado": "PR",
+      "classe": "Prata"
+    },
+    {
+      "nome": "A BITTENCOURT (CASA DOS PARAFUSOS UMUARAMA)",
+      "rep": "Hugo Carpanese",
+      "cidade": "Umuarama",
+      "estado": "PR",
+      "classe": "Prata"
+    },
+    {
+      "nome": "RUZAM PARAFUSOS",
+      "rep": "Hugo Carpanese",
+      "cidade": "Pitanga",
+      "estado": "PR",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "SCHNEIDER",
+      "rep": "Hugo Carpanese",
+      "cidade": "Francisco Beltrão",
+      "estado": "PR",
+      "classe": "Prata"
+    },
+    {
+      "nome": "BRASOLDA",
+      "rep": "Hugo Carpanese",
+      "cidade": "Londrina",
+      "estado": "PR",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FORTE SOLDAS",
+      "rep": "Hugo Carpanese",
+      "cidade": "Ponta Grossa",
+      "estado": "PR",
+      "classe": "Prata"
+    },
+    {
+      "nome": "TRIANORTE",
+      "rep": "Hugo Carpanese",
+      "cidade": "Cianorte",
+      "estado": "PR",
+      "classe": "Prata"
+    },
+    {
+      "nome": "SUPRIMIG",
+      "rep": "Fernando Augusto",
+      "cidade": "Bauru",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "DIAFER",
+      "rep": "Fernando Augusto",
+      "cidade": "Itapeva",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "CS",
+      "rep": "Fernando Augusto",
+      "cidade": "Sorocaba",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "IPANEMA (L T )",
+      "rep": "Fernando Augusto",
+      "cidade": "Sorocaba",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "COMERCIAL SOLDAS  PIRACICABA",
+      "rep": "Fernando Augusto",
+      "cidade": "Piracicaba",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "VR",
+      "rep": "Fernando Augusto",
+      "cidade": "Piracicaba",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "LOCSOLDAS",
+      "rep": "Chico",
+      "cidade": "Contagem",
+      "estado": "MG",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ELETRO SOLDA",
+      "rep": "Victor VLM",
+      "cidade": "Limeira",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "TECHNOFER ARARAQUARA",
+      "rep": "Victor VLM",
+      "cidade": "Araraquara",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "LUITEX",
+      "rep": "Victor VLM",
+      "cidade": "Americana",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "OXI-RIO",
+      "rep": "Victor VLM",
+      "cidade": "Rio Claro",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ALPHABRAS POÇOS",
+      "rep": "Victor VLM",
+      "cidade": "Poços de Caldas",
+      "estado": "MG",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ED MAQ",
+      "rep": "Victor VLM",
+      "cidade": "Nova Resende",
+      "estado": "MG",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FERRAGISTA",
+      "rep": "Victor VLM",
+      "cidade": "Varginha",
+      "estado": "MG",
+      "classe": "Prata"
+    },
+    {
+      "nome": "SANTA RITA",
+      "rep": "Victor VLM",
+      "cidade": "Jardinópolis",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "OXIGENIO JUNIAÍ",
+      "rep": "Victor VLM",
+      "cidade": "Jundiaí",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "MANFER",
+      "rep": "Fernando Marques",
+      "cidade": "Xanxerê",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "DOMINIK",
+      "rep": "Fernando Marques",
+      "cidade": "São José",
+      "estado": "SC",
+      "classe": "Prata"
+    },
+    {
+      "nome": "MAQDIMA",
+      "rep": "Fernando Marques",
+      "cidade": "Chapecó",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "TAMOYO",
+      "rep": "Fernando Marques",
+      "cidade": "Itajaí",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FERPAR",
+      "rep": "Fernando Marques",
+      "cidade": "Concórdia",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FERMAQ",
+      "rep": "Fernando Marques",
+      "cidade": "São Bento do Sul e Canoinhas",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "CERTTO FERRAGENS",
+      "rep": "Fernando Marques",
+      "cidade": "Turvo",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "TECMÁQUINAS",
+      "rep": "Fernando Marques",
+      "cidade": "Criciúma",
+      "estado": "SC",
+      "classe": "Prata"
+    },
+    {
+      "nome": "CASA DAS FERRAMENTAS",
+      "rep": "Fernando Marques",
+      "cidade": "Içara",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "AP MÁQUINAS",
+      "rep": "Fernando Marques",
+      "cidade": "Palhoça",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "KAPDIMA",
+      "rep": "Fernando Marques",
+      "cidade": "Blumenau",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FEBRAZO",
+      "rep": "Fernando Marques",
+      "cidade": "Pouso Redondo",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "NAZARENO SOLDAS",
+      "rep": "Fernando Marques",
+      "cidade": "Lages",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "MATTES",
+      "rep": "Fernando Marques",
+      "cidade": "Joaçaba",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "DIFERTON",
+      "rep": "Fernando Marques",
+      "cidade": "Joaçaba",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "AVANTPAR",
+      "rep": "Fernando Marques",
+      "cidade": "São Miguel D'Oeste",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ALMAM",
+      "rep": "Fernando Marques",
+      "cidade": "Agrolândia",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "CHAPEFER",
+      "rep": "Fernando Marques",
+      "cidade": "Chapecó",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "RIOMÁQ",
+      "rep": "Fernando Marques",
+      "cidade": "Rio do Sul",
+      "estado": "SC",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "MEPAR",
+      "rep": "Weberson",
+      "cidade": "Aparecida de Goiânia",
+      "estado": "GO",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "LT FLEX",
+      "rep": "Weberson",
+      "cidade": "Goiânia",
+      "estado": "GO",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "FERMARCS",
+      "rep": "Weberson",
+      "cidade": "Goianéisa",
+      "estado": "GO",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "MAX SOLDAS",
+      "rep": "Weberson",
+      "cidade": "Cristalina",
+      "estado": "GO",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "SERVWELD",
+      "rep": "Weberson",
+      "cidade": "Brasília",
+      "estado": "GO",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "D. SOLDAS",
+      "rep": "Caio P Mancini",
+      "cidade": "Santo André",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ALUGAASOLDAS",
+      "rep": "Caio P Mancini",
+      "cidade": "Cotia",
+      "estado": "SP",
+      "classe": "Prata"
+    },
+    {
+      "nome": "DEMIL",
+      "rep": "Caio P Mancini",
+      "cidade": "Pindamonhangaba",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "WST",
+      "rep": "Caio P Mancini",
+      "cidade": "Diadema",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "METATRÔNICA",
+      "rep": "Caio P Mancini",
+      "cidade": "Santo André",
+      "estado": "SP",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "SOLENGE SOLDAS",
+      "rep": "Cris",
+      "cidade": "Porto Alegre",
+      "estado": "RS",
+      "classe": "Ouro"
+    },
+    {
+      "nome": "ELETRICA EDP",
+      "rep": "Cris",
+      "cidade": "Cachoeiro de Itapemirim",
+      "estado": "ES",
+      "classe": "Prata"
+    },
+    {
+      "nome": "TECNIVALE SOLDATEC",
+      "rep": "Cris",
+      "cidade": "Lajeado",
+      "estado": "RS",
+      "classe": "Prata"
+    }
   ]
 }

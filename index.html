@@ -477,7 +477,11 @@ main{padding:30px 32px;overflow-y:auto}
     <div class="brow">
       <button class="btn btn-p" onclick="saveRev()">💾 Salvar no Supabase</button>
       <button class="btn btn-g" onclick="clearRevForm()">✕ Limpar</button>
-      <button class="btn btn-g btn-sm" onclick="recarregarRevendas()" style="margin-left:auto">🔄 Recarregar</button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);cursor:pointer;margin-left:auto">
+        <input type="checkbox" id="toggle-inativas" onchange="renderRevTable()" style="width:14px;height:14px;accent-color:var(--acc)">
+        Mostrar inativas
+      </label>
+      <button class="btn btn-g btn-sm" onclick="recarregarRevendas()">🔄 Recarregar</button>
     </div>
   </div>
   <div class="card">
@@ -769,7 +773,7 @@ async function loadRevendas() {
     const { data, error } = await sbClient
       .from('comercial_revendas_bmax')
       .select('*')
-      .eq('ativo', true)
+      .order('ativo', { ascending: false })
       .order('classe')
       .order('nome');
     if (!error && data?.length) {
@@ -1368,23 +1372,16 @@ function editRev(id) {
   nav('revendas'); window.scrollTo({ top:0, behavior:'smooth' });
 }
 
-async function delRev(id) {
-  confirm2('Remover esta revenda do Supabase?', async () => {
-    try {
-      const { error } = await sbClient.from('comercial_revendas_bmax').update({ ativo:false }).eq('id', id);
-      if (error) throw error;
-      toast('Revenda desativada.', 'ok');
-      await loadRevendas(); renderRevTable(); updateSb();
-    } catch (e) { toast('Erro: ' + e.message, 'err'); }
-  });
-}
 
 function renderRevTable() {
   const tb = document.getElementById('rtbody');
   const em = document.getElementById('r-empty');
   if (!revendas.length) { tb.innerHTML=''; em.style.display='block'; em.textContent='Nenhuma revenda.'; return; }
   em.style.display = 'none';
-  tb.innerHTML = revendas.map(r => {
+  const mostrarInativas = document.getElementById('toggle-inativas')?.checked;
+  const lista = mostrarInativas ? revendas : revendas.filter(r => r.ativo !== false);
+  tb.innerHTML = lista.map(r => {
+    const ativo  = r.ativo !== false;
     const cls    = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : 'chip-n';
     const cep    = (r.cep||'').replace(/\D/g,'');
     const cepFmt = cep.length===8 ? cep.slice(0,5)+'-'+cep.slice(5) : cep||'—';
@@ -1392,19 +1389,36 @@ function renderRevTable() {
       ? `<span class="geo-ok" title="${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}">✓ OK</span>`
       : '<span class="geo-no">○ —</span>';
     const cidUF  = r.estado ? `${r.cidade||''}/${r.estado}` : r.cidade||'—';
-    return `<tr>
+    const rowStyle = ativo ? '' : 'opacity:.45;text-decoration:line-through';
+    const toggleBtn = ativo
+      ? `<button class="btn btn-d btn-sm" onclick="toggleRevAtivo('${r.id}',true)" title="Inativar revenda">⏸ Inativar</button>`
+      : `<button class="btn btn-g btn-sm" onclick="toggleRevAtivo('${r.id}',false)" title="Ativar revenda">▶ Ativar</button>`;
+    return `<tr style="${rowStyle}">
       <td style="font-weight:500">${r.nome}</td>
       <td>${r.rep||'—'}</td>
       <td>${cidUF}</td>
       <td>${cepFmt}</td>
       <td>${geo}</td>
       <td><span class="chip ${cls}">${r.classe}</span></td>
-      <td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
         <button class="btn btn-g btn-sm" onclick="editRev('${r.id}')">✏️</button>
-        <button class="btn btn-d btn-sm" onclick="delRev('${r.id}')">🗑</button>
+        ${toggleBtn}
       </td>
     </tr>`;
   }).join('');
+}
+
+async function toggleRevAtivo(id, atualAtivo) {
+  const novoAtivo = !atualAtivo;
+  const label = novoAtivo ? 'ativar' : 'inativar';
+  confirm2(`Deseja ${label} esta revenda?`, async () => {
+    try {
+      const { error } = await sbClient.from('comercial_revendas_bmax').update({ ativo: novoAtivo }).eq('id', id);
+      if (error) throw error;
+      toast(`Revenda ${novoAtivo ? 'ativada' : 'inativada'}.`, 'ok');
+      await loadRevendas(); renderRevTable(); updateSb();
+    } catch (e) { toast('Erro: ' + e.message, 'err'); }
+  });
 }
 
 // Lista base embutida (fallback quando Supabase vazio)
