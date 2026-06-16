@@ -233,25 +233,8 @@ main{padding:30px 32px;overflow-y:auto}
 <body>
 
 <!-- ══════ LOGIN ══════ -->
-<div id="loginPage">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="login-logo-i">BM</div>
-      <div>
-        <div class="login-logo-t"><span>BMax</span> Motor PCI</div>
-        <div class="login-logo-sub">Boxer Soldas · Industrial</div>
-      </div>
-    </div>
-    <p class="login-title">Acesso restrito a colaboradores @boxersoldas.com.br</p>
-    <div class="login-err" id="loginErr"></div>
-    <div class="lf"><label>Email</label><input type="email" id="loginEmail" placeholder="seu@boxersoldas.com.br" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div class="lf"><label>Senha</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()">Entrar</button>
-  </div>
-</div>
-
 <!-- ══════ APP ══════ -->
-<div id="appPage" style="display:none">
+<div id="appPage">
 
 <nav class="mnav">
   <div class="mnav-logo"><span>BMax</span> PCI</div>
@@ -283,8 +266,6 @@ main{padding:30px 32px;overflow-y:auto}
     <div class="sbox-l">Revendas ativas</div>
     <div class="sbox-n" id="sb-n">0</div>
     <div class="sbox-s" id="sb-s">carregando...</div>
-    <div class="sbox-u" id="sb-user">—</div>
-    <button class="btn btn-g btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="doLogout()">Sair</button>
   </div>
 </aside>
 
@@ -563,54 +544,8 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const { createClient } = supabase;
 const sbClient = createClient(SB_URL, SB_ANON);
-let SESSION = null;
-
-// ════════════════════════════════════════════════════
-// AUTH
-// ════════════════════════════════════════════════════
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPass').value;
-  const err   = document.getElementById('loginErr');
-  const btn   = document.getElementById('loginBtn');
-  err.style.display = 'none';
-  if (!email || !pass) { showLoginErr('Preencha email e senha.'); return; }
-  btn.disabled = true; btn.textContent = 'Entrando...';
-  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Entrar';
-  if (error) { showLoginErr('Email ou senha incorretos.'); return; }
-  SESSION = data.session;
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appPage').style.display   = 'block';
-  document.getElementById('sb-user').textContent = data.user?.email || '';
-  await initApp();
-}
-
-function showLoginErr(msg) {
-  const e = document.getElementById('loginErr');
-  e.textContent = msg; e.style.display = 'block';
-}
-
-async function doLogout() {
-  await sbClient.auth.signOut();
-  SESSION = null;
-  document.getElementById('appPage').style.display   = 'none';
-  document.getElementById('loginPage').style.display = 'flex';
-  document.getElementById('loginEmail').value = '';
-  document.getElementById('loginPass').value  = '';
-}
-
-// Verifica sessão existente ao carregar
-(async () => {
-  const { data } = await sbClient.auth.getSession();
-  if (data?.session) {
-    SESSION = data.session;
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('appPage').style.display   = 'block';
-    document.getElementById('sb-user').textContent = data.session.user?.email || '';
-    await initApp();
-  }
-})();
+// Inicializa direto — autenticação feita pelo Cloudflare Access
+(async () => { await initApp(); })();
 
 // ════════════════════════════════════════════════════
 // TABELA EXATA DOS 17 PCIs (planilha BMAX_CRITERIOS — 2ª Versão)
@@ -833,7 +768,7 @@ async function saveConfigToSb() {
 async function logClassificacao(pci) {
   try {
     await sbClient.from('comercial_bmax_classificacoes').insert({
-      usuario_email: SESSION?.user?.email,
+      usuario_email: 'boxer',
       pci_id:   pci.id,
       produto:  ans.produto,
       origem:   ans.origem,
