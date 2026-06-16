@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       force:
-        description: 'Reprocessar revendas que já têm CEP'
+        description: 'Reprocessar todas as revendas (inclusive as que já têm zen_id)'
         type: boolean
         default: false
 

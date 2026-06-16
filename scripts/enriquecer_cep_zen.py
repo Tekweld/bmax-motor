@@ -1,10 +1,17 @@
 """
 enriquecer_cep_zen.py
-Busca o CEP de cada revenda no ZEN via /catalog/person/person
-e atualiza a tabela comercial_revendas_bmax no Supabase.
+Busca TODAS as filiais de cada revenda no ZEN e sincroniza com o Supabase.
+
+Lógica:
+  - Itera revendas_lista.json (fonte de verdade)
+  - Para cada revenda, busca no ZEN e pega TODOS os matches válidos (não só o melhor)
+  - Cada match ZEN = uma entrada no banco (filiais incluídas)
+  - Preenche CEP, endereço, cidade, estado direto do ZEN
+  - Geocodifica por CEP (BrasilAPI → ViaCEP → Nominatim fallback)
+  - Upsert por zen_id: atualiza se já existe, insere se é filial nova
 
 Uso:
-  python scripts/enriquecer_cep_zen.py             # só revendas sem CEP
+  python scripts/enriquecer_cep_zen.py             # só revendas sem zen_id
   python scripts/enriquecer_cep_zen.py --force     # reprocessa todas
 
 Env vars (.env ou GitHub Secrets):
@@ -29,28 +36,35 @@ SB_URL    = os.environ["SUPABASE_URL"]
 SB_KEY    = os.environ["SUPABASE_SERVICE_KEY"]
 
 ZEN_BASE  = "https://api.zenerp.app.br"
+LISTA_PATH = Path(__file__).parent.parent / "revendas_lista.json"
 
 
-# ── helpers ────────────────────────────────────────────────────
+# ── helpers gerais ──────────────────────────────────────────────
 def norm(s: str) -> str:
-    """Normaliza string: minúsculo, sem acento, sem pontuação."""
     s = s.lower().strip()
     s = unicodedata.normalize("NFD", s)
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    return s
+    return "".join(c for c in s if unicodedata.category(c) != "Mn")
 
-
-def fmt_cep(cep: str) -> str:
+def fmt_cep(cep) -> str:
     d = "".join(c for c in (cep or "") if c.isdigit())
     return d if len(d) == 8 else ""
 
+def fmt_end(item: dict) -> str:
+    partes = [
+        item.get("address") or item.get("street") or "",
+        item.get("number") or "",
+        item.get("neighborhood") or item.get("district") or "",
+    ]
+    return ", ".join(p for p in partes if p).strip(", ")
 
+
+# ── Supabase ────────────────────────────────────────────────────
 def sb(path, method="GET", body=None, params=None):
     hdrs = {
         "apikey": SB_KEY,
         "Authorization": f"Bearer {SB_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "return=minimal" if method in ("PATCH",) else "return=representation",
+        "Prefer": "return=representation" if method == "GET" else "return=minimal",
     }
     r = requests.request(method, SB_URL.rstrip("/") + "/rest/v1" + path,
                          headers=hdrs, json=body, params=params, timeout=20)
@@ -59,7 +73,8 @@ def sb(path, method="GET", body=None, params=None):
     return r.json() if method == "GET" else r
 
 
-def zen_headers() -> dict:
+# ── ZEN ─────────────────────────────────────────────────────────
+def zen_auth() -> dict:
     r = requests.post(
         f"{ZEN_BASE}/system/security/tokenOpRequest",
         headers={"tenant": "boxer"},
@@ -71,9 +86,8 @@ def zen_headers() -> dict:
     return {"Authorization": f"Bearer {token}", "tenant": "boxer"}
 
 
-def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
-    """Busca em /catalog/person/person com paginação completa."""
-    page, todos = 1, []
+def zen_buscar(hdrs: dict, termo: str) -> list:
+    todos, page = [], 1
     while True:
         try:
             r = requests.get(f"{ZEN_BASE}/catalog/person/person",
@@ -81,10 +95,10 @@ def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
                              params={"search": termo, "limit": 100, "page": page},
                              timeout=30)
         except requests.exceptions.Timeout:
-            print(f"   !! Timeout na busca ZEN (termo='{termo}', page={page}) — pulando")
+            print(f"      !! Timeout (termo='{termo}' page={page})")
             break
         except Exception as e:
-            print(f"   !! Erro ZEN: {e}")
+            print(f"      !! Erro ZEN: {e}")
             break
         if not r.ok:
             break
@@ -100,149 +114,254 @@ def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
     return todos
 
 
-def score_match(item: dict, nome_rev: str, cidade_rev: str) -> int:
-    """
-    Pontua o quanto um cadastro ZEN bate com a revenda.
-    Maior = melhor.
-    """
-    fn  = norm(item.get("fantasyName") or item.get("name") or "")
-    cn  = norm(item.get("city") or "")
-    nr  = norm(nome_rev)
-    cr  = norm(cidade_rev)
-
-    score = 0
-
-    # Nome: match exato
+def score(item: dict, nome_ref: str, cidade_ref: str) -> int:
+    fn = norm(item.get("fantasyName") or item.get("name") or "")
+    cn = norm(item.get("city") or "")
+    nr = norm(nome_ref)
+    cr = norm(cidade_ref)
+    s  = 0
     if fn == nr:
-        score += 100
-    # Nome: contém
+        s += 100
     elif nr in fn or fn in nr:
-        score += 60
-    # Palavras em comum
+        s += 60
     else:
-        palavras_rev = set(nr.split())
-        palavras_zen = set(fn.split())
-        comuns = palavras_rev & palavras_zen
-        # Ignora palavras muito curtas ou genéricas
-        comuns = {p for p in comuns if len(p) > 2 and p not in
-                  {"ltda","eireli","me","sa","epp","com","de","da","do","dos","das","e"}}
-        score += len(comuns) * 20
-
-    # Cidade: match parcial (primeiros 5 chars)
+        stop = {"ltda","eireli","me","sa","epp","com","de","da","do","dos","das","e"}
+        comuns = {p for p in set(nr.split()) & set(fn.split())
+                  if len(p) > 2 and p not in stop}
+        s += len(comuns) * 20
     if cr and cn:
         if cn[:5] == cr[:5]:
-            score += 40
+            s += 40
         elif cr[:4] in cn or cn[:4] in cr:
-            score += 20
+            s += 20
+    return s
 
-    return score
+
+def todos_matches(candidatos: list, nome_ref: str, cidade_ref: str,
+                  min_score: int = 60) -> list:
+    """Retorna TODOS os candidatos com score suficiente, ordenados por score desc."""
+    scored = [(score(c, nome_ref, cidade_ref), c) for c in candidatos]
+    validos = [(s, c) for s, c in scored if s >= min_score]
+    validos.sort(key=lambda x: x[0], reverse=True)
+    return [c for _, c in validos]
 
 
-def melhor_match(items: list[dict], nome_rev: str, cidade_rev: str,
-                 min_score: int = 40) -> dict | None:
-    melhor, melhor_score = None, 0
-    for item in items:
-        s = score_match(item, nome_rev, cidade_rev)
-        if s > melhor_score:
-            melhor_score, melhor = s, item
-    if melhor_score >= min_score:
-        return melhor
+# ── geocoding ───────────────────────────────────────────────────
+def geocode_cep(cep: str) -> dict | None:
+    if not cep:
+        return None
+    # BrasilAPI
+    try:
+        r = requests.get(f"https://brasilapi.com.br/api/cep/v2/{cep}", timeout=8)
+        if r.ok:
+            d = r.json()
+            coords = (d.get("location") or {}).get("coordinates") or {}
+            lat, lng = coords.get("latitude"), coords.get("longitude")
+            city, state = d.get("city"), d.get("state")
+            if lat and lng:
+                return {"lat": float(lat), "lng": float(lng), "cidade": city, "estado": state}
+            if city:
+                geo = nominatim(f"{city} {state} Brasil")
+                if geo:
+                    return {**geo, "cidade": city, "estado": state}
+    except Exception:
+        pass
+    # ViaCEP
+    try:
+        r = requests.get(f"https://viacep.com.br/ws/{cep}/json/", timeout=8)
+        if r.ok:
+            d = r.json()
+            if not d.get("erro"):
+                city, state = d.get("localidade"), d.get("uf")
+                geo = nominatim(f"{d.get('logradouro','')} {city} {state} Brasil")
+                if geo:
+                    return {**geo, "cidade": city, "estado": state}
+                geo = nominatim(f"{city} {state} Brasil")
+                if geo:
+                    return {**geo, "cidade": city, "estado": state}
+    except Exception:
+        pass
     return None
 
 
-# ── main ───────────────────────────────────────────────────────
+def nominatim(query: str) -> dict | None:
+    time.sleep(1.1)
+    try:
+        r = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": query, "format": "json", "limit": 1, "countrycodes": "br"},
+            headers={"User-Agent": "BMaxMotorPCI/1.0 (boxersoldas.com.br)"},
+            timeout=10,
+        )
+        if r.ok and r.json():
+            it = r.json()[0]
+            return {"lat": float(it["lat"]), "lng": float(it["lon"])}
+    except Exception:
+        pass
+    return None
+
+
+# ── Supabase upsert por zen_id ───────────────────────────────────
+def upsert_filial(registro: dict) -> str:
+    """
+    Retorna 'inserido', 'atualizado' ou 'sem_alteracao'.
+    Chave: zen_id. Se zen_id null, usa nome+cidade.
+    """
+    zen_id = registro.get("zen_id")
+    if zen_id:
+        existente = sb(f"/comercial_revendas_bmax?zen_id=eq.{zen_id}")
+    else:
+        nome_enc  = requests.utils.quote(registro["nome"])
+        cid_enc   = requests.utils.quote(registro.get("cidade") or "")
+        existente = sb(f"/comercial_revendas_bmax?nome=eq.{nome_enc}&cidade=eq.{cid_enc}")
+
+    if existente:
+        rid = existente[0]["id"]
+        # Atualiza apenas campos que mudaram (não sobrescreve lat/lng se já tinha coords precisas)
+        atual = existente[0]
+        patch = {}
+        for campo in ("cep", "endereco", "cidade", "estado", "zen_id", "classe", "rep", "ativo"):
+            novo = registro.get(campo)
+            if novo is not None and atual.get(campo) != novo:
+                patch[campo] = novo
+        # lat/lng: só atualiza se o novo é mais preciso (veio de CEP) ou não tinha nenhum
+        if registro.get("lat") and (not atual.get("lat") or registro.get("_cep_geocoded")):
+            patch["lat"] = registro["lat"]
+            patch["lng"] = registro["lng"]
+        if patch:
+            sb(f"/comercial_revendas_bmax?id=eq.{rid}", "PATCH", patch)
+            return "atualizado"
+        return "sem_alteracao"
+    else:
+        reg_insert = {k: v for k, v in registro.items() if not k.startswith("_")}
+        sb("/comercial_revendas_bmax", "POST", reg_insert)
+        return "inserido"
+
+
+# ── main ────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true",
-                        help="Reprocessa mesmo revendas que já têm CEP")
+                        help="Reprocessa revendas que já têm zen_id")
     args = parser.parse_args()
 
-    # 1. Carregar revendas do Supabase
-    filtro = "/comercial_revendas_bmax?select=id,nome,cidade,estado,cep,ativo"
+    import json
+    lista = json.loads(LISTA_PATH.read_text(encoding="utf-8"))["revendas"]
+    print(f"Revendas na lista: {len(lista)}\n")
+
+    # Carrega zen_ids já presentes para pular se não --force
     if not args.force:
-        filtro += "&cep=is.null&ativo=eq.true"
+        ja_tem = {r["zen_id"] for r in sb("/comercial_revendas_bmax?select=zen_id&ativo=eq.true")
+                  if r.get("zen_id")}
+        print(f"Registros com zen_id no banco: {len(ja_tem)}\n")
     else:
-        filtro += "&ativo=eq.true"
+        ja_tem = set()
 
-    revendas = sb(filtro)
-    print(f"Revendas a processar: {len(revendas)}\n")
-    if not revendas:
-        print("Nada a fazer.")
-        return
-
-    # 2. Autenticar ZEN
     print("Autenticando no ZEN...")
-    hdrs_zen = zen_headers()
+    hdrs_zen = zen_auth()
     print("Token obtido.\n")
 
-    achou = 0
-    nao_achou = []
+    total_inseridos = total_atualizados = total_sem_cep = total_nao_encontrados = 0
 
-    for i, rev in enumerate(revendas, 1):
+    for i, rev in enumerate(lista, 1):
         nome   = rev["nome"]
         cidade = rev.get("cidade") or ""
         estado = rev.get("estado") or ""
-        print(f"[{i:02d}/{len(revendas):02d}] {nome} — {cidade}/{estado}")
+        classe = rev.get("classe", "Prata")
+        rep    = rev.get("rep", "")
+        print(f"[{i:02d}/{len(lista):02d}] {nome} — {cidade}/{estado}")
 
-        # Estratégias de busca em ordem crescente de abrangência
+        # Termos de busca: palavras significativas do nome
+        stop = {"LTDA","EIRELI","S.A","SA","ME","EPP","COM","DE","DA","DO","DOS","DAS"}
+        palavras = [p for p in nome.split() if len(p) > 2 and p.upper() not in stop]
         termos = []
-        palavras = [p for p in nome.split()
-                    if len(p) > 2 and p.upper() not in
-                    ("LTDA","EIRELI","S.A","SA","ME","EPP","COM","DE","DA","DO","DOS","DAS")]
         if palavras:
-            termos.append(palavras[0])            # primeira palavra significativa
+            termos.append(palavras[0])
         if len(palavras) > 1:
-            termos.append(" ".join(palavras[:2])) # duas primeiras palavras
-        if cidade:
-            termos.append(cidade.split()[0])      # cidade como fallback
+            termos.append(" ".join(palavras[:2]))
 
+        # Busca ZEN
         candidatos = []
+        seen_ids = set()
         for termo in termos:
-            try:
-                items = zen_buscar_todos(hdrs_zen, termo)
-                candidatos.extend(items)
-            except Exception as e:
-                print(f"   !! Busca falhou ({termo}): {e}")
+            for item in zen_buscar(hdrs_zen, termo):
+                rid = item.get("id")
+                if rid not in seen_ids:
+                    seen_ids.add(rid)
+                    candidatos.append(item)
             time.sleep(0.2)
 
-        # Remove duplicatas por id
-        seen = set()
-        unicos = []
-        for item in candidatos:
-            rid = item.get("id")
-            if rid not in seen:
-                seen.add(rid)
-                unicos.append(item)
+        matches = todos_matches(candidatos, nome, cidade)
 
-        match = melhor_match(unicos, nome, cidade)
+        if not matches:
+            print(f"   ✗ Não encontrado no ZEN ({len(candidatos)} candidatos)")
+            total_nao_encontrados += 1
+            time.sleep(0.3)
+            continue
 
-        if match:
-            cep_raw = fmt_cep(match.get("zipcode") or "")
-            zen_nome = (match.get("fantasyName") or match.get("name") or "")[:50]
-            zen_cidade = match.get("city") or ""
-            score = score_match(match, nome, cidade)
+        print(f"   {len(matches)} match(es) encontrado(s):")
 
+        for m in matches:
+            zen_id  = str(m.get("id") or "")
+            zen_nome = (m.get("fantasyName") or m.get("name") or "")[:60]
+            zen_cid  = m.get("city") or cidade
+            zen_est  = m.get("state") or estado
+            cep_raw  = fmt_cep(m.get("zipcode"))
+            endereco = fmt_end(m)
+            sc       = score(m, nome, cidade)
+
+            # Pula se já tem zen_id no banco e não é --force
+            if zen_id and zen_id in ja_tem and not args.force:
+                print(f"      = zen_id {zen_id} já no banco — pulando")
+                continue
+
+            # Geocoding pelo CEP do ZEN
+            geo = None
+            cep_geocoded = False
             if cep_raw:
-                sb(f"/comercial_revendas_bmax?id=eq.{rev['id']}", "PATCH",
-                   {"cep": cep_raw, "zen_id": str(match.get("id") or "")})
-                print(f"   ✓ CEP {cep_raw[:5]}-{cep_raw[5:]} | ZEN: {zen_nome} ({zen_cidade}) score={score}")
-                achou += 1
-            else:
-                print(f"   ~ Match sem CEP: {zen_nome} ({zen_cidade}) score={score}")
-                nao_achou.append(f"{nome} — match sem CEP no ZEN")
-        else:
-            print(f"   ✗ Não encontrado ({len(unicos)} candidatos)")
-            nao_achou.append(nome)
+                geo = geocode_cep(cep_raw)
+                if geo:
+                    cep_geocoded = True
 
-        time.sleep(0.3)
+            # Fallback: Nominatim por cidade/estado
+            if not geo and zen_cid:
+                geo = nominatim(f"{zen_cid} {zen_est} Brasil")
+
+            registro = {
+                "nome":          nome,
+                "rep":           rep,
+                "classe":        classe,
+                "cidade":        geo.get("cidade") or zen_cid if geo else zen_cid,
+                "estado":        geo.get("estado") or zen_est if geo else zen_est,
+                "cep":           cep_raw or None,
+                "endereco":      endereco or None,
+                "zen_id":        zen_id or None,
+                "lat":           geo["lat"] if geo else None,
+                "lng":           geo["lng"] if geo else None,
+                "ativo":         True,
+                "_cep_geocoded": cep_geocoded,
+            }
+
+            resultado = upsert_filial(registro)
+
+            cep_str = f"{cep_raw[:5]}-{cep_raw[5:]}" if cep_raw else "sem CEP"
+            geo_str = f"lat={geo['lat']:.4f}" if geo else "sem coords"
+            print(f"      [{resultado}] {zen_nome} | {zen_cid}/{zen_est} | {cep_str} | {geo_str} | score={sc}")
+
+            if resultado == "inserido":
+                total_inseridos += 1
+            elif resultado == "atualizado":
+                total_atualizados += 1
+            if not cep_raw:
+                total_sem_cep += 1
+
+            time.sleep(0.3)
 
     print(f"\n=== Resultado ===")
-    print(f"  CEP encontrado: {achou}")
-    print(f"  Sem match:      {len(nao_achou)}")
-    if nao_achou:
-        print("  Lista sem match:")
-        for n in nao_achou:
-            print(f"    • {n}")
+    print(f"  Inseridos:          {total_inseridos}")
+    print(f"  Atualizados:        {total_atualizados}")
+    print(f"  Sem CEP no ZEN:     {total_sem_cep}")
+    print(f"  Não encontrados:    {total_nao_encontrados}")
 
 
 if __name__ == "__main__":
