@@ -75,10 +75,17 @@ def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
     """Busca em /catalog/person/person com paginação completa."""
     page, todos = 1, []
     while True:
-        r = requests.get(f"{ZEN_BASE}/catalog/person/person",
-                         headers=hdrs,
-                         params={"search": termo, "limit": 100, "page": page, "tenant": "boxer"},
-                         timeout=15)
+        try:
+            r = requests.get(f"{ZEN_BASE}/catalog/person/person",
+                             headers=hdrs,
+                             params={"search": termo, "limit": 100, "page": page},
+                             timeout=30)
+        except requests.exceptions.Timeout:
+            print(f"   !! Timeout na busca ZEN (termo='{termo}', page={page}) — pulando")
+            break
+        except Exception as e:
+            print(f"   !! Erro ZEN: {e}")
+            break
         if not r.ok:
             break
         data = r.json()
@@ -86,7 +93,6 @@ def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
         if not items:
             break
         todos.extend(items)
-        # Para se vier menos que o limite (última página)
         if len(items) < 100:
             break
         page += 1
@@ -192,8 +198,11 @@ def main():
 
         candidatos = []
         for termo in termos:
-            items = zen_buscar_todos(hdrs_zen, termo)
-            candidatos.extend(items)
+            try:
+                items = zen_buscar_todos(hdrs_zen, termo)
+                candidatos.extend(items)
+            except Exception as e:
+                print(f"   !! Busca falhou ({termo}): {e}")
             time.sleep(0.2)
 
         # Remove duplicatas por id
