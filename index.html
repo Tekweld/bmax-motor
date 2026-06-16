@@ -708,7 +708,7 @@ async function loadRevendas() {
     const { data, error } = await sbClient
       .from('comercial_revendas_bmax')
       .select('*')
-      .order('ativo', { ascending: false })
+      .eq('ativo', true)
       .order('classe')
       .order('nome');
     if (!error && data?.length) {
@@ -951,22 +951,21 @@ async function geocodeLead() {
 
   const rows = comCoords.map(r => {
     const km = hav(leadCoords.lat, leadCoords.lng, r.lat, r.lng);
-    distMap[r.id] = { km, nome:r.nome, classe:r.classe, rep:r.rep };
+    distMap[r.id] = { km, nome:r.nome, classe:r.classe, rep:r.rep, endereco:r.endereco||'', cidade:r.cidade||'', estado:r.estado||'', cep:r.cep||'' };
     return { r, km };
   }).sort((a,b) => a.km - b.km);
 
   const inside = rows.filter(x => x.km <= CFG.raio);
   let html = `<div style="overflow-x:auto"><table class="dtable">
-    <thead><tr><th>Classe</th><th>Revenda</th><th>Rep</th><th>Distância</th><th>Status</th></tr></thead><tbody>`;
-  rows.slice(0,10).forEach(({r,km}) => {
-    const ok  = km <= CFG.raio;
+    <thead><tr><th>Classe</th><th>Revenda</th><th>Cidade</th><th>Rep</th><th>Distância</th></tr></thead><tbody>`;
+  inside.forEach(({r,km}) => {
     const cls = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : 'chip-n';
-    html += `<tr class="${ok?'near':''}">
+    html += `<tr class="near">
       <td><span class="chip ${cls}">${r.classe}</span></td>
       <td style="font-weight:500">${r.nome}</td>
+      <td style="color:var(--mut)">${r.cidade||'—'}${r.estado?'/'+r.estado:''}</td>
       <td style="color:var(--mut)">${r.rep||'—'}</td>
       <td style="font-weight:600">${km.toFixed(1)} km</td>
-      <td><span class="dchip ${ok?'din':'dout'}">${ok?'✓ Dentro':'✗ Fora'}</span></td>
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -1156,7 +1155,10 @@ async function classify() {
           <span style="font-weight:600">${principal.nome}</span>
           <span style="color:var(--mut);font-size:12px">${principal.rep||''} · ${principal.km.toFixed(1)} km</span>
         </div>
-        ${demais.length ? `<div style="margin-top:8px;font-size:12px;color:var(--mut)">Também no raio: ${demais.map(r=>`${r.nome} (${r.km.toFixed(1)} km · ${r.classe})`).join(' · ')}</div>` : ''}
+        <div style="margin-top:6px;font-size:12px;color:var(--mut)">
+          📍 ${[principal.endereco, [principal.cidade, principal.estado].filter(Boolean).join('/'), principal.cep ? principal.cep.replace(/(\d{5})(\d{3})/,'$1-$2') : ''].filter(Boolean).join(', ') || 'Endereço não cadastrado'}
+        </div>
+        ${demais.length ? `<div style="margin-top:6px;font-size:12px;color:var(--mut)">Também no raio: ${demais.map(r=>`${r.nome} (${r.km.toFixed(1)} km · ${r.classe})`).join(' · ')}</div>` : ''}
       </div>`;
   } else if (hasCEP && Object.keys(distMap).length) {
     revHtml = `<div class="al al-w">⚠️ Nenhuma revenda BMax dentro de ${CFG.raio} km.</div>`;
