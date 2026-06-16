@@ -1,0 +1,26 @@
+name: Sincronizar Excel BMax (diário)
+
+on:
+  schedule:
+    - cron: '0 11 * * *'   # 08:00 BRT (UTC-3) todos os dias
+  workflow_dispatch:        # permite rodar manualmente quando necessário
+
+jobs:
+  sincronizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install requests openpyxl msal python-dotenv
+
+      - name: Sincronizar Excel → Supabase
+        run: python scripts/sincronizar_excel_bmax.py
+        env:
+          MSAL_TOKEN_CACHE:     ${{ secrets.MSAL_TOKEN_CACHE }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
