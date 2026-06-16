@@ -59,21 +59,25 @@ def sb(path, method="GET", body=None, params=None):
     return r.json() if method == "GET" else r
 
 
-def zen_token() -> str:
-    r = requests.post(f"{ZEN_BASE}/auth/signin",
-                      json={"email": ZEN_EMAIL, "password": ZEN_SENHA}, timeout=15)
+def zen_headers() -> dict:
+    r = requests.post(
+        f"{ZEN_BASE}/system/security/tokenOpRequest",
+        headers={"tenant": "boxer"},
+        json={"email": ZEN_EMAIL, "password": ZEN_SENHA},
+        timeout=15,
+    )
     r.raise_for_status()
-    return r.json()["token"]
+    token = r.text.strip().strip('"')
+    return {"Authorization": f"Bearer {token}", "tenant": "boxer"}
 
 
-def zen_buscar_todos(token: str, termo: str) -> list[dict]:
+def zen_buscar_todos(hdrs: dict, termo: str) -> list[dict]:
     """Busca em /catalog/person/person com paginação completa."""
-    hdrs = {"Authorization": f"Bearer {token}"}
     page, todos = 1, []
     while True:
         r = requests.get(f"{ZEN_BASE}/catalog/person/person",
                          headers=hdrs,
-                         params={"search": termo, "limit": 100, "page": page},
+                         params={"search": termo, "limit": 100, "page": page, "tenant": "boxer"},
                          timeout=15)
         if not r.ok:
             break
@@ -162,7 +166,7 @@ def main():
 
     # 2. Autenticar ZEN
     print("Autenticando no ZEN...")
-    token = zen_token()
+    hdrs_zen = zen_headers()
     print("Token obtido.\n")
 
     achou = 0
@@ -188,7 +192,7 @@ def main():
 
         candidatos = []
         for termo in termos:
-            items = zen_buscar_todos(token, termo)
+            items = zen_buscar_todos(hdrs_zen, termo)
             candidatos.extend(items)
             time.sleep(0.2)
 

@@ -53,12 +53,13 @@ def sb(path: str, method="GET", body=None):
 # ── autenticação ZEN ───────────────────────────────────────
 def zen_token() -> str:
     r = requests.post(
-        f"{ZEN_BASE}/auth/signin",
+        f"{ZEN_BASE}/system/security/tokenOpRequest",
+        headers={"tenant": "boxer"},
         json={"email": ZEN_EMAIL, "password": ZEN_SENHA},
-        timeout=15
+        timeout=15,
     )
     r.raise_for_status()
-    return r.json()["token"]
+    return r.text.strip().strip('"')
 
 
 # ── busca revenda no ZEN por nome + cidade ─────────────────
