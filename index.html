@@ -682,9 +682,29 @@ const PCIS = [
 // ESTADO
 // ════════════════════════════════════════════════════
 let CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+
+// ── Regras de atendimento Boxer por DDD ─────────────────────────
+const _VND_BOXER = {
+  11: { nome:'Carlão', tipo:'VI',  cor:'#718096' }, // Grande SP / Região Metropolitana
+  12: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Vale do Paraíba
+  13: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Baixada Santista
+  14: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Bauru / Marília
+  15: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Sorocaba / Itapeva
+  16: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Ribeirão Preto / Araraquara
+  17: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // S.J. Rio Preto / Araçatuba
+  18: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Presidente Prudente
+  19: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Campinas / Piracicaba / Limeira
+  35: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Sul de Minas
+};
+const _VND_DEFAULT = { nome:'Carlão', tipo:'VI', cor:'#718096' }; // outros estados
+
+function getVendedorBoxer(ddd) {
+  return (ddd && _VND_BOXER[+ddd]) || _VND_DEFAULT;
+}
+
 let revendas  = [];
 let leadCoords = null;
-let leadGeo    = null;   // {state, city} para dimensão geográfica
+let leadGeo    = null;   // {state, city, ddd} para dimensão geográfica
 let distMap    = {};
 let ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
 
@@ -882,7 +902,8 @@ async function geocodeViaViaCEP(cep) {
     if (!r.ok) return null;
     const d = await r.json();
     if (d.erro) return null;
-    return { city:d.localidade, state:d.uf, street:d.logradouro||'', neighborhood:d.bairro||'',
+    return { city:d.localidade, state:d.uf, ddd:d.ddd||null,
+             street:d.logradouro||'', neighborhood:d.bairro||'',
              addr:`${d.logradouro||''} ${d.bairro||''}`.trim()+', '+d.localidade+'/'+d.uf };
   } catch { return null; }
 }
@@ -932,7 +953,7 @@ async function geocodeLead() {
   if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; a.value=''; return; }
 
   a.value = geo.addr || `${geo.city||''}/${geo.state||''}`;
-  leadGeo = { city: geo.city, state: geo.state };
+  leadGeo = { city: geo.city, state: geo.state, ddd: geo.ddd ? +geo.ddd : null };
 
   if (!geo.lat) {
     s.innerHTML = '<span class="pill pill-warn">⚠️ Endereço ok · sem coordenadas — distância indisponível</span>';
@@ -1166,11 +1187,24 @@ async function classify() {
     revHtml = `<div class="al al-i">ℹ️ CEP não geocodificado — distância verificada manualmente.</div>`;
   }
 
-  // Dimensão geográfica
+  // Vendedor Boxer responsável
+  const vnd = leadGeo ? getVendedorBoxer(leadGeo.ddd) : null;
+  const vndTag = vnd
+    ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+        <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:15px;color:${vnd.cor}">${vnd.nome}</span>
+          <span style="font-size:12px;color:var(--mut)">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
+          ${leadGeo.ddd ? `<span style="font-size:11px;color:var(--mut);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px">DDD ${leadGeo.ddd}</span>` : ''}
+        </div>
+      </div>`
+    : '';
+
+  // Dimensão geográfica (tag compacta para o hero)
   const geoTag = leadGeo
-    ? (leadGeo.state === 'SP' && (leadGeo.city||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') !== 'sao paulo'
+    ? (leadGeo.state === 'SP' && leadGeo.ddd !== 11
         ? '<span class="chip chip-o" style="font-size:10px;letter-spacing:.3px">Interior SP → VT1/VT2</span>'
-        : '<span class="chip chip-p" style="font-size:10px">SP Capital / outros → V1</span>')
+        : '<span class="chip chip-p" style="font-size:10px">SP Capital / outros → VI</span>')
     : '';
 
   document.getElementById('result').style.display = 'block';
@@ -1187,6 +1221,7 @@ async function classify() {
         <div class="badge"><span class="dot ${pci.dist?'db':'dr'}"></span>Rev. ${pci.dist?'no raio':'fora do raio'}</div>
       </div>
       ${geoTag ? `<div style="margin-top:4px">${geoTag}</div>` : ''}
+      ${vndTag}
     </div>
 
     <div class="sgrid">
