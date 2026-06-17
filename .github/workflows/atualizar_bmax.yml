@@ -4,14 +4,14 @@ on:
   schedule:
     - cron: '0 11 * * *'   # 08:00 BRT (UTC-3) todos os dias
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     inputs:
       force_enrich:
         description: 'Reprocessar todas as revendas no ZEN (inclusive as que já têm zen_id)'
         type: boolean
         default: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   sincronizar_excel:
@@ -66,3 +66,14 @@ jobs:
           ZEN_SENHA:            ${{ secrets.ZEN_SENHA }}
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
+
+  publicar_portal:
+    name: 4 — Publicar portal (Cloudflare Pages)
+    runs-on: ubuntu-latest
+    needs: sincronizar_excel
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Publicar index.html no Cloudflare Pages
+        run: npx wrangler@latest pages deploy . --project-name=bmax-motor --branch=main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
