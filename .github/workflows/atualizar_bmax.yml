@@ -67,8 +67,25 @@ jobs:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
 
+  importar_cobertura:
+    name: 4 — Importar cobertura de representantes
+    runs-on: ubuntu-latest
+    needs: sincronizar_excel
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Instalar dependências
+        run: pip install requests
+      - name: Importar cobertura BMax
+        run: python scripts/importar_cobertura_bmax.py
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
+
   publicar_portal:
-    name: 4 — Publicar portal (Cloudflare Pages)
+    name: 5 — Publicar portal (Cloudflare Pages)
     runs-on: ubuntu-latest
     needs: sincronizar_excel
     steps:
