@@ -19,7 +19,7 @@ Env vars (.env ou GitHub Secrets):
   SUPABASE_URL, SUPABASE_SERVICE_KEY
 """
 
-import os, sys, time, argparse, unicodedata, requests
+import os, sys, time, argparse, unicodedata, hashlib, requests
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -238,6 +238,37 @@ def upsert_filial(registro: dict) -> str:
         return "inserido"
 
 
+# ── hash da lista ────────────────────────────────────────────────
+CONFIG_TABLE = "/comercial_bmax_config"
+HASH_CHAVE   = "hash_revendas_lista"
+
+def hash_lista() -> str:
+    return hashlib.sha256(LISTA_PATH.read_bytes()).hexdigest()
+
+def hash_salvo() -> str | None:
+    try:
+        rows = sb(f"{CONFIG_TABLE}?chave=eq.{HASH_CHAVE}&select=valor")
+        return rows[0]["valor"] if rows else None
+    except Exception:
+        return None
+
+def salvar_hash(h: str):
+    try:
+        hdrs_extra = {"Prefer": "resolution=merge-duplicates,return=minimal"}
+        requests.post(
+            SB_URL.rstrip("/") + "/rest/v1" + CONFIG_TABLE,
+            headers={
+                "apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}",
+                "Content-Type": "application/json", **hdrs_extra,
+            },
+            json={"chave": HASH_CHAVE, "valor": h},
+            params={"on_conflict": "chave"},
+            timeout=10,
+        )
+    except Exception as e:
+        print(f"  Aviso: não foi possível salvar hash ({e})")
+
+
 # ── main ────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
@@ -246,6 +277,14 @@ def main():
     args = parser.parse_args()
 
     import json
+
+    # Verifica se a lista mudou desde o último enriquecimento
+    h_atual = hash_lista()
+    h_banco  = hash_salvo()
+    if not args.force and h_atual == h_banco:
+        print("Lista revendas_lista.json não mudou desde o último enriquecimento. Nada a fazer.")
+        sys.exit(0)
+
     lista = json.loads(LISTA_PATH.read_text(encoding="utf-8"))["revendas"]
     print(f"Revendas na lista: {len(lista)}\n")
 
@@ -362,6 +401,9 @@ def main():
     print(f"  Atualizados:        {total_atualizados}")
     print(f"  Sem CEP no ZEN:     {total_sem_cep}")
     print(f"  Não encontrados:    {total_nao_encontrados}")
+
+    salvar_hash(h_atual)
+    print(f"\nHash da lista salvo: {h_atual[:12]}...")
 
 
 if __name__ == "__main__":

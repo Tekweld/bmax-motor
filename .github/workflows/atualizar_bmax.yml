@@ -52,6 +52,7 @@ jobs:
     name: 3 — Enriquecer filiais via ZEN
     runs-on: ubuntu-latest
     needs: corrigir_banco
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-python@v5.6.0

@@ -702,16 +702,19 @@ function getVendedorBoxer(ddd) {
   return (ddd && _VND_BOXER[+ddd]) || _VND_DEFAULT;
 }
 
-async function getRepBmax(ibge) {
-  if (!ibge) return null;
+async function getRepBmax(ibge, cidade, estado) {
+  const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
   try {
-    const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax`, {
-      headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` }
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return (d && d.length) ? (d[0].rep_bmax || null) : null;
-  } catch { return null; }
+    if (ibge) {
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return d[0].rep_bmax || null; }
+    }
+    if (cidade && estado) {
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?cidade=ilike.${encodeURIComponent(cidade)}&estado=eq.${estado}&select=rep_bmax&limit=1`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return d[0].rep_bmax || null; }
+    }
+  } catch {}
+  return null;
 }
 
 let revendas  = [];
@@ -909,15 +912,19 @@ async function geocodeViaBrasilAPI(cep) {
 }
 
 async function geocodeViaViaCEP(cep) {
-  try {
-    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-    if (!r.ok) return null;
-    const d = await r.json();
-    if (d.erro) return null;
-    return { city:d.localidade, state:d.uf, ddd:d.ddd||null, ibge:d.ibge||null,
-             street:d.logradouro||'', neighborhood:d.bairro||'',
-             addr:`${d.logradouro||''} ${d.bairro||''}`.trim()+', '+d.localidade+'/'+d.uf };
-  } catch { return null; }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 400));
+      const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d.erro) return null;
+      return { city:d.localidade, state:d.uf, ddd:d.ddd||null, ibge:d.ibge||null,
+               street:d.logradouro||'', neighborhood:d.bairro||'',
+               addr:`${d.logradouro||''} ${d.bairro||''}`.trim()+', '+d.localidade+'/'+d.uf };
+    } catch {}
+  }
+  return null;
 }
 
 async function nominatimQuery(q) {
@@ -966,7 +973,7 @@ async function geocodeLead() {
   if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; a.value=''; return; }
 
   a.value = geo.addr || `${geo.city||''}/${geo.state||''}`;
-  const repBmax = await getRepBmax(geo.ibge);
+  const repBmax = await getRepBmax(geo.ibge, geo.city, geo.state);
   leadGeo = { city: geo.city, state: geo.state, ddd: geo.ddd ? +geo.ddd : null, ibge: geo.ibge || null, repBmax };
 
   if (!geo.lat) {
@@ -1202,16 +1209,21 @@ async function classify() {
   }
 
   // Vendedor Boxer responsável
-  const vnd = leadGeo ? getVendedorBoxer(leadGeo.ddd) : null;
-  const vndTag = vnd
-    ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-        <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-weight:700;font-size:15px;color:${vnd.cor}">${vnd.nome}</span>
-          <span style="font-size:12px;color:var(--mut)">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
-          ${leadGeo.ddd ? `<span style="font-size:11px;color:var(--mut);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px">DDD ${leadGeo.ddd}</span>` : ''}
-        </div>
-      </div>`
+  const vnd = (leadGeo && leadGeo.ddd) ? getVendedorBoxer(leadGeo.ddd) : null;
+  const vndTag = leadGeo
+    ? (vnd
+        ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+            <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:15px;color:${vnd.cor}">${vnd.nome}</span>
+              <span style="font-size:12px;color:var(--mut)">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
+              <span style="font-size:11px;color:var(--mut);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px">DDD ${leadGeo.ddd}</span>
+            </div>
+          </div>`
+        : `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+            <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
+            <div style="font-size:13px;color:var(--mut);opacity:.7">DDD não identificado — verificar manualmente</div>
+          </div>`)
     : '';
 
   // Representante BMax da cidade
@@ -1233,9 +1245,13 @@ async function classify() {
 
   // Dimensão geográfica (tag compacta para o hero)
   const geoTag = leadGeo
-    ? (leadGeo.state === 'SP' && leadGeo.ddd !== 11
-        ? '<span class="chip chip-o" style="font-size:10px;letter-spacing:.3px">Interior SP → VT1/VT2</span>'
-        : '<span class="chip chip-p" style="font-size:10px">SP Capital / outros → VI</span>')
+    ? (leadGeo.state === 'SP'
+        ? (leadGeo.ddd === null
+            ? '<span class="chip chip-p" style="font-size:10px;opacity:.7">SP — DDD não identificado</span>'
+            : leadGeo.ddd === 11
+              ? '<span class="chip chip-p" style="font-size:10px">SP Capital → VI</span>'
+              : '<span class="chip chip-o" style="font-size:10px;letter-spacing:.3px">Interior SP → VT1/VT2</span>')
+        : '<span class="chip chip-p" style="font-size:10px">Outros estados → VI</span>')
     : '';
 
   document.getElementById('result').style.display = 'block';
