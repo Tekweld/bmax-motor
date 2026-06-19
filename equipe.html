@@ -96,7 +96,7 @@ tbody tr:hover{background:#f0f7ff}
   </div>
 
   <div class="wrap">
-    <div class="card">
+    <div class="card" style="margin-bottom:20px">
       <div class="card-header">
         <div class="card-title">Vendedores cadastrados</div>
         <button class="btn btn-primary" onclick="openModal()">+ Novo vendedor</button>
@@ -107,6 +107,36 @@ tbody tr:hover{background:#f0f7ff}
         </tr></thead>
         <tbody id="tbl-body"><tr><td colspan="7" style="text-align:center;color:#718096;padding:24px">Carregando...</td></tr></tbody>
       </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Administradores BMax Motor</div>
+      </div>
+      <div style="padding:16px 0 0">
+        <table id="admins-tbl">
+          <thead><tr>
+            <th>Email</th><th>Nome</th><th>Desde</th><th></th>
+          </tr></thead>
+          <tbody id="admins-body"><tr><td colspan="4" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
+        </table>
+        <div style="padding:16px 0 0;border-top:1px solid #e2e8f0;margin-top:8px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Email do novo admin</label>
+            <input id="newAdminEmail" type="email" placeholder="nome@boxersoldas.com.br" style="width:100%;padding:8px 12px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:Outfit;outline:none">
+          </div>
+          <div style="flex:1;min-width:150px">
+            <label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Nome</label>
+            <input id="newAdminNome" placeholder="Nome" style="width:100%;padding:8px 12px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:Outfit;outline:none">
+          </div>
+          <div style="flex:1;min-width:150px">
+            <label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Senha inicial</label>
+            <input id="newAdminSenha" type="password" placeholder="Mínimo 6 caracteres" style="width:100%;padding:8px 12px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:Outfit;outline:none">
+          </div>
+          <button class="btn btn-primary" onclick="addAdmin()">+ Adicionar</button>
+        </div>
+        <p style="font-size:11px;color:#718096;padding:10px 0 4px">A pessoa receberá acesso exclusivo às páginas administrativas do BMax Motor. Não afeta o acesso a outros sistemas Boxer.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -172,11 +202,20 @@ async function doLogin() {
   if (!email || !pass) { errEl.textContent = 'Preencha todos os campos'; errEl.classList.remove('hidden'); return; }
   const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
   if (error || !data.session) { errEl.textContent = 'Email ou senha incorretos'; errEl.classList.remove('hidden'); return; }
+  // Verifica se email está na whitelist de admins BMax
+  const { data: adminRow } = await sbClient.from('comercial_bmax_admins').select('email,nome').eq('email', email).maybeSingle();
+  if (!adminRow) {
+    await sbClient.auth.signOut();
+    errEl.textContent = 'Você não tem acesso administrativo ao BMax Motor. Solicite ao administrador.';
+    errEl.classList.remove('hidden');
+    return;
+  }
   SESSION = data.session;
-  document.getElementById('userName').textContent = email.split('@')[0];
+  document.getElementById('userName').textContent = adminRow.nome || email.split('@')[0];
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('adminPage').classList.remove('hidden');
   loadVendedores();
+  loadAdmins();
 }
 
 async function doLogout() {
@@ -272,6 +311,64 @@ async function saveVendedor() {
   toast('Salvo com sucesso!');
   closeModal();
   loadVendedores();
+}
+
+// ── Admins ────────────────────────────────────────────────────────────────────
+async function loadAdmins() {
+  // Service role não disponível no frontend — usa RLS de leitura ampliada para admins
+  // Policy atual: cada user vê só seu próprio row. Para listar todos, usamos uma
+  // política extra: admins veem todos os rows ativos. Enquanto não tiver, mostramos
+  // pelo menos o usuário atual.
+  const { data, error } = await sbClient
+    .from('comercial_bmax_admins')
+    .select('id,email,nome,criado_em')
+    .order('criado_em');
+  if (error) { document.getElementById('admins-body').innerHTML = '<tr><td colspan="4" style="color:#e30613;padding:16px">Erro ao carregar admins.</td></tr>'; return; }
+  renderAdmins(data || []);
+}
+
+function renderAdmins(rows) {
+  const tbody = document.getElementById('admins-body');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#718096;padding:20px">Nenhum admin cadastrado.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(a => `
+    <tr>
+      <td>${a.email}</td>
+      <td>${a.nome || '—'}</td>
+      <td style="color:#718096">${a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeAdmin(${a.id}, '${a.email}')">Remover</button></td>
+    </tr>`).join('');
+}
+
+async function addAdmin() {
+  const email = document.getElementById('newAdminEmail').value.trim().toLowerCase();
+  const nome  = document.getElementById('newAdminNome').value.trim();
+  const senha = document.getElementById('newAdminSenha').value;
+  if (!email || !senha) { toast('Informe email e senha', 'err'); return; }
+  if (senha.length < 6)  { toast('Senha deve ter ao menos 6 caracteres', 'err'); return; }
+
+  // 1. Criar conta Supabase Auth (pode falhar se já existir — tudo bem)
+  const { error: signUpErr } = await sbClient.auth.signUp({ email, password: senha });
+  if (signUpErr && !signUpErr.message.includes('already registered')) {
+    toast('Erro ao criar conta: ' + signUpErr.message, 'err'); return;
+  }
+
+  // 2. Inserir na whitelist de admins
+  const { error } = await sbClient.from('comercial_bmax_admins').insert({ email, nome: nome || null });
+  if (error) { toast('Erro ao adicionar admin: ' + error.message, 'err'); return; }
+
+  toast(`${email} adicionado como admin`);
+  document.getElementById('newAdminEmail').value = '';
+  document.getElementById('newAdminNome').value  = '';
+  document.getElementById('newAdminSenha').value = '';
+  loadAdmins();
+}
+
+async function removeAdmin(id, email) {
+  if (!confirm(`Remover ${email} como admin do BMax Motor?`)) return;
+  const { error } = await sbClient.from('comercial_bmax_admins').update({ ativo: false }).eq('id', id);
+  if (error) { toast('Erro ao remover: ' + error.message, 'err'); return; }
+  toast(`${email} removido`);
+  loadAdmins();
 }
 </script>
 </body>
