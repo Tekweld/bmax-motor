@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Representantes BMax — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Outfit,sans-serif;background:#f0f4f8;color:#1a202c}
+.topbar{background:linear-gradient(135deg,#1d327b,#162666);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #25bbee}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar h1{color:#fff;font-size:18px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.user-badge{color:#93b4d4;font-size:13px}.user-badge strong{color:#fff}
+.logout-btn{color:#93b4d4;font-size:13px;padding:6px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer}
+.logout-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border-radius:12px;padding:40px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid #e2e8f0}
+.login-card h1{font-size:20px;color:#1d327b;font-weight:700;text-align:center;margin:12px 0 4px}
+.login-card p{font-size:13px;color:#718096;text-align:center;margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:500;color:#4a5568;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.field input{width:100%;padding:10px 14px;border:1px solid #c3cfe2;border-radius:8px;font-size:14px;font-family:Outfit;outline:none}
+.field input:focus{border-color:#25bbee}
+.btn-login{width:100%;padding:12px;background:#1d327b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:Outfit}
+.btn-login:hover{background:#162666}
+.err-msg{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid #fecaca}
+.wrap{max-width:1200px;margin:24px auto;padding:0 24px}
+.filters{background:#fff;border-radius:10px;border:1px solid #d0d8e8;padding:16px 20px;margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.filters label{font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.filters select,.filters input{padding:7px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:Outfit;outline:none;min-width:140px}
+.filters select:focus,.filters input:focus{border-color:#25bbee}
+.btn{padding:8px 16px;border-radius:8px;border:1px solid;font-family:Outfit;font-size:13px;font-weight:500;cursor:pointer}
+.btn-primary{background:#1d327b;color:#fff;border-color:#1d327b}.btn-primary:hover{background:#162666}
+.btn-outline{background:#fff;color:#4a5568;border-color:#c3cfe2}.btn-outline:hover{border-color:#25bbee;color:#1d327b}
+.btn-sm{padding:4px 10px;font-size:12px}
+.card{background:#fff;border-radius:12px;border:1px solid #d0d8e8}
+.card-header{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:15px;font-weight:600;color:#1d327b}
+.stats{font-size:13px;color:#718096}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 12px;text-align:left;color:#718096;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;background:#f7fafc;white-space:nowrap}
+tbody td{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+tbody tr:hover{background:#f0f7ff}
+.rep-cell{display:flex;align-items:center;gap:6px}
+.rep-select{padding:4px 8px;border:1px solid #c3cfe2;border-radius:5px;font-size:12px;font-family:Outfit;outline:none;background:#fff;min-width:150px}
+.rep-select:focus{border-color:#25bbee}
+.rep-select.dirty{border-color:#f59e0b;background:#fffbeb}
+.save-btn{padding:3px 10px;font-size:11px;border:1px solid #1d327b;background:#1d327b;color:#fff;border-radius:4px;cursor:pointer;font-family:Outfit}
+.save-btn:hover{background:#162666}
+.no-rep{color:#e30613;font-size:12px}
+.has-rep{color:#16a34a;font-size:12px;font-weight:500}
+.pagination{display:flex;align-items:center;gap:8px;padding:14px 20px;border-top:1px solid #e2e8f0;justify-content:flex-end}
+.pagination button{padding:6px 12px;border:1px solid #c3cfe2;background:#fff;border-radius:6px;font-family:Outfit;font-size:13px;cursor:pointer}
+.pagination button:hover{border-color:#25bbee;color:#1d327b}
+.pagination button:disabled{opacity:.4;cursor:default}
+.pagination span{font-size:13px;color:#718096}
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-family:Outfit;font-size:13px;font-weight:500;z-index:2000;animation:slideIn .3s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-ok{background:#16a34a}.toast-err{background:#dc2626}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="login-wrap">
+  <div class="login-card">
+    <h1>BMax · Representantes</h1>
+    <p>Gestão de cobertura por município</p>
+    <div id="loginErr" class="err-msg hidden"></div>
+    <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@boxersoldas.com.br"></div>
+    <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<div id="adminPage" class="hidden">
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg width="28" height="28" viewBox="0 0 200 200"><rect x="10" y="10" width="180" height="180" rx="30" fill="#e30613"/><polygon points="100,38 108,80 145,55 118,88 158,92 120,105 148,138 108,118 100,162 92,118 52,138 80,105 42,92 82,88 55,55 92,80" fill="#fff"/></svg>
+      <h1>Representantes BMax por Município</h1>
+    </div>
+    <div class="topbar-right">
+      <span class="user-badge">Logado como <strong id="userName"></strong></span>
+      <span class="logout-btn" onclick="doLogout()">Sair</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="filters">
+      <div>
+        <label>Estado</label>
+        <select id="fEstado" onchange="applyFilter()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div>
+        <label>Representante</label>
+        <select id="fRep" onchange="applyFilter()">
+          <option value="">Todos</option>
+          <option value="__sem__">Sem representante</option>
+        </select>
+      </div>
+      <div>
+        <label>DDD</label>
+        <select id="fDdd" onchange="applyFilter()">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div>
+        <label>Buscar cidade</label>
+        <input id="fCidade" placeholder="Nome da cidade..." oninput="applyFilter()">
+      </div>
+      <button class="btn btn-outline" onclick="clearFilters()">Limpar</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Municípios</div>
+        <div class="stats" id="statsLine">Carregando...</div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Cidade</th><th>Estado</th><th>DDD</th><th>Representante BMax</th>
+        </tr></thead>
+        <tbody id="tbl-body"><tr><td colspan="4" style="text-align:center;padding:24px;color:#718096">Carregando...</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <button id="btnPrev" onclick="changePage(-1)" disabled>← Anterior</button>
+        <span id="pageInfo">—</span>
+        <button id="btnNext" onclick="changePage(1)">Próxima →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://bmepxcnrsofofoswubuu.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZXB4Y25yc29mb2Zvc3d1YnV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTczNzMsImV4cCI6MjA5NTI5MzM3M30.S55ouFczRYlUYNFf5PotYKXBPT5idypTSmbzR-x2Pk0';
+const sbClient = supabase.createClient(SB_URL, SB_ANON);
+
+const PAGE_SIZE = 100;
+let allRows = [], filtered = [], page = 0;
+let repsDisponiveis = [];
+
+function toast(m, t='ok') {
+  const d = document.createElement('div');
+  d.className = `toast toast-${t}`; d.textContent = m;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3000);
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.classList.add('hidden');
+  if (!email || !pass) { errEl.textContent = 'Preencha todos os campos'; errEl.classList.remove('hidden'); return; }
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+  if (error || !data.session) { errEl.textContent = 'Email ou senha incorretos'; errEl.classList.remove('hidden'); return; }
+  document.getElementById('userName').textContent = email.split('@')[0];
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('adminPage').classList.remove('hidden');
+  await loadAll();
+}
+
+async function doLogout() {
+  await sbClient.auth.signOut();
+  document.getElementById('adminPage').classList.add('hidden');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+async function loadAll() {
+  // Carrega todos os municípios em batches de 1000
+  let rows = [], offset = 0;
+  while (true) {
+    const { data, error } = await sbClient
+      .from('comercial_bmax_cobertura')
+      .select('ibge_codigo,cidade,estado,ddd,rep_bmax')
+      .order('estado').order('cidade')
+      .range(offset, offset + 999);
+    if (error || !data?.length) break;
+    rows = rows.concat(data);
+    if (data.length < 1000) break;
+    offset += 1000;
+  }
+  allRows = rows;
+
+  // Popula selects de filtro
+  const estados = [...new Set(rows.map(r => r.estado))].sort();
+  const fEstado = document.getElementById('fEstado');
+  estados.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; fEstado.appendChild(o); });
+
+  const reps = [...new Set(rows.map(r => r.rep_bmax).filter(Boolean))].sort();
+  repsDisponiveis = reps;
+  const fRep = document.getElementById('fRep');
+  reps.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; fRep.appendChild(o); });
+
+  const ddds = [...new Set(rows.map(r => r.ddd).filter(Boolean))].sort((a,b) => a-b);
+  const fDdd = document.getElementById('fDdd');
+  ddds.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; fDdd.appendChild(o); });
+
+  applyFilter();
+}
+
+function applyFilter() {
+  const est  = document.getElementById('fEstado').value;
+  const rep  = document.getElementById('fRep').value;
+  const ddd  = document.getElementById('fDdd').value;
+  const cid  = document.getElementById('fCidade').value.toLowerCase().trim();
+
+  filtered = allRows.filter(r => {
+    if (est && r.estado !== est) return false;
+    if (rep === '__sem__' && r.rep_bmax) return false;
+    if (rep && rep !== '__sem__' && r.rep_bmax !== rep) return false;
+    if (ddd && String(r.ddd) !== ddd) return false;
+    if (cid && !r.cidade.toLowerCase().includes(cid)) return false;
+    return true;
+  });
+
+  page = 0;
+  renderPage();
+}
+
+function clearFilters() {
+  document.getElementById('fEstado').value = '';
+  document.getElementById('fRep').value = '';
+  document.getElementById('fDdd').value = '';
+  document.getElementById('fCidade').value = '';
+  applyFilter();
+}
+
+function renderPage() {
+  const start = page * PAGE_SIZE;
+  const slice = filtered.slice(start, start + PAGE_SIZE);
+  const total = filtered.length;
+  const semRep = filtered.filter(r => !r.rep_bmax).length;
+
+  document.getElementById('statsLine').textContent =
+    `${total.toLocaleString()} municípios | ${semRep} sem representante`;
+
+  const allRepsOptions = ['', ...repsDisponiveis].map(r =>
+    `<option value="${r}">${r || '— sem representante —'}</option>`).join('');
+
+  const tbody = document.getElementById('tbl-body');
+  tbody.innerHTML = slice.map(r => `
+    <tr>
+      <td><strong>${r.cidade}</strong></td>
+      <td>${r.estado}</td>
+      <td style="color:#718096">${r.ddd || '—'}</td>
+      <td>
+        <div class="rep-cell">
+          <select class="rep-select" data-ibge="${r.ibge_codigo}" data-orig="${r.rep_bmax||''}"
+                  onchange="markDirty(this)">
+            ${allRepsOptions.replace(`value="${r.rep_bmax||''}"`, `value="${r.rep_bmax||''}" selected`)}
+          </select>
+          <button class="save-btn hidden" data-ibge="${r.ibge_codigo}" onclick="saveRep(this)">Salvar</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  // Paginação
+  const pages = Math.ceil(total / PAGE_SIZE);
+  document.getElementById('pageInfo').textContent = `Página ${page+1} de ${pages || 1}`;
+  document.getElementById('btnPrev').disabled = page === 0;
+  document.getElementById('btnNext').disabled = page >= pages - 1;
+}
+
+function markDirty(sel) {
+  const orig = sel.dataset.orig;
+  if (sel.value !== orig) {
+    sel.classList.add('dirty');
+    sel.nextElementSibling.classList.remove('hidden');
+  } else {
+    sel.classList.remove('dirty');
+    sel.nextElementSibling.classList.add('hidden');
+  }
+}
+
+async function saveRep(btn) {
+  const ibge = btn.dataset.ibge;
+  const sel  = btn.previousElementSibling;
+  const newRep = sel.value || null;
+
+  const { error } = await sbClient
+    .from('comercial_bmax_cobertura')
+    .update({ rep_bmax: newRep })
+    .eq('ibge_codigo', ibge);
+
+  if (error) { toast('Erro ao salvar', 'err'); return; }
+
+  // Atualiza dado local
+  const idx = allRows.findIndex(r => r.ibge_codigo === ibge);
+  if (idx >= 0) allRows[idx].rep_bmax = newRep;
+  sel.dataset.orig = sel.value;
+  sel.classList.remove('dirty');
+  btn.classList.add('hidden');
+  toast('Salvo!');
+}
+
+function changePage(dir) {
+  page += dir;
+  renderPage();
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

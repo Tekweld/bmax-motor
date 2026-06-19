@@ -67,9 +67,16 @@ jobs:
           ZEN_SENHA:            ${{ secrets.ZEN_SENHA }}
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
+      - name: Corrigir endereço Luitex (ZEN ID direto)
+        run: python scripts/corrigir_endereco_luitex.py
+        env:
+          ZEN_EMAIL:            ${{ secrets.ZEN_EMAIL }}
+          ZEN_SENHA:            ${{ secrets.ZEN_SENHA }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
 
   importar_cobertura:
-    name: 4 — Importar cobertura de representantes
+    name: 4 — Importar cobertura + DDDs
     runs-on: ubuntu-latest
     needs: sincronizar_excel
     steps:
@@ -81,6 +88,11 @@ jobs:
         run: pip install requests
       - name: Importar cobertura BMax
         run: python scripts/importar_cobertura_bmax.py
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
+      - name: Popular DDDs por município (BrasilAPI)
+        run: python scripts/popular_ddd_cobertura.py
         env:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}

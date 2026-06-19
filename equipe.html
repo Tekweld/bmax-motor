@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Equipe Comercial — BMax Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Outfit,sans-serif;background:#f0f4f8;color:#1a202c}
+/* topbar */
+.topbar{background:linear-gradient(135deg,#1d327b,#162666);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #25bbee}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar h1{color:#fff;font-size:18px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.user-badge{color:#93b4d4;font-size:13px}.user-badge strong{color:#fff}
+.logout-btn{color:#93b4d4;font-size:13px;padding:6px 12px;border:1px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer}
+.logout-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+/* login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:#fff;border-radius:12px;padding:40px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid #e2e8f0}
+.login-card h1{font-size:20px;color:#1d327b;font-weight:700;text-align:center;margin:12px 0 4px}
+.login-card p{font-size:13px;color:#718096;text-align:center;margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:500;color:#4a5568;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.field input{width:100%;padding:10px 14px;border:1px solid #c3cfe2;border-radius:8px;font-size:14px;font-family:Outfit;outline:none}
+.field input:focus{border-color:#25bbee}
+.btn-login{width:100%;padding:12px;background:#1d327b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:Outfit}
+.btn-login:hover{background:#162666}
+.err-msg{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid #fecaca}
+/* main */
+.wrap{max-width:900px;margin:32px auto;padding:0 24px}
+.card{background:#fff;border-radius:12px;border:1px solid #d0d8e8;padding:24px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card-title{font-size:16px;font-weight:600;color:#1d327b}
+/* buttons */
+.btn{padding:8px 16px;border-radius:8px;border:1px solid;font-family:Outfit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:#1d327b;color:#fff;border-color:#1d327b}.btn-primary:hover{background:#162666}
+.btn-danger{background:#fff;color:#e30613;border-color:#fecaca}.btn-danger:hover{background:#fee2e2}
+.btn-outline{background:#fff;color:#4a5568;border-color:#c3cfe2}.btn-outline:hover{border-color:#25bbee;color:#1d327b}
+.btn-sm{padding:4px 10px;font-size:12px}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 12px;text-align:left;color:#718096;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;background:#f7fafc}
+tbody td{padding:10px 12px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+tbody tr:hover{background:#f0f7ff}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-vi{background:#e8edf8;color:#1d327b}
+.badge-vt1{background:#e0f8ff;color:#0e7490}
+.badge-vt2{background:#fef3c7;color:#92400e}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;border:1px solid rgba(0,0,0,.1)}
+/* modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:18px;margin-bottom:20px;color:#1d327b}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:12px;font-weight:500;color:#4a5568;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.form-row input,.form-row select{width:100%;padding:8px 12px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:Outfit;outline:none}
+.form-row input:focus,.form-row select:focus{border-color:#25bbee}
+.form-row small{font-size:11px;color:#718096;margin-top:3px;display:block}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
+/* toast */
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;color:#fff;font-family:Outfit;font-size:13px;font-weight:500;z-index:2000;animation:slideIn .3s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-ok{background:#16a34a}.toast-err{background:#dc2626}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-card">
+    <h1>BMax · Equipe Comercial</h1>
+    <p>Administração de vendedores e territórios</p>
+    <div id="loginErr" class="err-msg hidden"></div>
+    <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@boxersoldas.com.br"></div>
+    <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div id="adminPage" class="hidden">
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg width="28" height="28" viewBox="0 0 200 200"><rect x="10" y="10" width="180" height="180" rx="30" fill="#e30613"/><polygon points="100,38 108,80 145,55 118,88 158,92 120,105 148,138 108,118 100,162 92,118 52,138 80,105 42,92 82,88 55,55 92,80" fill="#fff"/></svg>
+      <h1>Equipe Comercial BMax</h1>
+    </div>
+    <div class="topbar-right">
+      <span class="user-badge">Logado como <strong id="userName"></strong></span>
+      <span class="logout-btn" onclick="doLogout()">Sair</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Vendedores cadastrados</div>
+        <button class="btn btn-primary" onclick="openModal()">+ Novo vendedor</button>
+      </div>
+      <table id="tbl">
+        <thead><tr>
+          <th>Nome</th><th>Tipo</th><th>Cor</th><th>DDDs</th><th>Fallback</th><th>Ativo</th><th></th>
+        </tr></thead>
+        <tbody id="tbl-body"><tr><td colspan="7" style="text-align:center;color:#718096;padding:24px">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modalTitle">Novo Vendedor</h3>
+    <input type="hidden" id="editId">
+    <div class="form-row">
+      <label>Nome</label>
+      <input id="fNome" placeholder="Ex: Max">
+    </div>
+    <div class="form-row">
+      <label>Tipo</label>
+      <select id="fTipo">
+        <option value="VI">VI — Vendedor Interno</option>
+        <option value="VT1">VT1 — Vendedor Técnico 1</option>
+        <option value="VT2">VT2 — Vendedor Técnico 2</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Cor de destaque</label>
+      <input id="fCor" type="color" value="#25bbee" style="height:38px;padding:2px 6px">
+    </div>
+    <div class="form-row">
+      <label>DDDs de atuação</label>
+      <input id="fDdds" placeholder="Ex: 12,13,14,15,19 (separados por vírgula)">
+      <small>Deixe vazio se este vendedor for o fallback (atende todos os demais DDDs)</small>
+    </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:8px">
+      <input id="fFallback" type="checkbox" style="width:auto">
+      <label for="fFallback" style="text-transform:none;letter-spacing:0;font-size:13px;cursor:pointer">Fallback — atende todos os DDDs não mapeados</label>
+    </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:8px">
+      <input id="fAtivo" type="checkbox" checked style="width:auto">
+      <label for="fAtivo" style="text-transform:none;letter-spacing:0;font-size:13px;cursor:pointer">Ativo</label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVendedor()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://bmepxcnrsofofoswubuu.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtZXB4Y25yc29mb2Zvc3d1YnV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MTczNzMsImV4cCI6MjA5NTI5MzM3M30.S55ouFczRYlUYNFf5PotYKXBPT5idypTSmbzR-x2Pk0';
+const sbClient = supabase.createClient(SB_URL, SB_ANON);
+let SESSION = null;
+
+function toast(m, t='ok') {
+  const d = document.createElement('div');
+  d.className = `toast toast-${t}`; d.textContent = m;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3000);
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.classList.add('hidden');
+  if (!email || !pass) { errEl.textContent = 'Preencha todos os campos'; errEl.classList.remove('hidden'); return; }
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+  if (error || !data.session) { errEl.textContent = 'Email ou senha incorretos'; errEl.classList.remove('hidden'); return; }
+  SESSION = data.session;
+  document.getElementById('userName').textContent = email.split('@')[0];
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('adminPage').classList.remove('hidden');
+  loadVendedores();
+}
+
+async function doLogout() {
+  await sbClient.auth.signOut();
+  SESSION = null;
+  document.getElementById('adminPage').classList.add('hidden');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+async function loadVendedores() {
+  const { data, error } = await sbClient
+    .from('comercial_bmax_vendedores')
+    .select('*')
+    .order('tipo').order('nome');
+  if (error) { toast('Erro ao carregar vendedores', 'err'); return; }
+  renderTable(data);
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tbl-body');
+  if (!rows?.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#718096;padding:24px">Nenhum vendedor cadastrado.</td></tr>'; return; }
+  const BADGE = { VI: 'badge-vi', VT1: 'badge-vt1', VT2: 'badge-vt2' };
+  tbody.innerHTML = rows.map(v => `
+    <tr>
+      <td><strong>${v.nome}</strong></td>
+      <td><span class="badge ${BADGE[v.tipo]||'badge-vi'}">${v.tipo}</span></td>
+      <td><span class="dot" style="background:${v.cor}"></span>${v.cor}</td>
+      <td>${v.ddds?.join(', ') || '—'}</td>
+      <td>${v.fallback ? '✓ sim' : '—'}</td>
+      <td>${v.ativo ? '<span style="color:#16a34a">✓ ativo</span>' : '<span style="color:#e30613">✗ inativo</span>'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="editVendedor(${v.id})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="toggleAtivo(${v.id}, ${v.ativo})">${v.ativo ? 'Desativar' : 'Ativar'}</button>
+      </td>
+    </tr>`).join('');
+}
+
+let _allRows = [];
+async function editVendedor(id) {
+  const { data } = await sbClient.from('comercial_bmax_vendedores').select('*').eq('id', id).single();
+  if (!data) return;
+  document.getElementById('modalTitle').textContent = 'Editar Vendedor';
+  document.getElementById('editId').value = id;
+  document.getElementById('fNome').value = data.nome;
+  document.getElementById('fTipo').value = data.tipo;
+  document.getElementById('fCor').value  = data.cor;
+  document.getElementById('fDdds').value = data.ddds?.join(',') || '';
+  document.getElementById('fFallback').checked = !!data.fallback;
+  document.getElementById('fAtivo').checked    = !!data.ativo;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+async function toggleAtivo(id, ativo) {
+  const { error } = await sbClient.from('comercial_bmax_vendedores').update({ ativo: !ativo }).eq('id', id);
+  if (error) toast('Erro ao atualizar', 'err');
+  else { toast(ativo ? 'Vendedor desativado' : 'Vendedor ativado'); loadVendedores(); }
+}
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'Novo Vendedor';
+  document.getElementById('editId').value = '';
+  document.getElementById('fNome').value = '';
+  document.getElementById('fTipo').value = 'VI';
+  document.getElementById('fCor').value  = '#25bbee';
+  document.getElementById('fDdds').value = '';
+  document.getElementById('fFallback').checked = false;
+  document.getElementById('fAtivo').checked    = true;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+async function saveVendedor() {
+  const id   = document.getElementById('editId').value;
+  const nome = document.getElementById('fNome').value.trim();
+  if (!nome) { toast('Informe o nome', 'err'); return; }
+  const dddsRaw = document.getElementById('fDdds').value;
+  const ddds = dddsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  const payload = {
+    nome,
+    tipo:     document.getElementById('fTipo').value,
+    cor:      document.getElementById('fCor').value,
+    ddds:     ddds.length ? ddds : null,
+    fallback: document.getElementById('fFallback').checked,
+    ativo:    document.getElementById('fAtivo').checked,
+  };
+  let error;
+  if (id) {
+    ({ error } = await sbClient.from('comercial_bmax_vendedores').update(payload).eq('id', id));
+  } else {
+    ({ error } = await sbClient.from('comercial_bmax_vendedores').insert(payload));
+  }
+  if (error) { toast('Erro ao salvar: ' + error.message, 'err'); return; }
+  toast('Salvo com sucesso!');
+  closeModal();
+  loadVendedores();
+}
+</script>
+</body>
+</html>

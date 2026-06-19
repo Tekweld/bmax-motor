@@ -9,7 +9,7 @@
 <style>
 :root{
   --bg:#050e1c; --bg2:#091525; --bg3:#0e3a7d; --acc:#00c2e0; --acc2:#00e5b0;
-  --gold:#f5a623; --sil:#94a3b8; --red:#f56565; --whi:#e8f4ff; --mut:#3d5a80;
+  --gold:#f5a623; --sil:#94a3b8; --red:#f56565; --whi:#e8f4ff; --mut:#7a9cbf;
   --bdr:rgba(0,194,224,.16); --card:rgba(14,58,125,.12); --r:13px;
   --shadow:0 4px 24px rgba(0,194,224,.08);
 }
@@ -91,7 +91,8 @@ aside{background:var(--bg2);border-right:1px solid var(--bdr);padding:24px 18px;
 .nl{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
 .ni{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:9px;
   cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;
-  border:1px solid transparent;background:none;color:var(--sil);width:100%;text-align:left}
+  border:1px solid transparent;background:none;color:var(--sil);width:100%;text-align:left;
+  text-decoration:none;box-sizing:border-box}
 .ni:hover{background:rgba(0,194,224,.06);color:var(--whi);border-color:rgba(0,194,224,.08)}
 .ni.on{background:rgba(0,194,224,.12);color:var(--acc);border-color:rgba(0,194,224,.22);
   box-shadow:0 0 12px rgba(0,194,224,.08)}
@@ -261,6 +262,11 @@ main{padding:30px 32px;overflow-y:auto}
     <button class="ni"    onclick="nav('revendas',this)"><span class="ni-ic">🏪</span>Revendas BMax</button>
     <button class="ni"    onclick="nav('tabela',this)"><span class="ni-ic">📊</span>Tabela de PCIs</button>
     <button class="ni"    onclick="nav('config',this)"><span class="ni-ic">⚙️</span>Configurações</button>
+  </div>
+  <div>
+    <div class="nl">Administração</div>
+    <a class="ni" href="equipe.html" target="_blank"><span class="ni-ic">👤</span>Equipe Comercial</a>
+    <a class="ni" href="representantes.html" target="_blank"><span class="ni-ic">🗺️</span>Representantes</a>
   </div>
   <div class="sbox">
     <div class="sbox-l">Revendas ativas</div>
@@ -683,38 +689,58 @@ const PCIS = [
 // ════════════════════════════════════════════════════
 let CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
 
-// ── Regras de atendimento Boxer por DDD ─────────────────────────
-const _VND_BOXER = {
-  11: { nome:'Carlão', tipo:'VI',  cor:'#718096' }, // Grande SP / Região Metropolitana
-  12: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Vale do Paraíba
-  13: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Baixada Santista
-  14: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Bauru / Marília
-  15: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Sorocaba / Itapeva
-  16: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Ribeirão Preto / Araraquara
-  17: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // S.J. Rio Preto / Araçatuba
-  18: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Presidente Prudente
-  19: { nome:'Max',    tipo:'VT1', cor:'#25bbee' }, // Campinas / Piracicaba / Limeira
-  35: { nome:'Lucas',  tipo:'VT2', cor:'#f59e0b' }, // Sul de Minas
+// ── Vendedores Boxer — carregados do Supabase, fallback hardcoded ──
+const _VND_BOXER_FALLBACK = {
+  12:{ nome:'Max',   tipo:'VT1', cor:'#25bbee' }, 13:{ nome:'Max',   tipo:'VT1', cor:'#25bbee' },
+  14:{ nome:'Max',   tipo:'VT1', cor:'#25bbee' }, 15:{ nome:'Max',   tipo:'VT1', cor:'#25bbee' },
+  16:{ nome:'Lucas', tipo:'VT2', cor:'#f59e0b' }, 17:{ nome:'Lucas', tipo:'VT2', cor:'#f59e0b' },
+  18:{ nome:'Lucas', tipo:'VT2', cor:'#f59e0b' }, 19:{ nome:'Max',   tipo:'VT1', cor:'#25bbee' },
+  35:{ nome:'Lucas', tipo:'VT2', cor:'#f59e0b' },
 };
-const _VND_DEFAULT = { nome:'Carlão', tipo:'VI', cor:'#718096' }; // outros estados
+const _VND_DEFAULT_FALLBACK = { nome:'Carlos', tipo:'VI', cor:'#718096' };
+let _VND_MAP = null;         // null = ainda não carregado
+let _VND_DEFAULT = _VND_DEFAULT_FALLBACK;
+
+async function loadVendedoresFromSB() {
+  try {
+    const r = await fetch(
+      `${SB_URL}/rest/v1/comercial_bmax_vendedores?ativo=eq.true&select=nome,tipo,cor,ddds,fallback`,
+      { headers: { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` } }
+    );
+    if (!r.ok) throw new Error();
+    const rows = await r.json();
+    const map = {};
+    let fallback = null;
+    for (const v of rows) {
+      if (v.fallback) { fallback = v; continue; }
+      for (const ddd of (v.ddds || [])) map[ddd] = v;
+    }
+    _VND_MAP = map;
+    if (fallback) _VND_DEFAULT = fallback;
+  } catch {
+    _VND_MAP = _VND_BOXER_FALLBACK;
+    _VND_DEFAULT = _VND_DEFAULT_FALLBACK;
+  }
+}
 
 function getVendedorBoxer(ddd) {
-  return (ddd && _VND_BOXER[+ddd]) || _VND_DEFAULT;
+  const map = _VND_MAP || _VND_BOXER_FALLBACK;
+  return (ddd && map[+ddd]) || _VND_DEFAULT;
 }
 
 async function getRepBmax(ibge, cidade, estado) {
   const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
   try {
     if (ibge) {
-      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax`, { headers: hdrs });
-      if (r.ok) { const d = await r.json(); if (d?.length) return d[0].rep_bmax || null; }
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax,ddd`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null }; }
     }
     if (cidade && estado) {
-      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?cidade=ilike.${encodeURIComponent(cidade)}&estado=eq.${estado}&select=rep_bmax&limit=1`, { headers: hdrs });
-      if (r.ok) { const d = await r.json(); if (d?.length) return d[0].rep_bmax || null; }
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?cidade=ilike.${encodeURIComponent(cidade)}&estado=eq.${estado}&select=rep_bmax,ddd&limit=1`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null }; }
     }
   } catch {}
-  return null;
+  return { rep_bmax: null, ddd: null };
 }
 
 let revendas  = [];
@@ -727,7 +753,7 @@ let ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
 // INIT
 // ════════════════════════════════════════════════════
 async function initApp() {
-  await Promise.all([loadRevendas(), loadConfig()]);
+  await Promise.all([loadRevendas(), loadConfig(), loadVendedoresFromSB()]);
   applyConfig();
   renderRevTable();
   renderTabela();
@@ -973,8 +999,9 @@ async function geocodeLead() {
   if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; a.value=''; return; }
 
   a.value = geo.addr || `${geo.city||''}/${geo.state||''}`;
-  const repBmax = await getRepBmax(geo.ibge, geo.city, geo.state);
-  leadGeo = { city: geo.city, state: geo.state, ddd: geo.ddd ? +geo.ddd : null, ibge: geo.ibge || null, repBmax };
+  const cobInfo = await getRepBmax(geo.ibge, geo.city, geo.state);
+  const dddFinal = geo.ddd ? +geo.ddd : (cobInfo.ddd || null);
+  leadGeo = { city: geo.city, state: geo.state, ddd: dddFinal, ibge: geo.ibge || null, repBmax: cobInfo.rep_bmax };
 
   if (!geo.lat) {
     s.innerHTML = '<span class="pill pill-warn">⚠️ Endereço ok · sem coordenadas — distância indisponível</span>';
