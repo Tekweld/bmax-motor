@@ -35,7 +35,9 @@ DO $$ BEGIN
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Seed: André como primeiro admin
+-- Seed: admins iniciais do BMax Motor
 INSERT INTO comercial_bmax_admins (email, nome) VALUES
-  ('andre.coelho@boxersoldas.com.br', 'André')
+  ('andre.coelho@boxersoldas.com.br',  'André'),
+  ('adriel.costa@boxersoldas.com.br',  'Billy'),
+  ('bruno@boxersoldas.com.br',         'Bruno')
 ON CONFLICT (email) DO NOTHING;
