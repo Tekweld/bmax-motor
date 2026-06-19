@@ -60,15 +60,12 @@ jobs:
           python-version: '3.11'
       - name: Instalar dependências
         run: pip install requests python-dotenv
-      - name: Enriquecer CEP e filiais via ZEN
-        run: python scripts/enriquecer_cep_zen.py ${{ inputs.force_enrich && '--force' || '' }}
+      - name: Baixar bsis.db do SharePoint
+        run: python scripts/baixar_bsis_sharepoint.py --dest bsis.db
         env:
-          ZEN_EMAIL:            ${{ secrets.ZEN_EMAIL }}
-          ZEN_SENHA:            ${{ secrets.ZEN_SENHA }}
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
-      - name: Corrigir endereço Luitex (ZEN ID direto)
-        run: python scripts/corrigir_endereco_luitex.py
+          MSAL_TOKEN_CACHE: ${{ secrets.MSAL_TOKEN_CACHE }}
+      - name: Enriquecer endereços via bsis.db + ZEN
+        run: python scripts/enriquecer_enderecos_bmax.py --bsis bsis.db ${{ inputs.force_enrich && '--force' || '' }}
         env:
           ZEN_EMAIL:            ${{ secrets.ZEN_EMAIL }}
           ZEN_SENHA:            ${{ secrets.ZEN_SENHA }}
