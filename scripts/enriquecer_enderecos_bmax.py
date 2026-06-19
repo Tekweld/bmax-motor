@@ -16,6 +16,7 @@ Uso:
   --dry-run   mostra o que faria sem alterar Supabase
 """
 import os, sys, re, unicodedata, sqlite3, requests, time
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 from pathlib import Path
 
 try:
@@ -216,7 +217,19 @@ for item in matches:
         time.sleep(0.3)
         continue
 
-    p = r.json()
+    try:
+        p = r.json()
+    except Exception:
+        print(f"  ZEN retornou resposta vazia/inválida (ID {zid} pode ser histórico) — pulando\n")
+        erros += 1
+        time.sleep(0.3)
+        continue
+
+    if not isinstance(p, dict):
+        print(f"  ZEN retornou tipo inesperado: {type(p)} — pulando\n")
+        erros += 1
+        time.sleep(0.3)
+        continue
     cep      = fmt_cep(p.get('zipcode'))
     endereco = fmt_end(p)
     nome_f   = p.get('fantasyName') or None
