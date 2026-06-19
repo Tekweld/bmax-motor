@@ -1237,49 +1237,40 @@ async function classify() {
 
   // Vendedor Boxer responsável
   const vnd = (leadGeo && leadGeo.ddd) ? getVendedorBoxer(leadGeo.ddd) : null;
-  const vndTag = leadGeo
+  const vndInner = leadGeo
     ? (vnd
-        ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-            <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:15px;color:${vnd.cor}">${vnd.nome}</span>
-              <span style="font-size:12px;color:var(--mut)">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
-              <span style="font-size:11px;color:var(--mut);background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px">DDD ${leadGeo.ddd}</span>
-            </div>
-          </div>`
-        : `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-            <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Vendedor Boxer responsável</div>
-            <div style="font-size:13px;color:var(--mut);opacity:.7">DDD não identificado — verificar manualmente</div>
-          </div>`)
-    : '';
+              <span style="font-size:12px;color:#fff">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
+              <span style="font-size:11px;color:#fff;background:rgba(255,255,255,.12);padding:2px 7px;border-radius:4px">DDD ${leadGeo.ddd}</span>
+           </div>`
+        : `<div style="font-size:13px;color:rgba(255,255,255,.6)">DDD não identificado — verificar manualmente</div>`)
+    : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
 
-  // Representante BMax da cidade
-  const repBmaxTag = leadGeo
-    ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.05);border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-        <div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Representante BMax da cidade</div>
-        ${leadGeo.repBmax
-          ? `<div style="display:flex;align-items:center;gap:8px">
-               <span style="font-weight:700;font-size:15px;color:#16a34a">✓ ${leadGeo.repBmax}</span>
-               <span style="font-size:12px;color:var(--mut)">cobre esta cidade</span>
-             </div>`
-          : `<div style="display:flex;align-items:center;gap:6px">
-               <span style="font-weight:600;font-size:14px;color:#e30613">✗ Sem representante BMax</span>
-               ${leadGeo.ibge ? `<span style="font-size:11px;color:var(--mut)">IBGE ${leadGeo.ibge}</span>` : ''}
-             </div>`
-        }
-      </div>`
-    : '';
+  const repInner = leadGeo
+    ? (leadGeo.repBmax
+        ? `<div style="display:flex;align-items:center;gap:8px">
+             <span style="font-weight:700;font-size:15px;color:#4ade80">✓ ${leadGeo.repBmax}</span>
+             <span style="font-size:12px;color:#fff">cobre esta cidade</span>
+           </div>`
+        : `<div style="display:flex;align-items:center;gap:6px">
+             <span style="font-weight:600;font-size:14px;color:#e30613">✗ Sem representante BMax</span>
+           </div>`)
+    : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
 
-  // Dimensão geográfica (tag compacta para o hero)
-  const geoTag = leadGeo
-    ? (leadGeo.state === 'SP'
-        ? (leadGeo.ddd === null
-            ? '<span class="chip chip-p" style="font-size:10px;opacity:.7">SP — DDD não identificado</span>'
-            : leadGeo.ddd === 11
-              ? '<span class="chip chip-p" style="font-size:10px">SP Capital → VI</span>'
-              : '<span class="chip chip-o" style="font-size:10px;letter-spacing:.3px">Interior SP → VT1/VT2</span>')
-        : '<span class="chip chip-p" style="font-size:10px">Outros estados → VI</span>')
-    : '';
+  const vndRepGrid = leadGeo ? `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Vendedor Boxer Responsável</div>
+        ${vndInner}
+      </div>
+      <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
+        <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Representante BMax da Cidade</div>
+        ${repInner}
+      </div>
+    </div>` : '';
+
+  const geoTag = '';
 
   document.getElementById('result').style.display = 'block';
   document.getElementById('result').innerHTML = `
@@ -1294,9 +1285,7 @@ async function classify() {
         <div class="badge"><span class="dot dg"></span>Portal: ${pci.portal}</div>
         <div class="badge"><span class="dot ${pci.dist?'db':'dr'}"></span>Rev. ${pci.dist?'no raio':'fora do raio'}</div>
       </div>
-      ${geoTag ? `<div style="margin-top:4px">${geoTag}</div>` : ''}
-      ${vndTag}
-      ${repBmaxTag}
+      ${vndRepGrid}
     </div>
 
     <div class="sgrid">
