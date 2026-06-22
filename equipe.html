@@ -79,6 +79,9 @@ tbody tr:hover{background:#f0f7ff}
     <div class="field"><label>Email</label><input id="loginEmail" type="email" placeholder="seu@boxersoldas.com.br"></div>
     <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div style="text-align:center;margin-top:14px">
+      <span onclick="doReset()" style="font-size:12px;color:#718096;cursor:pointer;text-decoration:underline">Esqueceu a senha?</span>
+    </div>
   </div>
 </div>
 
@@ -216,6 +219,16 @@ async function doLogin() {
   document.getElementById('adminPage').classList.remove('hidden');
   loadVendedores();
   loadAdmins();
+}
+
+async function doReset() {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { alert('Digite seu email primeiro.'); return; }
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bmax-motor.pages.dev/equipe'
+  });
+  if (error) { alert('Erro: ' + error.message); return; }
+  alert('Email de redefinição enviado para ' + email + '. Verifique sua caixa de entrada.');
 }
 
 async function doLogout() {
