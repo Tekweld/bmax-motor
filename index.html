@@ -6,6 +6,7 @@
 <title>BMax — Motor PCI</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#050e1c; --bg2:#091525; --bg3:#1d327b; --acc:#25bbee; --acc2:#00e5b0;
@@ -169,6 +170,15 @@ main{padding:30px 32px;overflow-y:auto}
 .din{background:rgba(0,229,176,.12);color:var(--acc2)}
 .dout{background:rgba(245,101,101,.1);color:var(--red)}
 .chip{display:inline-block;padding:3px 9px;border-radius:18px;font-size:11px;font-weight:600}
+.srch-wrap{position:relative;width:100%}
+.srch-inp{width:100%;padding:7px 30px 7px 10px;background:var(--srf);border:1px solid var(--brd);border-radius:6px;color:var(--txt);font-family:Outfit,sans-serif;font-size:13px;outline:none;box-sizing:border-box}
+.srch-inp:focus{border-color:var(--acc)}
+.srch-inp:disabled{opacity:.45;cursor:not-allowed}
+.srch-arr{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--mut);font-size:11px}
+.srch-drop{position:fixed;background:#1a2340;border:1px solid var(--acc);border-radius:7px;max-height:220px;overflow-y:auto;z-index:99999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.srch-drop.open{display:block}
+.srch-opt{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--txt)}
+.srch-opt:hover,.srch-opt.hi{background:rgba(37,187,238,.15);color:#25bbee}
 .chip-o{background:rgba(245,166,35,.14);color:var(--gold);border:1px solid rgba(245,166,35,.28)}
 .chip-p{background:rgba(148,163,184,.1);color:var(--sil);border:1px solid rgba(148,163,184,.22)}
 .chip-n{background:rgba(255,255,255,.05);color:var(--mut);border:1px solid rgba(255,255,255,.09)}
@@ -229,13 +239,130 @@ main{padding:30px 32px;overflow-y:auto}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:99px}
+/* ── ADMIN SECTIONS ── */
+.adm-wrap{max-width:960px;margin:0 auto;padding:0}
+.adm-login-box{background:#fff;border-radius:12px;padding:32px;max-width:400px;margin:40px auto;border:1px solid #d0d8e8}
+.adm-login-box h2{font-size:17px;font-weight:700;color:#1d327b;text-align:center;margin-bottom:4px}
+.adm-login-box p{font-size:12px;color:#718096;text-align:center;margin-bottom:20px}
+.adm-field{margin-bottom:14px}
+.adm-field label{display:block;font-size:11px;font-weight:500;color:#4a5568;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.adm-field input{width:100%;padding:9px 12px;border:1px solid #c3cfe2;border-radius:7px;font-size:13px;font-family:inherit;outline:none;color:#1a202c}
+.adm-field input:focus{border-color:#25bbee}
+.adm-err{background:#fee2e2;color:#991b1b;padding:9px 12px;border-radius:7px;font-size:12px;margin-bottom:12px;border:1px solid #fecaca}
+.adm-btn-login{width:100%;padding:11px;background:#1d327b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.adm-btn-login:hover{background:#162666}
+.adm-reset-link{text-align:center;margin-top:12px;font-size:12px;color:#718096;cursor:pointer;text-decoration:underline}
+.adm-card{background:#fff;border-radius:12px;border:1px solid #d0d8e8;margin-bottom:16px}
+.adm-card-header{padding:14px 18px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
+.adm-card-title{font-size:15px;font-weight:600;color:#1d327b}
+.adm-card-body{padding:18px}
+.adm-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.adm-filters{background:#fff;border-radius:10px;border:1px solid #d0d8e8;padding:14px 18px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.adm-filters label{font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.adm-filters select,.adm-filters input{padding:6px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:12px;font-family:inherit;outline:none;min-width:130px;color:#1a202c}
+.adm-filters select:focus,.adm-filters input:focus{border-color:#25bbee}
+.adm-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.adm-tbl thead th{padding:8px 10px;text-align:left;color:#718096;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;background:#f7fafc}
+.adm-tbl tbody td{padding:8px 10px;border-bottom:1px solid #f0f4f8;vertical-align:middle;color:#1a202c}
+.adm-tbl tbody tr:hover{background:#f0f7ff}
+.adm-badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.adm-badge-vi{background:#e8edf8;color:#1d327b}
+.adm-badge-vt1{background:#e0f8ff;color:#0e7490}
+.adm-badge-vt2{background:#fef3c7;color:#92400e}
+.adm-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;border:1px solid rgba(0,0,0,.1);vertical-align:middle}
+.adm-btn{padding:6px 12px;border-radius:7px;border:1px solid;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer}
+.adm-btn-sm{padding:3px 9px;font-size:11px}
+.adm-btn-p{background:#1d327b;color:#fff;border-color:#1d327b}.adm-btn-p:hover{background:#162666}
+.adm-btn-d{background:#fff;color:#e30613;border-color:#fecaca}.adm-btn-d:hover{background:#fee2e2}
+.adm-btn-o{background:#fff;color:#4a5568;border-color:#c3cfe2}.adm-btn-o:hover{border-color:#25bbee;color:#1d327b}
+.adm-btn-warn{background:#f59e0b;color:#fff;border-color:#f59e0b}
+.adm-pag{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid #e2e8f0;justify-content:flex-end}
+.adm-pag button{padding:5px 12px;border:1px solid #c3cfe2;background:#fff;border-radius:6px;font-family:inherit;font-size:12px;cursor:pointer;color:#4a5568}
+.adm-pag button:hover{border-color:#25bbee;color:#1d327b}
+.adm-pag button:disabled{opacity:.4;cursor:default}
+.adm-pag span{font-size:12px;color:#718096}
+.adm-rep-sel{padding:4px 8px;border:1px solid #c3cfe2;border-radius:5px;font-size:12px;font-family:inherit;outline:none;background:#fff;min-width:140px;color:#1a202c}
+.adm-rep-sel:focus{border-color:#25bbee}
+.adm-rep-sel.dirty{border-color:#f59e0b;background:#fffbeb}
+.adm-save-btn{padding:3px 9px;font-size:11px;border:1px solid #1d327b;background:#1d327b;color:#fff;border-radius:4px;cursor:pointer;font-family:inherit}
+.adm-save-btn:hover{background:#162666}
+.adm-pg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.adm-pg-title{font-size:16px;font-weight:600;color:#fff}
+.adm-pg-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.adm-user-info{display:flex;align-items:center;gap:10px}
+.adm-user-info span{font-size:12px;color:rgba(255,255,255,.6)}
+.adm-logout{font-size:12px;color:rgba(255,255,255,.6);padding:5px 10px;border:1px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer}
+.adm-logout:hover{background:rgba(255,255,255,.08);color:#fff}
+.adm-inline-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding-top:14px;border-top:1px solid #e2e8f0;margin-top:8px}
+.adm-inline-field{flex:1;min-width:160px}
+.adm-inline-field label{display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.adm-inline-field input{width:100%;padding:7px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:12px;font-family:inherit;outline:none;color:#1a202c}
+.adm-inline-field input:focus{border-color:#25bbee}
 </style>
 </head>
 <body>
 
-<!-- ══════ LOGIN ══════ -->
+<!-- ══════ RESET DE SENHA (recovery link) ══════ -->
+<div id="resetPage" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:var(--bg)">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-i">BM</div>
+      <div>
+        <div class="login-logo-t"><span>BMax</span> Motor PCI</div>
+        <div class="login-logo-sub">Boxer Soldas · Industrial</div>
+      </div>
+    </div>
+    <p class="login-title">Defina sua nova senha de acesso.</p>
+    <div id="reset-err" class="login-err"></div>
+    <div class="lf">
+      <label>Nova senha</label>
+      <input id="reset-pass1" type="password" placeholder="Mínimo 6 caracteres"
+             onkeydown="if(event.key==='Enter')document.getElementById('reset-pass2').focus()">
+    </div>
+    <div class="lf">
+      <label>Confirmar senha</label>
+      <input id="reset-pass2" type="password" placeholder="Repita a nova senha"
+             onkeydown="if(event.key==='Enter')submitNewPassword()">
+    </div>
+    <button class="login-btn" id="reset-btn" onclick="submitNewPassword()">Salvar nova senha</button>
+  </div>
+</div>
+
+<!-- ══════ LOGIN GLOBAL ══════ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-i">BM</div>
+      <div>
+        <div class="login-logo-t"><span>BMax</span> Motor PCI</div>
+        <div class="login-logo-sub">Boxer Soldas · Industrial</div>
+      </div>
+    </div>
+    <p class="login-title">Acesso restrito a usuários autorizados.<br>Faça login com suas credenciais BMax.</p>
+    <div id="glb-err" class="login-err"></div>
+    <div class="lf">
+      <label>Email</label>
+      <input id="glb-email" type="email" placeholder="seu@boxersoldas.com.br" autocomplete="email"
+             onkeydown="if(event.key==='Enter')document.getElementById('glb-pass').focus()">
+    </div>
+    <div class="lf">
+      <label>Senha</label>
+      <input id="glb-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')globalLogin()">
+    </div>
+    <button class="login-btn" id="glb-btn" onclick="globalLogin()">Entrar</button>
+    <div style="text-align:center;margin-top:14px">
+      <a href="#" onclick="globalReset(event)"
+         style="font-size:12px;color:var(--mut);text-decoration:none;transition:color .15s"
+         onmouseover="this.style.color='var(--acc)'" onmouseout="this.style.color='var(--mut)'">
+        Esqueceu a senha?
+      </a>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ APP ══════ -->
-<div id="appPage">
+<div id="appPage" style="display:none">
 
 <nav class="mnav">
   <div class="mnav-logo"><span>BMax</span> PCI</div>
@@ -243,7 +370,8 @@ main{padding:30px 32px;overflow-y:auto}
     <button class="mtab on" onclick="nav('classificar',this)">⚡</button>
     <button class="mtab"    onclick="nav('revendas',this)">🏪</button>
     <button class="mtab"    onclick="nav('tabela',this)">📊</button>
-    <button class="mtab"    onclick="nav('config',this)">⚙️</button>
+    <button class="mtab"    onclick="nav('cobertura',this)">🗺️</button>
+    <button class="mtab" id="mnav-config-tab" onclick="nav('config',this);adm_enterSection()">⚙️</button>
   </div>
 </nav>
 
@@ -261,17 +389,27 @@ main{padding:30px 32px;overflow-y:auto}
     <button class="ni on" onclick="nav('classificar',this)"><span class="ni-ic">⚡</span>Classificar Lead</button>
     <button class="ni"    onclick="nav('revendas',this)"><span class="ni-ic">🏪</span>Revendas BMax</button>
     <button class="ni"    onclick="nav('tabela',this)"><span class="ni-ic">📊</span>Tabela de PCIs</button>
-    <button class="ni"    onclick="nav('config',this)"><span class="ni-ic">⚙️</span>Configurações</button>
+    <button class="ni"    onclick="nav('cobertura',this)"><span class="ni-ic">🗺️</span>Cobertura BMax</button>
   </div>
-  <div>
+  <div id="sidebar-admin-section">
     <div class="nl">Administração</div>
-    <a class="ni" href="equipe.html" target="_blank"><span class="ni-ic">👤</span>Equipe Comercial</a>
-    <a class="ni" href="representantes.html" target="_blank"><span class="ni-ic">🗺️</span>Representantes</a>
+    <button class="ni" onclick="nav('equipe',this);adm_enterSection()"><span class="ni-ic">👤</span>Equipe Comercial</button>
+    <button class="ni" onclick="nav('representantes',this);adm_enterSection()"><span class="ni-ic">🗺️</span>Representantes</button>
+    <button class="ni" onclick="nav('config',this);adm_enterSection()"><span class="ni-ic">⚙️</span>Configurações</button>
   </div>
   <div class="sbox">
     <div class="sbox-l">Revendas ativas</div>
     <div class="sbox-n" id="sb-n">0</div>
     <div class="sbox-s" id="sb-s">carregando...</div>
+  </div>
+  <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--bdr)">
+    <div style="font-size:11px;color:var(--mut);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px">Logado como</div>
+    <div id="glb-user-name" style="font-size:13px;font-weight:600;color:var(--whi);margin-bottom:10px"></div>
+    <button onclick="globalLogout()" style="width:100%;padding:7px 12px;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:8px;color:var(--mut);font-size:12px;cursor:pointer;text-align:left;transition:all .15s"
+      onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
+      onmouseout="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='var(--mut)'">
+      ↩ Sair
+    </button>
   </div>
 </aside>
 
@@ -362,8 +500,8 @@ main{padding:30px 32px;overflow-y:auto}
 
   <!-- STEP 3b: CONDUTOR (somente leads revenda) -->
   <div class="card ws" id="ws-condutor">
-    <div class="step-n">Passo 3b de 5 — Lead Revenda</div>
-    <div class="pbar"><div class="pfill" style="width:70%"></div></div>
+    <div class="step-n">Passo 3 de 3 — Lead Revenda</div>
+    <div class="pbar"><div class="pfill" style="width:100%"></div></div>
     <div class="sq">Quem conduz a negociação com o cliente final?</div>
     <div class="sh">Define se é <strong>PCI16</strong> (Boxer participa junto) ou <strong>PCI17</strong> (Revenda conduz sozinha). A revenda escolhe o modelo.</div>
     <div class="og">
@@ -382,32 +520,9 @@ main{padding:30px 32px;overflow-y:auto}
     </div>
   </div>
 
-  <!-- STEP 4: REPRESENTANTE (leads boxer) -->
-  <div class="card ws" id="ws-rep">
-    <div class="step-n">Passo 4 de 5</div>
-    <div class="pbar"><div class="pfill" style="width:80%"></div></div>
-    <div class="sq">Há representante BMax ativo na região do lead?</div>
-    <div class="sh" id="rep-hint">O representante territorial está credenciado e ativo no BMax para esta área?</div>
-    <div id="rep-auto-msg"></div>
-    <div class="og" id="rep-og">
-      <button class="ob" data-v="sim" onclick="pick('rep',this)">
-        <div class="on-name">✅ Sim — há representante BMax</div>
-        <div class="on-desc">Representante credenciado e ativo na área</div>
-      </button>
-      <button class="ob" data-v="nao" onclick="pick('rep',this)">
-        <div class="on-name">❌ Não — sem representante BMax</div>
-        <div class="on-desc">Região sem representante BMax ativo</div>
-      </button>
-    </div>
-    <div class="brow">
-      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
-      <button class="btn btn-p" onclick="goRepNext()">Próximo →</button>
-    </div>
-  </div>
-
-  <!-- STEP 5: VALOR NF -->
+  <!-- STEP 3 (antes 4): VALOR NF — rep determinado automaticamente pelo leadGeo -->
   <div class="card ws" id="ws-nf">
-    <div class="step-n">Passo 5 de 5</div>
+    <div class="step-n">Passo 3 de 3</div>
     <div class="pbar"><div class="pfill" style="width:100%"></div></div>
     <div class="sq">Qual o valor estimado da venda?</div>
     <div class="sh">Para Máquina Industrial, o valor define o cluster: ≥ R$ 50.000 → PCI 10–12 · &lt; R$ 50.000 → PCI 13–15.</div>
@@ -422,7 +537,7 @@ main{padding:30px 32px;overflow-y:auto}
       </button>
     </div>
     <div class="brow">
-      <button class="btn btn-g" onclick="goWs('rep')">← Voltar</button>
+      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
       <button class="btn btn-p" onclick="classify()">⚡ Classificar Agora</button>
     </div>
   </div>
@@ -437,9 +552,10 @@ main{padding:30px 32px;overflow-y:auto}
     <h1 class="ph-title">Revendas BMax</h1>
     <p class="ph-sub">Revendas carregadas do Supabase. Use o script de enriquecimento ZEN para atualizar CEPs e coordenadas.</p>
   </div>
-  <div class="card">
+  <div id="rev-form-wrapper"><div class="card">
     <div class="ct">➕ Adicionar / Editar Revenda</div>
     <input type="hidden" id="r-id">
+    <input type="hidden" id="r-estado-hidden">
     <div class="fr c3">
       <div class="fi"><label>Nome da Revenda</label><input type="text" id="r-nome" placeholder="Ex: Technofer Araraquara"></div>
       <div class="fi"><label>Representante</label><input type="text" id="r-rep" placeholder="Ex: Victor VLM"></div>
@@ -470,7 +586,7 @@ main{padding:30px 32px;overflow-y:auto}
       </label>
       <button class="btn btn-g btn-sm" onclick="recarregarRevendas()">🔄 Recarregar</button>
     </div>
-  </div>
+  </div></div>
   <div class="card">
     <div class="ct">🏪 Revendas cadastradas</div>
     <div id="rev-load" class="al al-i" style="display:none">⏳ Carregando revendas do Supabase...</div>
@@ -478,7 +594,7 @@ main{padding:30px 32px;overflow-y:auto}
       <table class="rtbl" id="rtbl">
         <thead><tr>
           <th>Revenda</th><th>Rep</th><th>Cidade / UF</th>
-          <th>CEP</th><th>Coords</th><th>Classe</th><th>Ações</th>
+          <th>CEP</th><th>Coords</th><th>Classe</th><th id="rev-acoes-th">Ações</th>
         </tr></thead>
         <tbody id="rtbody"></tbody>
       </table>
@@ -499,34 +615,259 @@ main{padding:30px 32px;overflow-y:auto}
 
 <!-- ══════ CONFIG ══════ -->
 <div class="pg" id="pg-config">
+  <!-- login gate (reutiliza mesma lógica do adm-login-box) -->
+  <div id="adm-cfg-login-box"></div>
+  <div id="adm-cfg-content" class="hidden">
+    <div class="ph">
+      <div class="ph-tag">Parâmetros</div>
+      <h1 class="ph-title">Configurações</h1>
+      <p class="ph-sub">Ajuste thresholds e comissões. Configurações salvas no Supabase e compartilhadas entre usuários.</p>
+    </div>
+    <div class="card">
+      <div class="ct">📐 Thresholds</div>
+      <div class="fr c2">
+        <div class="fi"><label>Raio máximo de revenda (km)</label><input type="number" id="c-raio" value="50"></div>
+        <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="50000"></div>
+        <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="120"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">💰 Comissões padrão (%)</div>
+      <div class="fr c2">
+        <div class="fi"><label>Rep Robô/Laser múltiplo sem revenda</label><input type="number" id="c-rep0" value="0" step="0.1"></div>
+        <div class="fi"><label>Rep Robô/Laser múltiplo com revenda</label><input type="number" id="c-rep1" value="1" step="0.1"></div>
+        <div class="fi"><label>Rep Laser simples com revenda</label><input type="number" id="c-rep3a" value="3" step="0.1"></div>
+        <div class="fi"><label>Rep Máquina ≥50k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
+        <div class="fi"><label>Rep Máquina &lt;50k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
+        <div class="fi"><label>Vendedor Interno (todos os PCIs Boxer)</label><input type="number" id="c-vi" value="1.2" step="0.1"></div>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="saveCfg()">💾 Salvar Configurações</button>
+      <button class="btn btn-g" onclick="resetCfg()">↩ Restaurar padrões</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ COBERTURA ══════ -->
+<div class="pg" id="pg-cobertura">
   <div class="ph">
-    <div class="ph-tag">Parâmetros</div>
-    <h1 class="ph-title">Configurações</h1>
-    <p class="ph-sub">Ajuste thresholds e comissões. Configurações salvas no Supabase e compartilhadas entre usuários.</p>
+    <div class="ph-tag">Consulta</div>
+    <h1 class="ph-title">Cobertura BMax</h1>
+    <p class="ph-sub">Pesquise qual representante atende cada cidade. Filtre por estado ou busque pelo nome da cidade.</p>
   </div>
-  <div class="card">
-    <div class="ct">📐 Thresholds</div>
-    <div class="fr c2">
-      <div class="fi"><label>Raio máximo de revenda (km)</label><input type="number" id="c-raio" value="50"></div>
-      <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="50000"></div>
-      <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="120"></div>
+
+  <div class="card" style="margin-bottom:12px;backdrop-filter:none;overflow:visible">
+    <div class="ct">🔍 Pesquisar</div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:0 0 150px">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Estado</label>
+        <div class="srch-wrap">
+          <input class="srch-inp" id="cob-estado-inp" placeholder="Ex: SP" autocomplete="off" maxlength="30"
+            oninput="cobEstadoInp()" onfocus="cobEstadoFocus()" onblur="cobEstadoBlur()" onkeydown="cobEstadoKey(event)">
+          <span class="srch-arr">▼</span>
+          <div class="srch-drop" id="cob-estado-drop"></div>
+        </div>
+      </div>
+      <div style="flex:0 0 260px">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Cidade</label>
+        <div class="srch-wrap">
+          <input class="srch-inp" id="cob-cidade-inp" placeholder="Selecione um estado primeiro" autocomplete="off" disabled
+            oninput="cobCidadeInp()" onfocus="cobCidadeFocus()" onblur="cobCidadeBlur()" onkeydown="cobCidadeKey(event)">
+          <span class="srch-arr">▼</span>
+          <div class="srch-drop" id="cob-cidade-drop"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;padding-bottom:1px">
+        <button class="btn btn-p" onclick="cobBuscar()">🔍 Buscar</button>
+        <button class="btn btn-g" onclick="cobLimpar()">✕</button>
+        <span id="cob-hint" style="font-size:12px;color:var(--mut)"></span>
+      </div>
     </div>
   </div>
+
+  <div class="card" style="margin-bottom:12px;display:none" id="cob-rep-card">
+    <div class="ct">👤 Atendimento por cidade</div>
+    <div id="cob-rep-content"></div>
+  </div>
+
   <div class="card">
-    <div class="ct">💰 Comissões padrão (%)</div>
-    <div class="fr c2">
-      <div class="fi"><label>Rep Robô/Laser múltiplo sem revenda</label><input type="number" id="c-rep0" value="0" step="0.1"></div>
-      <div class="fi"><label>Rep Robô/Laser múltiplo com revenda</label><input type="number" id="c-rep1" value="1" step="0.1"></div>
-      <div class="fi"><label>Rep Laser simples com revenda</label><input type="number" id="c-rep3a" value="3" step="0.1"></div>
-      <div class="fi"><label>Rep Máquina ≥50k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
-      <div class="fi"><label>Rep Máquina &lt;50k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
-      <div class="fi"><label>Vendedor Interno (todos os PCIs Boxer)</label><input type="number" id="c-vi" value="1.2" step="0.1"></div>
+    <div class="ct">🏪 Revendas BMax</div>
+    <div id="cob-rev-content"><p style="font-size:13px;color:var(--mut)">Selecione um estado para ver as revendas.</p></div>
+  </div>
+</div>
+
+<!-- ══════ PG-EQUIPE ══════ -->
+<div class="pg" id="pg-equipe">
+<div style="padding:20px 24px">
+
+  <!-- login -->
+  <div id="adm-login-box">
+    <div class="adm-login-box">
+      <h2>Administração BMax Motor</h2>
+      <p>Acesso restrito a administradores do sistema</p>
+      <div id="adm-err" class="adm-err hidden"></div>
+      <div class="adm-field"><label>Email</label><input id="adm-email" type="email" placeholder="seu@boxersoldas.com.br"></div>
+      <div class="adm-field"><label>Senha</label><input id="adm-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adm_doLogin()"></div>
+      <button class="adm-btn-login" onclick="adm_doLogin()">Entrar</button>
+      <div class="adm-reset-link" onclick="adm_doReset()">Esqueceu a senha?</div>
     </div>
   </div>
-  <div class="brow">
-    <button class="btn btn-p" onclick="saveCfg()">💾 Salvar Configurações</button>
-    <button class="btn btn-g" onclick="resetCfg()">↩ Restaurar padrões</button>
+
+  <!-- conteúdo -->
+  <div id="adm-equipe-content" class="hidden">
+    <div class="adm-pg-header">
+      <div>
+        <div class="adm-pg-title">Equipe Comercial BMax</div>
+        <div class="adm-pg-sub">Vendedores e territórios</div>
+      </div>
+      <div class="adm-user-info">
+        <span>Logado como <strong id="adm-user-name" style="color:#fff"></strong></span>
+        <span class="adm-logout" onclick="adm_doLogout()">Sair</span>
+      </div>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-header">
+        <div class="adm-card-title">Vendedores cadastrados</div>
+        <button class="adm-btn adm-btn-p" onclick="adm_openVendedorModal()">+ Novo vendedor</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="adm-tbl">
+          <thead><tr><th>Nome</th><th>Tipo</th><th>Cor</th><th>DDDs</th><th>Fallback</th><th>Ativo</th><th></th></tr></thead>
+          <tbody id="adm-vnd-body"><tr><td colspan="7" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-header">
+        <div class="adm-card-title">Representantes BMax</div>
+        <button class="adm-btn adm-btn-p" onclick="adm_openRepBmaxModal()">+ Novo representante</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="adm-tbl">
+          <thead><tr><th>Nome</th><th>Status</th><th style="width:120px"></th></tr></thead>
+          <tbody id="adm-repbmax-body"><tr><td colspan="3" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-header">
+        <div class="adm-card-title">Acesso ao Sistema</div>
+      </div>
+      <div class="adm-card-body">
+        <table class="adm-tbl">
+          <thead><tr><th>Email</th><th>Nome</th><th>Perfil</th><th>Desde</th><th></th></tr></thead>
+          <tbody id="adm-admins-body"><tr><td colspan="5" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
+        </table>
+        <div class="adm-inline-row" style="margin-top:16px">
+          <div class="adm-inline-field"><label>Email</label><input id="adm-new-email" type="email" placeholder="nome@boxersoldas.com.br"></div>
+          <div class="adm-inline-field"><label>Nome</label><input id="adm-new-nome" placeholder="Nome completo"></div>
+          <div class="adm-inline-field"><label>Senha inicial</label><input id="adm-new-senha" type="password" placeholder="Mínimo 6 caracteres"></div>
+          <div class="adm-inline-field"><label>Perfil</label>
+            <select id="adm-new-perfil" style="padding:8px 10px;background:#0f1f3d;border:1px solid #2d5a8e;color:#fff;border-radius:6px;font-family:Outfit;font-size:13px">
+              <option value="usuario">Usuário</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <button class="adm-btn adm-btn-p" onclick="adm_addAdmin()">+ Adicionar</button>
+        </div>
+        <p style="font-size:11px;color:#718096;margin-top:10px">Administradores têm acesso completo, inclusive a esta área de gestão. Não afeta acesso a outros sistemas Boxer.</p>
+      </div>
+    </div>
   </div>
+
+</div>
+</div>
+
+<!-- ══════ PG-REPRESENTANTES ══════ -->
+<div class="pg" id="pg-representantes">
+<div style="padding:20px 24px">
+
+  <!-- login compartilhado — redireciona para equipe para fazer login -->
+  <div id="adm-rep-login-box">
+    <div class="adm-login-box">
+      <h2>Administração BMax Motor</h2>
+      <p>Acesso restrito a administradores do sistema</p>
+      <div id="adm-rep-err" class="adm-err hidden"></div>
+      <div class="adm-field"><label>Email</label><input id="adm-rep-email" type="email" placeholder="seu@boxersoldas.com.br"></div>
+      <div class="adm-field"><label>Senha</label><input id="adm-rep-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adm_doLogin('rep')"></div>
+      <button class="adm-btn-login" onclick="adm_doLogin('rep')">Entrar</button>
+      <div class="adm-reset-link" onclick="adm_doReset('rep')">Esqueceu a senha?</div>
+    </div>
+  </div>
+
+  <!-- conteúdo -->
+  <div id="adm-repr-content" class="hidden">
+    <div class="adm-pg-header">
+      <div>
+        <div class="adm-pg-title">Representantes BMax por Município</div>
+        <div class="adm-pg-sub">Cobertura de 5.571 municípios</div>
+      </div>
+      <div class="adm-user-info">
+        <span>Logado como <strong id="adm-rep-user-name" style="color:#fff"></strong></span>
+        <span class="adm-logout" onclick="adm_doLogout()">Sair</span>
+      </div>
+    </div>
+
+    <!-- Gestão de representantes inline -->
+    <div class="adm-card" style="margin-bottom:16px">
+      <div class="adm-card-header" style="cursor:pointer" onclick="var p=document.getElementById('repr-mgmt-panel');p.style.display=p.style.display==='none'?'block':'none'">
+        <div class="adm-card-title">👥 Representantes BMax</div>
+        <button class="adm-btn adm-btn-p" onclick="event.stopPropagation();adm_openRepBmaxModal()">+ Novo</button>
+      </div>
+      <div id="repr-mgmt-panel" style="display:none;overflow-x:auto">
+        <table class="adm-tbl">
+          <thead><tr><th>Nome</th><th>Status</th><th style="width:200px"></th></tr></thead>
+          <tbody id="adm-repbmax-body2"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="adm-filters">
+      <div><label>Estado</label><select id="adm-f-estado" onchange="adm_reprApplyFilter()"><option value="">Todos</option></select></div>
+      <div><label>Representante</label><select id="adm-f-rep" onchange="adm_reprApplyFilter()"><option value="">Todos</option><option value="__sem__">Sem representante</option></select></div>
+      <div><label>DDD</label><select id="adm-f-ddd" onchange="adm_reprApplyFilter()"><option value="">Todos</option></select></div>
+      <div><label>Buscar cidade</label><input id="adm-f-cidade" placeholder="Nome da cidade..." oninput="adm_reprApplyFilter()"></div>
+      <button class="adm-btn adm-btn-o" onclick="adm_reprClearFilters()">Limpar</button>
+    </div>
+
+    <div class="adm-card">
+      <div class="adm-card-header">
+        <div class="adm-card-title">Municípios</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="adm-repr-stats" style="font-size:12px;color:#718096">Carregando...</div>
+          <button class="adm-btn adm-btn-p" onclick="adm_openImport()" style="font-size:12px;padding:5px 10px">📂 Importar planilha</button>
+        </div>
+      </div>
+      <!-- barra de atribuição em lote -->
+      <div id="adm-bulk-bar" style="background:#1e3a5f;border:1px solid #2d5a8e;border-radius:8px;padding:12px 16px;margin-bottom:12px;align-items:center;gap:10px;flex-wrap:wrap;display:none">
+        <span style="font-size:13px;color:#93b4d4">Aplicar a <strong id="adm-bulk-count" style="color:#fff">0</strong> municípios filtrados:</span>
+        <select id="adm-bulk-rep" style="font-size:13px;padding:5px 10px;background:#0f1f3d;border:1px solid #2d5a8e;color:#fff;border-radius:6px;min-width:200px"></select>
+        <button class="adm-btn adm-btn-p" onclick="adm_applyBulk()" style="font-size:13px">✅ Aplicar a todos</button>
+        <span id="adm-bulk-progress" style="font-size:12px;color:#93b4d4"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="adm-tbl">
+          <thead><tr><th>Cidade</th><th>Estado</th><th>DDD</th><th>Representante BMax</th></tr></thead>
+          <tbody id="adm-repr-body"><tr><td colspan="4" style="text-align:center;padding:24px;color:#718096">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+      <div id="adm-saveall-bar" style="display:none;padding:10px 0 4px;gap:10px;align-items:center">
+        <button class="adm-btn adm-btn-p" onclick="adm_saveAll()" id="adm-saveall-btn">💾 Salvar alterações pendentes (<span id="adm-saveall-count">0</span>)</button>
+        <span id="adm-saveall-status" style="font-size:12px;color:#93b4d4"></span>
+      </div>
+      <div class="adm-pag">
+        <button id="adm-repr-prev" onclick="adm_reprChangePage(-1)" disabled>← Anterior</button>
+        <span id="adm-repr-page-info">—</span>
+        <button id="adm-repr-next" onclick="adm_reprChangePage(1)">Próxima →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
 </div>
 
 </main>
@@ -550,8 +891,137 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const { createClient } = supabase;
 const sbClient = createClient(SB_URL, SB_ANON);
-// Inicializa direto — autenticação feita pelo Cloudflare Access
-(async () => { await initApp(); })();
+
+// Declaradas cedo — usadas pelo bootstrap e pelas seções admin
+let adminSession  = null;
+let adminInfo     = null;
+let adm_reprLoaded = false;
+
+// ════════════════════════════════════════════════════
+// AUTENTICAÇÃO GLOBAL
+// ════════════════════════════════════════════════════
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display   = 'none';
+}
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display   = 'block';
+  const nome = adminInfo?.nome || adminInfo?.email?.split('@')[0] || '';
+  document.getElementById('glb-user-name').textContent = nome;
+  const isAdmin = adminInfo?.perfil === 'admin';
+  document.getElementById('sidebar-admin-section').style.display = isAdmin ? '' : 'none';
+  document.getElementById('rev-form-wrapper').style.display = isAdmin ? '' : 'none';
+  const mnCfg = document.getElementById('mnav-config-tab');
+  if (mnCfg) mnCfg.style.display = isAdmin ? '' : 'none';
+  const acoesTh = document.getElementById('rev-acoes-th');
+  if (acoesTh) acoesTh.style.display = isAdmin ? '' : 'none';
+}
+
+async function globalLogin() {
+  const email = document.getElementById('glb-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('glb-pass').value;
+  const errEl = document.getElementById('glb-err');
+  const btn   = document.getElementById('glb-btn');
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent = 'Preencha email e senha.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try {
+    const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+    if (error || !data.session) {
+      errEl.textContent = 'Email ou senha incorretos.'; errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar'; return;
+    }
+    const { data: row } = await sbClient.from('comercial_bmax_admins')
+      .select('email,nome,perfil').eq('email', email).eq('ativo', true).maybeSingle();
+    if (!row) {
+      await sbClient.auth.signOut();
+      errEl.textContent = 'Você não tem acesso ao BMax Motor. Solicite ao administrador.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar'; return;
+    }
+    adminSession = data.session;
+    adminInfo    = row;
+    showApp();
+    adm_enterSection();
+    await initApp();
+  } catch(e) {
+    errEl.textContent = 'Erro de conexão. Tente novamente.'; errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+async function globalReset(e) {
+  e.preventDefault();
+  const email = document.getElementById('glb-email').value.trim();
+  if (!email) { alert('Digite seu email no campo acima primeiro.'); return; }
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bmax-motor.pages.dev'
+  });
+  if (error) { alert('Erro: ' + error.message); return; }
+  alert('Email de redefinição enviado para ' + email + '.\nVerifique sua caixa de entrada.');
+}
+
+async function globalLogout() {
+  await sbClient.auth.signOut();
+  adminSession = null; adminInfo = null; adm_reprLoaded = false;
+  showLogin();
+}
+
+function showResetPage() {
+  document.getElementById('resetPage').style.display  = 'flex';
+  document.getElementById('loginPage').style.display  = 'none';
+  document.getElementById('appPage').style.display    = 'none';
+}
+
+async function submitNewPassword() {
+  const p1  = document.getElementById('reset-pass1').value;
+  const p2  = document.getElementById('reset-pass2').value;
+  const err = document.getElementById('reset-err');
+  const btn = document.getElementById('reset-btn');
+  err.style.display = 'none';
+  if (!p1 || p1.length < 6) { err.textContent = 'A senha deve ter no mínimo 6 caracteres.'; err.style.display = 'block'; return; }
+  if (p1 !== p2) { err.textContent = 'As senhas não coincidem.'; err.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  const { error } = await sbClient.auth.updateUser({ password: p1 });
+  if (error) {
+    err.textContent = 'Erro: ' + error.message; err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Salvar nova senha'; return;
+  }
+  await sbClient.auth.signOut();
+  document.getElementById('resetPage').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  const glbErr = document.getElementById('glb-err');
+  glbErr.textContent = 'Senha alterada com sucesso. Faça login com a nova senha.';
+  glbErr.style.display = 'block';
+  glbErr.style.background = '#064e3b';
+  glbErr.style.color = '#6ee7b7';
+}
+
+// Bootstrap: verifica sessão existente ou exibe login
+(async () => {
+  // Detecta token de recovery no hash da URL (chegou via link "Esqueceu a senha?")
+  sbClient.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') showResetPage();
+  });
+
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session) {
+    // Sessão pode ser uma recovery session — onAuthStateChange acima cuida disso
+    const { data: row } = await sbClient.from('comercial_bmax_admins')
+      .select('email,nome,perfil').eq('email', session.user.email).eq('ativo', true).maybeSingle();
+    if (row) {
+      adminSession = session;
+      adminInfo    = row;
+      showApp();
+      adm_enterSection();
+      await initApp();
+      return;
+    }
+    await sbClient.auth.signOut();
+  }
+  showLogin();
+})();
 
 // ════════════════════════════════════════════════════
 // TABELA EXATA DOS 17 PCIs (planilha BMAX_CRITERIOS — 2ª Versão)
@@ -758,6 +1228,7 @@ async function initApp() {
   renderRevTable();
   renderTabela();
   updateSb();
+  loadCobertura();
 }
 
 // ════════════════════════════════════════════════════
@@ -953,10 +1424,16 @@ async function geocodeViaViaCEP(cep) {
   return null;
 }
 
-async function nominatimQuery(q) {
+const _NOM_DELAY = 400; // ms entre chamadas Nominatim (rate-limit: 1 req/s)
+async function nominatimQuery(params) {
+  await new Promise(r => setTimeout(r, _NOM_DELAY));
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`;
-    const r = await fetch(url, { headers:{'User-Agent':'BMaxMotorPCI/3.0 (boxersoldas.com.br)'} });
+    const qs = typeof params === 'string'
+      ? `q=${encodeURIComponent(params)}&format=json&limit=1&countrycodes=br`
+      : Object.entries({...params, format:'json', limit:1, countrycodes:'br'})
+          .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?${qs}`,
+      { headers:{'User-Agent':'BMaxMotorPCI/3.0 (boxersoldas.com.br)'} });
     if (!r.ok) return null;
     const d = await r.json();
     if (!d.length) return null;
@@ -964,22 +1441,89 @@ async function nominatimQuery(q) {
   } catch { return null; }
 }
 
+// Centróide aproximado via IBGE GeoJSON (município inteiro — não tem rate-limit)
+async function ibgeCentroid(ibgeCode) {
+  if (!ibgeCode) return null;
+  try {
+    const r = await fetch(
+      `https://servicodados.ibge.gov.br/api/v3/malhas/municipios/${ibgeCode}?formato=application/vnd.geo+json&qualidade=minima`
+    );
+    if (!r.ok) return null;
+    const geo = await r.json();
+    const feature = geo?.features?.[0];
+    if (!feature) return null;
+    // Extrai todos os pontos do polígono e calcula centróide como média
+    const coords = [];
+    const extract = (arr) => {
+      if (typeof arr[0] === 'number') { coords.push(arr); return; }
+      arr.forEach(extract);
+    };
+    extract(feature.geometry.coordinates);
+    if (!coords.length) return null;
+    const lat = coords.reduce((s,c) => s + c[1], 0) / coords.length;
+    const lng = coords.reduce((s,c) => s + c[0], 0) / coords.length;
+    return { lat, lng, _approx: 'centroide_ibge' };
+  } catch { return null; }
+}
+
+// Busca qualquer CEP do centro da cidade via ViaCEP → BrasilAPI
+async function cityCenterCep(city, state) {
+  if (!city || !state) return null;
+  try {
+    // ViaCEP: busca CEPs de "Centro" na cidade
+    const r = await fetch(
+      `https://viacep.com.br/ws/${encodeURIComponent(state)}/${encodeURIComponent(city)}/Centro/json/`
+    );
+    if (!r.ok) return null;
+    const list = await r.json();
+    if (!Array.isArray(list) || !list.length) return null;
+    // Tenta BrasilAPI no primeiro CEP encontrado
+    const cepClean = list[0].cep?.replace(/\D/g,'');
+    if (!cepClean) return null;
+    const rb = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepClean}`);
+    if (!rb.ok) return null;
+    const d = await rb.json();
+    const c = d.location?.coordinates;
+    if (c?.latitude && c?.longitude)
+      return { lat: parseFloat(c.latitude), lng: parseFloat(c.longitude), _approx: 'cep_centro' };
+  } catch {}
+  return null;
+}
+
 async function geocodeFull(cep) {
   const clean = cep.replace(/\D/g,'');
   const [b, v] = await Promise.all([geocodeViaBrasilAPI(clean), geocodeViaViaCEP(clean)]);
   const meta = { ddd: v?.ddd || null, ibge: v?.ibge || null };
+
+  // Camada 1 — BrasilAPI com coordenadas
   if (b?.lat) return { ...b, ...meta };
+
   const info = b || v;
   if (!info) return null;
-  let coords = await nominatimQuery(clean + ', Brasil');
-  if (coords) return { ...info, ...coords };
-  if (info.street||info.neighborhood) {
-    coords = await nominatimQuery(`${info.street} ${info.neighborhood} ${info.city} ${info.state} Brasil`);
-    if (coords) return { ...info, ...coords };
+
+  // Camada 2 — Nominatim texto livre: CEP + Brasil (com delay)
+  let coords = await nominatimQuery(clean + ' Brasil');
+  if (coords) return { ...info, ...coords, ...meta };
+
+  // Camada 2b — Nominatim endereço completo
+  if (info.street || info.neighborhood) {
+    coords = await nominatimQuery(`${info.street||''} ${info.neighborhood||''} ${info.city} ${info.state} Brasil`.trim());
+    if (coords) return { ...info, ...coords, ...meta };
   }
-  coords = await nominatimQuery(`${info.city} ${info.state} Brasil`);
-  if (coords) return { ...info, ...coords };
-  return { ...info, lat:null, lng:null };
+
+  // Camada 3 — Nominatim query ESTRUTURADA por cidade/estado (mais confiável)
+  coords = await nominatimQuery({ city: info.city, state: info.state, country: 'Brazil' });
+  if (coords) return { ...info, ...coords, ...meta };
+
+  // Camada 4 — Centróide oficial IBGE (sem rate-limit, garante qualquer município)
+  coords = await ibgeCentroid(meta.ibge || v?.ibge);
+  if (coords) return { ...info, ...coords, ...meta };
+
+  // Camada 5 — CEP do centro da cidade via ViaCEP + BrasilAPI (sugestão do usuário)
+  coords = await cityCenterCep(info.city, info.state);
+  if (coords) return { ...info, ...coords, ...meta };
+
+  return { ...info, lat:null, lng:null, ...meta };
 }
 
 async function geocodeLead() {
@@ -1058,7 +1602,7 @@ async function geocodeRev() {
   const geo = await geocodeFull(cep);
   if (!geo) { s.innerHTML='<span class="pill pill-err">✗ CEP não encontrado</span>'; return; }
   e.value = geo.addr || '';
-  if (!c.value && geo.city) c.value = `${geo.city} / ${geo.state}`;
+  if (geo.city) { c.value = `${geo.city} / ${geo.state}`; document.getElementById('r-estado-hidden').value = geo.state || ''; }
   if (geo.lat) {
     inp.dataset.lat = geo.lat; inp.dataset.lng = geo.lng;
     s.innerHTML = `<span class="pill pill-ok">✓ ${geo.lat.toFixed(5)}, ${geo.lng.toFixed(5)}</span>`;
@@ -1112,27 +1656,11 @@ function goOrigemNext() {
   if (!ans.origem) { toast('Selecione a origem do lead.', 'err'); return; }
   if (ans.origem === 'revenda') {
     goWs('condutor');
-  } else {
-    // Boxer lead: auto-responde rep se revenda detectada no raio
-    const revEmRaio = temRevenda();
-    if (revEmRaio) {
-      ans.rep = 'sim';
-      document.getElementById('rep-auto-msg').innerHTML =
-        '<div class="al al-g" style="margin-bottom:10px">✅ <strong>Representante auto-confirmado:</strong> há revenda BMax no raio — rep é sempre ativo neste caso.</div>';
-      document.querySelectorAll('#rep-og .ob').forEach(b => {
-        b.classList.toggle('sel', b.dataset.v === 'sim');
-      });
-    } else {
-      ans.rep = null;
-      document.getElementById('rep-auto-msg').innerHTML = '';
-      document.querySelectorAll('#rep-og .ob').forEach(b => b.classList.remove('sel'));
-    }
-    goWs('rep');
+    return;
   }
-}
-
-function goRepNext() {
-  if (!ans.rep) { toast('Selecione se há representante BMax.', 'err'); return; }
+  // Boxer lead: rep determinado automaticamente pelo mapa de cobertura
+  ans.rep = (leadGeo && leadGeo.repBmax) ? 'sim' : 'nao';
+  // Robô e Laser não dependem de NF — classificar direto
   const prod = ans.produto;
   if (prod === 'robo' || prod === 'laser_multi' || prod === 'laser_single') {
     ans.nf = 'acima';
@@ -1354,10 +1882,19 @@ function resetWiz() {
 // ════════════════════════════════════════════════════
 async function saveRev() {
   const cepEl = document.getElementById('r-cep');
+  const cidadeRaw = document.getElementById('r-cidade').value.trim();
+  const estadoHidden = document.getElementById('r-estado-hidden').value.trim();
+  let cidadeFinal = cidadeRaw, estadoFinal = estadoHidden;
+  if (cidadeRaw.includes('/')) {
+    const parts = cidadeRaw.split('/');
+    cidadeFinal = parts[0].trim();
+    if (!estadoFinal) estadoFinal = parts[1]?.trim() || '';
+  }
   const r = {
     nome:     document.getElementById('r-nome').value.trim(),
     rep:      document.getElementById('r-rep').value.trim(),
-    cidade:   document.getElementById('r-cidade').value.trim(),
+    cidade:   cidadeFinal,
+    estado:   estadoFinal || null,
     cep:      cepEl.value.replace(/\D/g,''),
     endereco: document.getElementById('r-end').value,
     lat:      cepEl.dataset.lat ? parseFloat(cepEl.dataset.lat) : null,
@@ -1366,16 +1903,29 @@ async function saveRev() {
     ativo:    true,
   };
   if (!r.nome) { toast('Informe o nome da revenda.', 'err'); return; }
+  r.editado_em  = new Date().toISOString();
+  r.editado_por = SESSION?.user?.email || 'desconhecido';
 
   const rid = document.getElementById('r-id').value;
   try {
     if (rid) {
+      const rev = revendas.find(x => x.id === rid);
       const { error } = await sbClient.from('comercial_revendas_bmax').update(r).eq('id', rid);
       if (error) throw error;
+      await sbClient.from('comercial_bmax_log_revendas').insert({
+        revenda_id: rid, zen_id: rev?.zen_id ? String(rev.zen_id) : null,
+        acao: 'editar', campo: 'dados', valor_anterior: rev?.nome || null,
+        valor_novo: r.nome, usuario_email: r.editado_por,
+      });
       toast('Revenda atualizada.', 'ok');
     } else {
-      const { error } = await sbClient.from('comercial_revendas_bmax').insert(r);
+      const { data, error } = await sbClient.from('comercial_revendas_bmax').insert(r).select().single();
       if (error) throw error;
+      await sbClient.from('comercial_bmax_log_revendas').insert({
+        revenda_id: data?.id || null, zen_id: null,
+        acao: 'inserir', campo: 'nome', valor_anterior: null,
+        valor_novo: r.nome, usuario_email: r.editado_por,
+      });
       toast('Revenda adicionada.', 'ok');
     }
     await loadRevendas();
@@ -1386,7 +1936,7 @@ async function saveRev() {
 }
 
 function clearRevForm() {
-  ['r-id','r-nome','r-rep','r-cidade','r-end'].forEach(id => document.getElementById(id).value = '');
+  ['r-id','r-nome','r-rep','r-cidade','r-end','r-estado-hidden'].forEach(id => document.getElementById(id).value = '');
   const c = document.getElementById('r-cep'); c.value=''; c.dataset.lat=''; c.dataset.lng='';
   document.getElementById('r-class').value = 'Ouro';
   document.getElementById('sr-cep').innerHTML = '';
@@ -1397,7 +1947,8 @@ function editRev(id) {
   document.getElementById('r-id').value    = r.id;
   document.getElementById('r-nome').value  = r.nome;
   document.getElementById('r-rep').value   = r.rep  || '';
-  document.getElementById('r-cidade').value= r.cidade || '';
+  document.getElementById('r-cidade').value= r.cidade && r.estado ? `${r.cidade} / ${r.estado}` : (r.cidade || '');
+  document.getElementById('r-estado-hidden').value = r.estado || '';
   const c = document.getElementById('r-cep');
   const cep = (r.cep||'').replace(/\D/g,'');
   c.value = cep.length===8 ? cep.slice(0,5)+'-'+cep.slice(5) : cep;
@@ -1429,6 +1980,9 @@ function renderRevTable() {
     const toggleBtn = ativo
       ? `<button class="btn btn-d btn-sm" onclick="toggleRevAtivo('${r.id}',true)" title="Inativar revenda">⏸ Inativar</button>`
       : `<button class="btn btn-g btn-sm" onclick="toggleRevAtivo('${r.id}',false)" title="Ativar revenda">▶ Ativar</button>`;
+    const acoesCell = (adminInfo?.perfil === 'admin')
+      ? `<td style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-g btn-sm" onclick="editRev('${r.id}')">✏️</button>${toggleBtn}</td>`
+      : '';
     return `<tr style="${rowStyle}">
       <td style="font-weight:500">${r.nome}</td>
       <td>${r.rep||'—'}</td>
@@ -1436,10 +1990,7 @@ function renderRevTable() {
       <td>${cepFmt}</td>
       <td>${geo}</td>
       <td><span class="chip ${cls}">${r.classe}</span></td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap">
-        <button class="btn btn-g btn-sm" onclick="editRev('${r.id}')">✏️</button>
-        ${toggleBtn}
-      </td>
+      ${acoesCell}
     </tr>`;
   }).join('');
 }
@@ -1447,14 +1998,31 @@ function renderRevTable() {
 async function toggleRevAtivo(id, atualAtivo) {
   const novoAtivo = !atualAtivo;
   const label = novoAtivo ? 'ativar' : 'inativar';
-  confirm2(`Deseja ${label} esta revenda?`, async () => {
-    try {
-      const { error } = await sbClient.from('comercial_revendas_bmax').update({ ativo: novoAtivo }).eq('id', id);
-      if (error) throw error;
-      toast(`Revenda ${novoAtivo ? 'ativada' : 'inativada'}.`, 'ok');
-      await loadRevendas(); renderRevTable(); updateSb();
-    } catch (e) { toast('Erro: ' + e.message, 'err'); }
-  });
+  openModal(`
+    <h3>Confirmar</h3>
+    <p>Deseja ${label} esta revenda?</p>
+    <div class="modal-acts">
+      <button class="btn btn-g" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-d" onclick="closeModal();_doToggleRev('${id}',${novoAtivo})">Confirmar</button>
+    </div>`);
+}
+async function _doToggleRev(id, novoAtivo) {
+  try {
+    const rev = revendas.find(x => x.id === id);
+    const email = SESSION?.user?.email || 'desconhecido';
+    const { error } = await sbClient.from('comercial_revendas_bmax').update({
+      ativo: novoAtivo, editado_em: new Date().toISOString(), editado_por: email
+    }).eq('id', id);
+    if (error) throw error;
+    await sbClient.from('comercial_bmax_log_revendas').insert({
+      revenda_id: id, zen_id: rev?.zen_id ? String(rev.zen_id) : null,
+      acao: novoAtivo ? 'ativar' : 'inativar', campo: 'ativo',
+      valor_anterior: String(!novoAtivo), valor_novo: String(novoAtivo),
+      usuario_email: email,
+    });
+    toast(`Revenda ${novoAtivo ? 'ativada' : 'inativada'}.`, 'ok');
+    await loadRevendas(); renderRevTable(); updateSb();
+  } catch (e) { toast('Erro: ' + e.message, 'err'); }
 }
 
 // Lista base embutida (fallback quando Supabase vazio)
@@ -1498,7 +2066,7 @@ const GRUPOS_TABELA = [
   {label:'⚡ Laser +2 (múltiplas unidades)',        ids:['PCI4','PCI5','PCI6']},
   {label:'⚡ Laser ×1 (unitário)',                  ids:['PCI7','PCI8','PCI9']},
   {label:'🔧 Máquina Industrial ≥R$50k',           ids:['PCI10','PCI11','PCI12']},
-  {label:'🔧 Máquina Industrial <R$50k',            ids:['PCI13','PCI14','PCI15']},
+  {label:'🔧 Máquina Industrial &lt;R$50k',           ids:['PCI13','PCI14','PCI15']},
   {label:'🏪 Qualquer produto — Lead Revenda',      ids:['PCI16','PCI17']},
 ];
 
@@ -1587,6 +2155,1062 @@ async function resetCfg() {
   await saveConfigToSb();
   applyConfig(); renderTabela();
   toast('Configurações restauradas para os valores padrão.', 'ok');
+}
+
+// ════════════════════════════════════════════════════
+// ADMIN — sessão global (declarada cedo para o bootstrap)
+// ════════════════════════════════════════════════════
+// adminSession/adminInfo são declarados no topo do script (antes do bootstrap)
+
+function adm_enterSection() {
+  const logged = !!adminSession;
+  // Equipe
+  document.getElementById('adm-login-box').classList.toggle('hidden', logged);
+  document.getElementById('adm-equipe-content').classList.toggle('hidden', !logged);
+  // Representantes
+  document.getElementById('adm-rep-login-box').classList.toggle('hidden', logged);
+  document.getElementById('adm-repr-content').classList.toggle('hidden', !logged);
+  // Configurações
+  const cfgLogin   = document.getElementById('adm-cfg-login-box');
+  const cfgContent = document.getElementById('adm-cfg-content');
+  if (logged) {
+    cfgLogin.innerHTML = '';
+    cfgContent.classList.remove('hidden');
+  } else {
+    cfgLogin.innerHTML = document.getElementById('adm-login-box').innerHTML;
+    cfgContent.classList.add('hidden');
+  }
+  if (logged && !adm_reprLoaded) { adm_reprLoaded = true; adm_loadRepr(); }
+}
+
+async function adm_doLogin(form) {
+  const emailId = form === 'rep' ? 'adm-rep-email' : 'adm-email';
+  const passId  = form === 'rep' ? 'adm-rep-pass'  : 'adm-pass';
+  const errId   = form === 'rep' ? 'adm-rep-err'   : 'adm-err';
+  const email = document.getElementById(emailId).value.trim();
+  const pass  = document.getElementById(passId).value;
+  const errEl = document.getElementById(errId);
+  errEl.classList.add('hidden');
+  if (!email || !pass) { errEl.textContent = 'Preencha email e senha'; errEl.classList.remove('hidden'); return; }
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+  if (error || !data.session) { errEl.textContent = 'Email ou senha incorretos'; errEl.classList.remove('hidden'); return; }
+  const { data: adminRow } = await sbClient.from('comercial_bmax_admins').select('email,nome,perfil').eq('email', email).maybeSingle();
+  if (!adminRow) {
+    await sbClient.auth.signOut();
+    errEl.textContent = 'Você não tem acesso administrativo ao BMax Motor.';
+    errEl.classList.remove('hidden'); return;
+  }
+  adminSession = data.session;
+  adminInfo    = adminRow;
+  const nome = adminRow.nome || email.split('@')[0];
+  document.getElementById('adm-user-name').textContent     = nome;
+  document.getElementById('adm-rep-user-name').textContent = nome;
+  adm_enterSection();
+  adm_loadVendedores();
+  adm_loadAdmins();
+  adm_loadRepBmax();
+}
+
+async function adm_doReset(form) {
+  const emailId = form === 'rep' ? 'adm-rep-email' : 'adm-email';
+  const email = document.getElementById(emailId).value.trim();
+  if (!email) { alert('Digite seu email primeiro.'); return; }
+  const { error } = await sbClient.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bmax-motor.pages.dev'
+  });
+  if (error) { alert('Erro: ' + error.message); return; }
+  alert('Email de redefinição enviado para ' + email + '.');
+}
+
+async function adm_doLogout() {
+  await sbClient.auth.signOut();
+  adminSession = null; adminInfo = null; adm_reprLoaded = false;
+  adm_enterSection();
+}
+
+// ── Vendedores ──────────────────────────────────────────────────────────────
+async function adm_loadVendedores() {
+  const { data, error } = await sbClient.from('comercial_bmax_vendedores').select('*').order('tipo').order('nome');
+  if (error) { toast('Erro ao carregar vendedores', 'err'); return; }
+  adm_renderVendedores(data || []);
+}
+
+function adm_renderVendedores(rows) {
+  const BADGE = { VI:'adm-badge-vi', VT1:'adm-badge-vt1', VT2:'adm-badge-vt2' };
+  const tbody = document.getElementById('adm-vnd-body');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#718096;padding:20px">Nenhum vendedor cadastrado.</td></tr>'; return; }
+  tbody.innerHTML = rows.map(v => `<tr>
+    <td><strong>${v.nome}</strong></td>
+    <td><span class="adm-badge ${BADGE[v.tipo]||'adm-badge-vi'}">${v.tipo}</span></td>
+    <td><span class="adm-dot" style="background:${v.cor}"></span>${v.cor}</td>
+    <td>${v.ddds?.join(', ') || '—'}</td>
+    <td>${v.fallback ? '<span style="color:#16a34a">✓</span>' : '—'}</td>
+    <td>${v.ativo ? '<span style="color:#16a34a">✓ ativo</span>' : '<span style="color:#e30613">✗ inativo</span>'}</td>
+    <td style="display:flex;gap:5px">
+      <button class="adm-btn adm-btn-o adm-btn-sm" onclick="adm_openVendedorModal(${v.id})">Editar</button>
+      <button class="adm-btn adm-btn-d adm-btn-sm" onclick="adm_toggleVendedor(${v.id},${v.ativo})">${v.ativo?'Desativar':'Ativar'}</button>
+    </td></tr>`).join('');
+}
+
+async function adm_toggleVendedor(id, ativo) {
+  const { error } = await sbClient.from('comercial_bmax_vendedores').update({ ativo: !ativo }).eq('id', id);
+  if (error) toast('Erro', 'err'); else { toast(ativo ? 'Vendedor desativado' : 'Vendedor ativado'); adm_loadVendedores(); }
+}
+
+// ── Representantes BMax (lista mestre via comercial_bmax_config) ─────────────
+let _repBmaxList = []; // [{nome, ativo}]
+
+async function adm_loadRepBmax() {
+  const { data } = await sbClient.from('comercial_bmax_config')
+    .select('valor').eq('chave', 'representantes_bmax').maybeSingle();
+
+  if (data?.valor) {
+    try { _repBmaxList = JSON.parse(data.valor); } catch { _repBmaxList = []; }
+  } else {
+    // Primeira vez: semeia com nomes já usados na cobertura
+    const { data: cob } = await sbClient.from('comercial_bmax_cobertura')
+      .select('rep_bmax').not('rep_bmax', 'is', null);
+    const nomes = [...new Set((cob||[]).map(r => r.rep_bmax).filter(Boolean))].sort();
+    _repBmaxList = nomes.map(n => ({ nome: n, ativo: true }));
+    await _saveRepBmaxConfig();
+  }
+  adm_renderRepBmax();
+  adm_reprSyncReps(); // atualiza dropdown da página Representantes se já carregada
+}
+
+async function _saveRepBmaxConfig() {
+  await sbClient.from('comercial_bmax_config')
+    .upsert({ chave: 'representantes_bmax', valor: JSON.stringify(_repBmaxList) }, { onConflict: 'chave' });
+}
+
+function adm_renderRepBmax() {
+  const row_html = !_repBmaxList.length
+    ? '<tr><td colspan="3" style="text-align:center;color:#718096;padding:20px">Nenhum representante cadastrado.</td></tr>'
+    : _repBmaxList.map((r, i) => `<tr style="${r.ativo ? '' : 'opacity:.5'}">
+    <td><strong>${r.nome}</strong></td>
+    <td>${r.ativo ? '<span style="color:#16a34a">✓ ativo</span>' : '<span style="color:#718096">✗ inativo</span>'}</td>
+    <td style="display:flex;gap:5px">
+      <button class="adm-btn adm-btn-o adm-btn-sm" onclick="adm_openRepBmaxModal(${i})">Editar</button>
+      <button class="adm-btn adm-btn-d adm-btn-sm" onclick="adm_toggleRepBmax(${i})">${r.ativo ? 'Desativar' : 'Ativar'}</button>
+      <button class="adm-btn adm-btn-sm" style="background:#fff;color:#e30613;border-color:#fecaca" onclick="adm_deleteRepBmax(${i})">Excluir</button>
+    </td></tr>`).join('');
+  const t1 = document.getElementById('adm-repbmax-body');
+  if (t1) t1.innerHTML = row_html;
+  const t2 = document.getElementById('adm-repbmax-body2');
+  if (t2) t2.innerHTML = row_html;
+}
+
+async function adm_toggleRepBmax(i) {
+  _repBmaxList[i].ativo = !_repBmaxList[i].ativo;
+  await _saveRepBmaxConfig();
+  adm_renderRepBmax();
+  adm_reprSyncReps();
+  toast(_repBmaxList[i].ativo ? 'Representante ativado' : 'Representante desativado');
+}
+
+async function adm_deleteRepBmax(i) {
+  const nome = _repBmaxList[i].nome;
+  if (!confirm(`Excluir "${nome}"?\n\nCidades com este representante ficam sem representante atribuído.`)) return;
+  _repBmaxList.splice(i, 1);
+  await _saveRepBmaxConfig();
+  adm_renderRepBmax();
+  adm_reprSyncReps();
+  toast(nome + ' removido');
+}
+
+function adm_openRepBmaxModal(i) {
+  const isEdit = i !== undefined;
+  const rep = isEdit ? _repBmaxList[i] : { nome: '', ativo: true };
+  openModal(`
+    <h3 style="font-size:16px;margin-bottom:16px">${isEdit ? 'Editar' : 'Novo'} Representante BMax</h3>
+    <div class="form-row">
+      <label>Nome do representante</label>
+      <input id="modal-rep-nome" type="text" style="width:100%;padding:8px 12px;border:1px solid #c3cfe2;border-radius:6px;font-size:14px;font-family:Outfit"
+        value="${rep.nome}" placeholder="Ex: João Silva">
+    </div>
+    <div class="form-row" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <input type="checkbox" id="modal-rep-ativo" ${rep.ativo ? 'checked' : ''}>
+      <label for="modal-rep-ativo" style="font-size:13px;cursor:pointer">Ativo</label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+      <button onclick="closeModal()" style="padding:8px 16px;border-radius:6px;border:1px solid #c3cfe2;background:#fff;cursor:pointer;font-family:Outfit;font-size:13px">Cancelar</button>
+      <button onclick="adm_saveRepBmax(${isEdit ? i : 'undefined'})"
+        style="padding:8px 16px;border-radius:6px;background:#1d327b;color:#fff;border:none;cursor:pointer;font-family:Outfit;font-size:13px;font-weight:600">
+        💾 Salvar
+      </button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('modal-rep-nome')?.focus(), 100);
+}
+
+async function adm_saveRepBmax(i) {
+  const nome = (document.getElementById('modal-rep-nome').value || '').trim();
+  const ativo = document.getElementById('modal-rep-ativo').checked;
+  if (!nome) { alert('Digite o nome do representante.'); return; }
+
+  const isEdit = i !== undefined;
+  if (isEdit) {
+    _repBmaxList[i] = { nome, ativo };
+  } else {
+    if (_repBmaxList.find(r => r.nome.toLowerCase() === nome.toLowerCase())) {
+      alert('Já existe um representante com este nome.'); return;
+    }
+    _repBmaxList.push({ nome, ativo });
+    _repBmaxList.sort((a, b) => a.nome.localeCompare(b.nome));
+  }
+  await _saveRepBmaxConfig();
+  closeModal();
+  adm_renderRepBmax();
+  adm_reprSyncReps();
+  toast('Representante salvo!');
+}
+
+// Sincroniza a lista de reps ativos para a página Representantes
+function adm_reprSyncReps() {
+  adm_reprReps = _repBmaxList.filter(r => r.ativo).map(r => r.nome).sort();
+  // Atualiza filtro de rep na página Representantes
+  const fRep = document.getElementById('adm-f-rep');
+  if (fRep) {
+    fRep.innerHTML = '<option value="">Todos</option><option value="__sem__">Sem representante</option>' +
+      adm_reprReps.map(r => `<option value="${r}">${r}</option>`).join('');
+  }
+  adm_reprUpdateBulkBar();
+}
+
+async function adm_openVendedorModal(id) {
+  let v = { nome:'', tipo:'VI', cor:'#25bbee', ddds:'', fallback:false, ativo:true };
+  if (id) {
+    const { data } = await sbClient.from('comercial_bmax_vendedores').select('*').eq('id', id).single();
+    if (data) v = { ...data, ddds: data.ddds?.join(',') || '' };
+  }
+  openModal(`
+    <h3 style="font-size:16px;font-weight:700;color:#1d327b;margin-bottom:16px">${id ? 'Editar' : 'Novo'} Vendedor</h3>
+    <input type="hidden" id="adm-v-id" value="${id||''}">
+    <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Nome</label>
+      <input id="adm-v-nome" value="${v.nome}" style="width:100%;padding:8px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:inherit;outline:none;color:#1a202c"></div>
+    <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Tipo</label>
+      <select id="adm-v-tipo" style="width:100%;padding:8px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:inherit;outline:none;color:#1a202c">
+        <option value="VI" ${v.tipo==='VI'?'selected':''}>VI — Vendedor Interno</option>
+        <option value="VT1" ${v.tipo==='VT1'?'selected':''}>VT1 — Vendedor Técnico 1</option>
+        <option value="VT2" ${v.tipo==='VT2'?'selected':''}>VT2 — Vendedor Técnico 2</option>
+      </select></div>
+    <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Cor</label>
+      <input id="adm-v-cor" type="color" value="${v.cor}" style="height:36px;padding:2px 6px;border:1px solid #c3cfe2;border-radius:6px;width:100%"></div>
+    <div style="margin-bottom:12px"><label style="display:block;font-size:11px;font-weight:500;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">DDDs (separados por vírgula)</label>
+      <input id="adm-v-ddds" value="${v.ddds}" placeholder="Ex: 12,13,14,15,19" style="width:100%;padding:8px 10px;border:1px solid #c3cfe2;border-radius:6px;font-size:13px;font-family:inherit;outline:none;color:#1a202c"></div>
+    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
+      <input id="adm-v-fallback" type="checkbox" ${v.fallback?'checked':''} style="width:auto">
+      <label for="adm-v-fallback" style="font-size:13px;cursor:pointer;color:#1a202c">Fallback — atende DDDs não mapeados</label></div>
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <input id="adm-v-ativo" type="checkbox" ${v.ativo?'checked':''} style="width:auto">
+      <label for="adm-v-ativo" style="font-size:13px;cursor:pointer;color:#1a202c">Ativo</label></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:14px;border-top:1px solid #e2e8f0">
+      <button class="adm-btn adm-btn-o" onclick="closeModal()">Cancelar</button>
+      <button class="adm-btn adm-btn-p" onclick="adm_saveVendedor()">Salvar</button>
+    </div>`);
+}
+
+async function adm_saveVendedor() {
+  const id   = document.getElementById('adm-v-id').value;
+  const nome = document.getElementById('adm-v-nome').value.trim();
+  if (!nome) { toast('Informe o nome', 'err'); return; }
+  const dddsRaw = document.getElementById('adm-v-ddds').value;
+  const ddds = dddsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  const payload = {
+    nome, tipo: document.getElementById('adm-v-tipo').value,
+    cor:  document.getElementById('adm-v-cor').value,
+    ddds: ddds.length ? ddds : null,
+    fallback: document.getElementById('adm-v-fallback').checked,
+    ativo:    document.getElementById('adm-v-ativo').checked,
+  };
+  const { error } = id
+    ? await sbClient.from('comercial_bmax_vendedores').update(payload).eq('id', id)
+    : await sbClient.from('comercial_bmax_vendedores').insert(payload);
+  if (error) { toast('Erro: ' + error.message, 'err'); return; }
+  toast('Salvo!'); closeModal(); adm_loadVendedores();
+}
+
+// ── Admins ───────────────────────────────────────────────────────────────────
+async function adm_loadAdmins() {
+  const { data, error } = await sbClient.from('comercial_bmax_admins').select('id,email,nome,perfil,criado_em').order('criado_em');
+  if (error) { document.getElementById('adm-admins-body').innerHTML = '<tr><td colspan="5" style="color:#e30613;padding:14px">Erro ao carregar.</td></tr>'; return; }
+  const tbody = document.getElementById('adm-admins-body');
+  const rows = data || [];
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#718096;padding:16px">Nenhum usuário cadastrado.</td></tr>'; return; }
+  const meEmail = adminInfo?.email || '';
+  tbody.innerHTML = rows.map(a => {
+    const isAdmin = a.perfil === 'admin';
+    const badge = isAdmin
+      ? '<span style="background:#1d327b;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">Admin</span>'
+      : '<span style="background:#2d3748;color:#a0aec0;padding:2px 8px;border-radius:10px;font-size:11px">Usuário</span>';
+    const canRemove = a.email !== meEmail;
+    const removeBtn = canRemove
+      ? `<button class="adm-btn adm-btn-d adm-btn-sm" onclick="adm_removeAdmin(${a.id},'${a.email}')">Remover</button>`
+      : `<span style="font-size:11px;color:#718096">(você)</span>`;
+    return `<tr>
+      <td>${a.email}</td><td>${a.nome||'—'}</td>
+      <td>${badge}</td>
+      <td style="color:#718096">${a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '—'}</td>
+      <td>${removeBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function adm_addAdmin() {
+  const email  = document.getElementById('adm-new-email').value.trim().toLowerCase();
+  const nome   = document.getElementById('adm-new-nome').value.trim();
+  const senha  = document.getElementById('adm-new-senha').value;
+  const perfil = document.getElementById('adm-new-perfil').value;
+  if (!email || !senha) { toast('Informe email e senha', 'err'); return; }
+  if (senha.length < 6)  { toast('Senha deve ter ao menos 6 caracteres', 'err'); return; }
+  const { error: signUpErr } = await sbClient.auth.signUp({ email, password: senha });
+  if (signUpErr && !signUpErr.message.includes('already registered')) {
+    toast('Erro ao criar conta: ' + signUpErr.message, 'err'); return;
+  }
+  const { error } = await sbClient.from('comercial_bmax_admins')
+    .upsert({ email, nome: nome || null, perfil, ativo: true }, { onConflict: 'email' });
+  if (error) { toast('Erro: ' + error.message, 'err'); return; }
+  const label = perfil === 'admin' ? 'administrador' : 'usuário';
+  toast(`${email} adicionado como ${label}`, 'ok');
+  document.getElementById('adm-new-email').value = '';
+  document.getElementById('adm-new-nome').value  = '';
+  document.getElementById('adm-new-senha').value = '';
+  document.getElementById('adm-new-perfil').value = 'usuario';
+  adm_loadAdmins();
+}
+
+async function adm_removeAdmin(id, email) {
+  if (!confirm('Remover ' + email + ' como admin?')) return;
+  const { error } = await sbClient.from('comercial_bmax_admins').update({ ativo: false }).eq('id', id);
+  if (error) toast('Erro', 'err'); else { toast(email + ' removido'); adm_loadAdmins(); }
+}
+
+// ── Representantes ──────────────────────────────────────────────────────────
+const ADM_PAGE_SIZE = 100;
+let adm_reprAllRows = [], adm_reprFiltered = [], adm_reprPage = 0, adm_reprReps = [];
+
+async function adm_loadRepr() {
+  let rows = [], offset = 0;
+  while (true) {
+    const { data, error } = await sbClient.from('comercial_bmax_cobertura')
+      .select('ibge_codigo,cidade,estado,ddd,rep_bmax')
+      .order('estado').order('cidade').range(offset, offset + 999);
+    if (error || !data?.length) break;
+    rows = rows.concat(data);
+    if (data.length < 1000) break;
+    offset += 1000;
+  }
+  adm_reprAllRows = rows;
+
+  const estados = [...new Set(rows.map(r => r.estado))].sort();
+  const fEstado = document.getElementById('adm-f-estado');
+  fEstado.innerHTML = '<option value="">Todos</option>';
+  estados.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; fEstado.appendChild(o); });
+
+  // Reps vêm da lista mestre (_repBmaxList). Se ainda não carregou, carrega agora.
+  if (_repBmaxList.length) {
+    adm_reprSyncReps();
+  } else {
+    await adm_loadRepBmax(); // carrega e chama adm_reprSyncReps() internamente
+  }
+
+  const ddds = [...new Set(rows.map(r => r.ddd).filter(Boolean))].sort((a,b) => a-b);
+  const fDdd = document.getElementById('adm-f-ddd');
+  fDdd.innerHTML = '<option value="">Todos</option>';
+  ddds.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; fDdd.appendChild(o); });
+
+  adm_reprApplyFilter();
+}
+
+function adm_reprApplyFilter() {
+  const est = document.getElementById('adm-f-estado').value;
+  const rep = document.getElementById('adm-f-rep').value;
+  const ddd = document.getElementById('adm-f-ddd').value;
+  const cid = document.getElementById('adm-f-cidade').value.toLowerCase().trim();
+  adm_reprFiltered = adm_reprAllRows.filter(r => {
+    if (est && r.estado !== est) return false;
+    if (rep === '__sem__' && r.rep_bmax) return false;
+    if (rep && rep !== '__sem__' && r.rep_bmax !== rep) return false;
+    if (ddd && String(r.ddd) !== ddd) return false;
+    if (cid && !r.cidade.toLowerCase().includes(cid)) return false;
+    return true;
+  });
+  adm_reprPage = 0;
+  adm_reprRenderPage();
+  adm_reprUpdateBulkBar();
+}
+
+function adm_reprClearFilters() {
+  document.getElementById('adm-f-estado').value = '';
+  document.getElementById('adm-f-rep').value    = '';
+  document.getElementById('adm-f-ddd').value    = '';
+  document.getElementById('adm-f-cidade').value = '';
+  adm_reprApplyFilter();
+}
+
+function adm_reprRenderPage() {
+  const start = adm_reprPage * ADM_PAGE_SIZE;
+  const slice = adm_reprFiltered.slice(start, start + ADM_PAGE_SIZE);
+  const total = adm_reprFiltered.length;
+  const semRep = adm_reprFiltered.filter(r => !r.rep_bmax).length;
+  document.getElementById('adm-repr-stats').textContent = `${total.toLocaleString()} municípios · ${semRep} sem representante`;
+
+  const opts = ['', ...adm_reprReps].map(r => `<option value="${r}">${r||'— sem representante —'}</option>`).join('');
+  const tbody = document.getElementById('adm-repr-body');
+  tbody.innerHTML = slice.map(r => `<tr>
+    <td><strong>${r.cidade}</strong></td>
+    <td>${r.estado}</td>
+    <td style="color:#718096">${r.ddd||'—'}</td>
+    <td><div style="display:flex;align-items:center;gap:6px">
+      <select class="adm-rep-sel" data-ibge="${r.ibge_codigo}" data-orig="${r.rep_bmax||''}" onchange="adm_reprMarkDirty(this)">
+        ${opts.replace(`value="${r.rep_bmax||''}"`, `value="${r.rep_bmax||''}" selected`)}
+      </select>
+      <button class="adm-save-btn hidden" data-ibge="${r.ibge_codigo}" onclick="adm_reprSaveRep(this)">Salvar</button>
+    </div></td></tr>`).join('');
+
+  const pages = Math.ceil(total / ADM_PAGE_SIZE);
+  document.getElementById('adm-repr-page-info').textContent = `Página ${adm_reprPage+1} de ${pages||1}`;
+  document.getElementById('adm-repr-prev').disabled = adm_reprPage === 0;
+  document.getElementById('adm-repr-next').disabled = adm_reprPage >= pages - 1;
+}
+
+function adm_reprMarkDirty(sel) {
+  if (sel.value !== sel.dataset.orig) { sel.classList.add('dirty'); sel.nextElementSibling.classList.remove('hidden'); }
+  else { sel.classList.remove('dirty'); sel.nextElementSibling.classList.add('hidden'); }
+  adm_updateSaveAllBar();
+}
+
+function adm_updateSaveAllBar() {
+  var dirty = document.querySelectorAll('#adm-repr-body .adm-rep-sel.dirty');
+  var bar = document.getElementById('adm-saveall-bar');
+  var cnt = document.getElementById('adm-saveall-count');
+  if (!bar) return;
+  if (dirty.length > 0) {
+    bar.style.display = 'flex';
+    cnt.textContent = dirty.length;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+async function adm_saveAll() {
+  var dirty = Array.from(document.querySelectorAll('#adm-repr-body .adm-rep-sel.dirty'));
+  if (!dirty.length) return;
+  var btn = document.getElementById('adm-saveall-btn');
+  var status = document.getElementById('adm-saveall-status');
+  btn.disabled = true;
+  status.textContent = 'Salvando...';
+  var done = 0, erros = 0, batchSize = 50;
+  for (var i = 0; i < dirty.length; i += batchSize) {
+    var batch = dirty.slice(i, i + batchSize);
+    await Promise.all(batch.map(function(sel) {
+      var ibge = sel.dataset.ibge;
+      return sbClient.from('comercial_bmax_cobertura')
+        .update({ rep_bmax: sel.value || null })
+        .eq('ibge_codigo', ibge)
+        .then(function(res) {
+          if (res.error) { erros++; return; }
+          done++;
+          sel.dataset.orig = sel.value;
+          sel.classList.remove('dirty');
+          var saveBtn = sel.nextElementSibling;
+          if (saveBtn) saveBtn.classList.add('hidden');
+          // Atualiza cache local
+          var local = adm_reprAllRows.find(function(r) { return r.ibge_codigo === ibge; });
+          if (local) local.rep_bmax = sel.value || null;
+        });
+    }));
+  }
+  btn.disabled = false;
+  adm_updateSaveAllBar();
+  if (erros) { toast(done + ' salvos, ' + erros + ' erros', 'err'); status.textContent = erros + ' erros'; }
+  else { toast(done + ' municípios salvos!', 'ok'); status.textContent = ''; }
+}
+
+async function adm_reprSaveRep(btn) {
+  const ibge = btn.dataset.ibge;
+  const sel  = btn.previousElementSibling;
+  const { error } = await sbClient.from('comercial_bmax_cobertura').update({ rep_bmax: sel.value || null }).eq('ibge_codigo', ibge);
+  if (error) { toast('Erro ao salvar', 'err'); return; }
+  const idx = adm_reprAllRows.findIndex(r => r.ibge_codigo === ibge);
+  if (idx >= 0) adm_reprAllRows[idx].rep_bmax = sel.value || null;
+  sel.dataset.orig = sel.value; sel.classList.remove('dirty'); btn.classList.add('hidden');
+  toast('Salvo!');
+}
+
+function adm_reprChangePage(dir) {
+  adm_reprPage += dir; adm_reprRenderPage();
+  document.getElementById('pg-representantes').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function adm_reprUpdateBulkBar() {
+  var bar = document.getElementById('adm-bulk-bar');
+  var cnt = document.getElementById('adm-bulk-count');
+  var sel = document.getElementById('adm-bulk-rep');
+  var n = adm_reprFiltered.length;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  cnt.textContent = n.toLocaleString();
+  sel.innerHTML = '<option value="">— sem representante —</option>' +
+    adm_reprReps.map(function(r){ return '<option value="' + r + '">' + r + '</option>'; }).join('');
+}
+
+async function adm_applyBulk() {
+  var repVal = document.getElementById('adm-bulk-rep').value;
+  var n = adm_reprFiltered.length;
+  var label = repVal || '(sem representante)';
+  if (!confirm('Aplicar "' + label + '" a ' + n.toLocaleString() + ' municípios?\n\nEsta ação não pode ser desfeita.')) return;
+
+  var prog = document.getElementById('adm-bulk-progress');
+  var ibges = adm_reprFiltered.map(function(r){ return r.ibge_codigo; }).filter(Boolean);
+  var total = ibges.length, done = 0, erros = 0;
+  var batchSize = 50;
+
+  for (var i = 0; i < ibges.length; i += batchSize) {
+    var batch = ibges.slice(i, i + batchSize);
+    prog.textContent = 'Salvando... ' + Math.min(i + batchSize, total) + '/' + total;
+    var res = await sbClient.from('comercial_bmax_cobertura')
+      .update({ rep_bmax: repVal || null })
+      .in('ibge_codigo', batch)
+      .select('ibge_codigo');
+    if (res.error) { erros += batch.length; console.error('Bulk update error:', res.error); }
+    else {
+      var affected = (res.data || []).length;
+      if (affected === 0 && batch.length > 0) {
+        console.warn('RLS bloqueou update — verifique políticas de UPDATE no Supabase.');
+        erros += batch.length;
+      } else {
+        done += affected;
+      }
+    }
+  }
+
+  // Atualiza cache local
+  adm_reprFiltered.forEach(function(r){ r.rep_bmax = repVal || null; });
+  adm_reprAllRows.forEach(function(r){
+    if (adm_reprFiltered.find(function(f){ return f.ibge_codigo === r.ibge_codigo; }))
+      r.rep_bmax = repVal || null;
+  });
+
+  // Atualiza select de reps se necessário
+  if (repVal && !adm_reprReps.includes(repVal)) {
+    adm_reprReps.push(repVal); adm_reprReps.sort();
+    var fRep = document.getElementById('adm-f-rep');
+    var opt = document.createElement('option'); opt.value = repVal; opt.textContent = repVal;
+    fRep.appendChild(opt);
+  }
+
+  prog.textContent = '';
+  adm_reprRenderPage();
+  adm_reprUpdateBulkBar();
+  toast(done.toLocaleString() + ' municípios atualizados' + (erros ? ' (' + erros + ' erros)' : ''), erros ? 'err' : 'ok');
+}
+
+// ── Importação de planilha ───────────────────────────────────────────────────
+function adm_openImport() {
+  openModal(`
+    <div style="font-family:Outfit,sans-serif">
+      <h3 style="margin-bottom:4px">📂 Importar Planilha de Cobertura</h3>
+      <p style="font-size:13px;color:#718096;margin-bottom:16px">
+        Formatos aceitos: <strong>.xlsx, .xls, .csv</strong><br>
+        A planilha deve ter colunas: <strong>estado</strong> (ou UF), <strong>cidade</strong> (ou município), <strong>representante</strong> (ou rep).
+      </p>
+      <div style="border:2px dashed #c3cfe2;border-radius:8px;padding:20px;text-align:center;cursor:pointer" onclick="document.getElementById('adm-import-file').click()">
+        <div style="font-size:32px;margin-bottom:8px">📄</div>
+        <div style="font-size:13px;color:#718096">Clique para selecionar o arquivo</div>
+        <input type="file" id="adm-import-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="adm_parseImport(this)">
+      </div>
+      <div id="adm-import-preview" style="margin-top:16px"></div>
+    </div>
+  `);
+}
+
+function adm_parseImport(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var prev = document.getElementById('adm-import-preview');
+  prev.innerHTML = '<p style="font-size:13px;color:#718096">⏳ Lendo arquivo...</p>';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) { prev.innerHTML = '<p style="color:#e53e3e">Planilha vazia.</p>'; return; }
+
+      // Detecta colunas por nome aproximado
+      var keys = Object.keys(rows[0]).map(function(k){ return k.toLowerCase().trim(); });
+      function findCol(candidates) {
+        for (var i = 0; i < candidates.length; i++) {
+          for (var j = 0; j < keys.length; j++) {
+            if (keys[j].includes(candidates[i])) return Object.keys(rows[0])[j];
+          }
+        }
+        return null;
+      }
+      var colEst = findCol(['estado','uf','state']);
+      var colCid = findCol(['cidade','municipio','município','city','municipio']);
+      var colRep = findCol(['representante','rep ','rep_','vendedor','atend']);
+
+      if (!colEst || !colCid || !colRep) {
+        prev.innerHTML = '<p style="color:#e53e3e;font-size:13px">Não encontrei as colunas necessárias. Colunas detectadas: <strong>' + Object.keys(rows[0]).join(', ') + '</strong></p>';
+        return;
+      }
+
+      // Monta lookup: "estado|cidade" → ibge_codigo
+      var lookup = {};
+      adm_reprAllRows.forEach(function(r){
+        var k = (r.estado||'').toUpperCase() + '|' + (r.cidade||'').toLowerCase().trim();
+        lookup[k] = r;
+      });
+
+      // Match
+      var matched = [], notFound = [];
+      rows.forEach(function(row){
+        var est = String(row[colEst]||'').toUpperCase().trim();
+        var cid = String(row[colCid]||'').toLowerCase().trim();
+        var rep = String(row[colRep]||'').trim();
+        if (!est && !cid) return;
+        var key = est + '|' + cid;
+        if (lookup[key]) {
+          matched.push({ row: lookup[key], rep: rep });
+        } else {
+          notFound.push(est + ' / ' + cid);
+        }
+      });
+
+      // Preview
+      var previewRows = matched.slice(0, 10).map(function(m){
+        return '<tr><td>' + m.row.cidade + '</td><td>' + m.row.estado + '</td><td style="color:#16a34a">' + (m.rep||'—') + '</td></tr>';
+      }).join('');
+      var maisInfo = matched.length > 10 ? '<p style="font-size:12px;color:#718096;margin-top:6px">... e mais ' + (matched.length-10) + ' linha(s)</p>' : '';
+      var naoAchados = notFound.length ? '<p style="font-size:12px;color:#e53e3e;margin-top:8px">⚠️ ' + notFound.length + ' linha(s) não encontradas no banco.</p>' : '';
+
+      prev.innerHTML =
+        '<p style="font-size:13px;margin-bottom:8px">✅ <strong>' + matched.length + '</strong> municípios encontrados' + (notFound.length ? ', <span style="color:#e53e3e">' + notFound.length + ' não encontrados</span>' : '') + ':</p>' +
+        '<div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+        '<th style="padding:6px 10px;text-align:left;background:#f7fafc;color:#718096">Cidade</th>' +
+        '<th style="padding:6px 10px;text-align:left;background:#f7fafc;color:#718096">UF</th>' +
+        '<th style="padding:6px 10px;text-align:left;background:#f7fafc;color:#718096">Representante</th>' +
+        '</tr></thead><tbody>' + previewRows + '</tbody></table></div>' +
+        maisInfo + naoAchados +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">' +
+        '<button onclick="closeModal()" style="padding:8px 16px;border-radius:6px;border:1px solid #c3cfe2;background:#fff;cursor:pointer;font-family:Outfit;font-size:13px">Cancelar</button>' +
+        '<button onclick="adm_executeImport(' + JSON.stringify(matched).replace(/</g,'\\u003c') + ')" style="padding:8px 16px;border-radius:6px;background:#1d327b;color:#fff;border:none;cursor:pointer;font-family:Outfit;font-size:13px;font-weight:600">💾 Importar ' + matched.length + ' registros</button>' +
+        '</div>';
+
+      // Guarda para execução
+      window._importPending = matched;
+    } catch(err) {
+      prev.innerHTML = '<p style="color:#e53e3e;font-size:13px">Erro ao ler arquivo: ' + err.message + '</p>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function adm_executeImport(matched) {
+  if (!matched || !matched.length) matched = window._importPending || [];
+  closeModal();
+  var batchSize = 50, done = 0, erros = 0;
+  toast('Importando ' + matched.length + ' registros...', 'ok');
+
+  for (var i = 0; i < matched.length; i += batchSize) {
+    var batch = matched.slice(i, i + batchSize);
+    // Update individual por ibge_codigo (Supabase não tem bulk update com valores diferentes)
+    await Promise.all(batch.map(function(m){
+      return sbClient.from('comercial_bmax_cobertura')
+        .update({ rep_bmax: m.rep || null })
+        .eq('ibge_codigo', m.row.ibge_codigo)
+        .then(function(res){
+          if (res.error) erros++;
+          else {
+            done++;
+            // Atualiza cache local
+            var local = adm_reprAllRows.find(function(r){ return r.ibge_codigo === m.row.ibge_codigo; });
+            if (local) local.rep_bmax = m.rep || null;
+          }
+        });
+    }));
+  }
+
+  // Recarrega reps no filtro — usa sempre a lista mestre para incluir reps sem município ainda
+  adm_reprSyncReps();
+
+  adm_reprApplyFilter();
+  toast(done + ' importados' + (erros ? ', ' + erros + ' erros' : ''), erros ? 'err' : 'ok');
+}
+
+// ════════════════════════════════════════════════════
+// GEOCODIFICAÇÃO — cache de sessão, Nominatim + BrasilAPI
+// ════════════════════════════════════════════════════
+var _geoCache = {};
+
+function _haversineKm(lat1, lng1, lat2, lng2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLng = (lng2 - lng1) * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function _geocodeCity(cidade, estado) {
+  var key = 'city:' + cidade + '|' + estado;
+  if (_geoCache[key] !== undefined) return _geoCache[key];
+  try {
+    var url = 'https://nominatim.openstreetmap.org/search?city=' + encodeURIComponent(cidade) +
+              '&state=' + encodeURIComponent(estado) + '&country=Brazil&format=json&limit=1';
+    var r = await fetch(url, { headers: { 'Accept-Language': 'pt-BR', 'User-Agent': 'BMaxMotorPCI/1.0' } });
+    var data = await r.json();
+    var result = (data && data[0]) ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) } : null;
+    _geoCache[key] = result;
+    return result;
+  } catch(e) { _geoCache[key] = null; return null; }
+}
+
+async function _geocodeCep(cep, cidadeFallback, estadoFallback) {
+  var cepClean = (cep || '').replace(/\D/g, '');
+  if (cepClean.length === 8) {
+    var key = 'cep:' + cepClean;
+    if (_geoCache[key] !== undefined) return _geoCache[key];
+    try {
+      var r = await fetch('https://brasilapi.com.br/api/cep/v2/' + cepClean);
+      var data = await r.json();
+      if (data && data.location && data.location.coordinates) {
+        var lat = parseFloat(data.location.coordinates.latitude);
+        var lng = parseFloat(data.location.coordinates.longitude);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          var result = { lat: lat, lng: lng };
+          _geoCache[key] = result;
+          return result;
+        }
+      }
+    } catch(e) {}
+    _geoCache[key] = null;
+  }
+  // Fallback: geocodifica pela cidade
+  if (cidadeFallback && estadoFallback) return _geocodeCity(cidadeFallback, estadoFallback);
+  return null;
+}
+
+// ════════════════════════════════════════════════════
+// COBERTURA (read-only para todos os usuários)
+// ════════════════════════════════════════════════════
+var _cobEstado = '';
+var _cobCidade = '';
+var _cobCidades = []; // lista de cidades carregadas para o estado atual
+var _COB_ESTADOS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
+                    'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+
+function loadCobertura() { /* comboboxes inicializam vazios, nada a fazer */ }
+
+// ── helpers combobox ──────────────────────────────
+function _cobDrop(id, opts, onSelect) {
+  var drop = document.getElementById(id);
+  if (!opts.length) { drop.classList.remove('open'); return; }
+
+  // Move para body para escapar de qualquer backdrop-filter stacking context
+  if (drop.parentNode !== document.body) document.body.appendChild(drop);
+
+  // Posiciona abaixo do input correspondente
+  var inputId = id.replace('-drop', '-inp');
+  var inp = document.getElementById(inputId);
+  if (inp) {
+    var rect = inp.getBoundingClientRect();
+    drop.style.top   = (rect.bottom + 4) + 'px';
+    drop.style.left  = rect.left + 'px';
+    drop.style.width = rect.width + 'px';
+  }
+
+  drop.innerHTML = opts.slice(0, 80).map(function(o) {
+    return '<div class="srch-opt" onmousedown="event.preventDefault();' + onSelect + '(\'' + o.replace(/'/g,"&#39;") + '\')">' + o + '</div>';
+  }).join('');
+  drop.classList.add('open');
+}
+function _cobCloseDrop(id) {
+  var d = document.getElementById(id);
+  if (d) d.classList.remove('open');
+}
+
+// ── Estado combobox ───────────────────────────────
+function cobEstadoFocus() {
+  var v = document.getElementById('cob-estado-inp').value.trim().toUpperCase();
+  var opts = v ? _COB_ESTADOS.filter(function(e){ return e.startsWith(v); }) : _COB_ESTADOS;
+  _cobDrop('cob-estado-drop', opts, 'cobSelectEstado');
+}
+function cobEstadoInp() {
+  var v = document.getElementById('cob-estado-inp').value.trim().toUpperCase();
+  var opts = v ? _COB_ESTADOS.filter(function(e){ return e.includes(v); }) : _COB_ESTADOS;
+  _cobDrop('cob-estado-drop', opts, 'cobSelectEstado');
+  // Se o que foi digitado não é um estado válido, limpa seleção
+  if (_cobEstado && _cobEstado !== v) { _cobEstado = ''; _cobCidade = ''; }
+}
+function cobEstadoBlur() { setTimeout(function(){ _cobCloseDrop('cob-estado-drop'); }, 150); }
+function cobEstadoKey(e) {
+  if (e.key === 'Enter') {
+    var v = document.getElementById('cob-estado-inp').value.trim().toUpperCase();
+    var match = _COB_ESTADOS.find(function(s){ return s === v || s.startsWith(v); });
+    if (match) cobSelectEstado(match);
+  }
+  if (e.key === 'Escape') _cobCloseDrop('cob-estado-drop');
+}
+async function cobSelectEstado(uf) {
+  _cobEstado = uf;
+  _cobCidade = '';
+  document.getElementById('cob-estado-inp').value = uf;
+  _cobCloseDrop('cob-estado-drop');
+
+  // Reset cidade
+  var cidInp = document.getElementById('cob-cidade-inp');
+  cidInp.value = '';
+  cidInp.placeholder = '⏳ Carregando cidades...';
+  cidInp.disabled = true;
+  _cobCidades = [];
+
+  // Limpa resultados
+  document.getElementById('cob-rep-card').style.display = 'none';
+  document.getElementById('cob-rep-content').innerHTML = '';
+  document.getElementById('cob-hint').textContent = '';
+  document.getElementById('cob-rev-content').innerHTML =
+    '<p style="font-size:13px;color:var(--mut)">Selecione uma cidade para ver as revendas.</p>';
+
+  // Carrega cidades com paginação
+  var todas = [], offset = 0, pageSize = 1000;
+  while (true) {
+    var res = await sbClient.from('comercial_bmax_cobertura')
+      .select('cidade').eq('estado', uf).order('cidade')
+      .range(offset, offset + pageSize - 1);
+    if (res.error || !res.data || !res.data.length) break;
+    todas = todas.concat(res.data.map(function(x){ return x.cidade; }));
+    if (res.data.length < pageSize) break;
+    offset += pageSize;
+  }
+  // Deduplicar
+  var seen = {}, unicas = [];
+  todas.forEach(function(c){ if (!seen[c]) { seen[c] = true; unicas.push(c); } });
+  _cobCidades = unicas;
+
+  cidInp.placeholder = 'Digite para buscar (' + unicas.length + ' cidades)';
+  cidInp.disabled = false;
+  cidInp.focus();
+}
+
+// ── Cidade combobox ───────────────────────────────
+function cobCidadeFocus() {
+  var v = document.getElementById('cob-cidade-inp').value.trim().toLowerCase();
+  var opts = v ? _cobCidades.filter(function(c){ return c.toLowerCase().includes(v); }) : _cobCidades;
+  _cobDrop('cob-cidade-drop', opts, 'cobSelectCidade');
+}
+function cobCidadeInp() {
+  var v = document.getElementById('cob-cidade-inp').value.trim().toLowerCase();
+  var opts = v ? _cobCidades.filter(function(c){ return c.toLowerCase().includes(v); }) : _cobCidades;
+  _cobDrop('cob-cidade-drop', opts, 'cobSelectCidade');
+  if (_cobCidade && _cobCidade.toLowerCase() !== v) _cobCidade = '';
+}
+function cobCidadeBlur() { setTimeout(function(){ _cobCloseDrop('cob-cidade-drop'); }, 150); }
+function cobCidadeKey(e) {
+  if (e.key === 'Enter') {
+    var v = document.getElementById('cob-cidade-inp').value.trim().toLowerCase();
+    var match = _cobCidades.find(function(c){ return c.toLowerCase() === v || c.toLowerCase().startsWith(v); });
+    if (match) cobSelectCidade(match);
+  }
+  if (e.key === 'Escape') _cobCloseDrop('cob-cidade-drop');
+}
+function cobSelectCidade(cidade) {
+  _cobCidade = cidade;
+  document.getElementById('cob-cidade-inp').value = cidade;
+  _cobCloseDrop('cob-cidade-drop');
+  // Auto-buscar ao selecionar
+  cobBuscar();
+}
+
+function cobLimpar() {
+  _cobEstado = ''; _cobCidade = ''; _cobCidades = [];
+  document.getElementById('cob-estado-inp').value = '';
+  var cidInp = document.getElementById('cob-cidade-inp');
+  cidInp.value = ''; cidInp.placeholder = 'Selecione um estado primeiro'; cidInp.disabled = true;
+  document.getElementById('cob-hint').textContent = '';
+  document.getElementById('cob-rep-card').style.display = 'none';
+  document.getElementById('cob-rep-content').innerHTML = '';
+  document.getElementById('cob-rev-content').innerHTML =
+    '<p style="font-size:13px;color:var(--mut)">Selecione um estado para ver as revendas.</p>';
+}
+
+async function cobBuscar() {
+  var estado = _cobEstado;
+  var cidade = _cobCidade;
+  var hint   = document.getElementById('cob-hint');
+  var card   = document.getElementById('cob-rep-card');
+  var repEl  = document.getElementById('cob-rep-content');
+
+  if (!estado) {
+    hint.textContent = 'Selecione um estado.';
+    return;
+  }
+  if (!cidade) {
+    hint.textContent = 'Selecione uma cidade.';
+    return;
+  }
+
+  hint.textContent = '⏳ Buscando...';
+
+  try {
+    var res = await sbClient.from('comercial_bmax_cobertura')
+      .select('cidade, estado, ddd, rep_bmax')
+      .eq('estado', estado)
+      .eq('cidade', cidade)
+      .order('ddd');
+
+    if (res.error) { hint.textContent = 'Erro na busca: ' + res.error.message; return; }
+
+    var data = res.data || [];
+
+    if (data.length === 0) {
+      hint.textContent = 'Nenhum dado encontrado para ' + cidade + '/' + estado + '.';
+      card.style.display = 'none';
+      cobRenderRevendas(estado, cidade);
+      return;
+    }
+
+    // Deduplicar por DDD (cidades com múltiplos registros por DDD diferente)
+    var dddsVistos = {};
+    var dataUniq = [];
+    for (var i = 0; i < data.length; i++) {
+      var key = (data[i].ddd || '') + '|' + (data[i].rep_bmax || '');
+      if (!dddsVistos[key]) { dddsVistos[key] = true; dataUniq.push(data[i]); }
+    }
+
+    hint.textContent = cidade + ' / ' + estado;
+    card.style.display = '';
+
+    var rows = '';
+    for (var j = 0; j < dataUniq.length; j++) {
+      var r = dataUniq[j];
+      var v = r.ddd ? getVendedorBoxer(r.ddd) : null;
+      var repBmax = r.rep_bmax || '—';
+      var vendTxt = v
+        ? '<span class="dot" style="background:' + (v.cor||'#25bbee') + ';display:inline-block;vertical-align:middle;margin-right:5px"></span>' +
+          '<strong>' + v.nome + '</strong> <span style="font-size:10px;color:var(--mut);background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px;margin-left:3px">' + v.tipo + '</span>'
+        : '<span style="color:var(--mut)">—</span>';
+      rows += '<tr>' +
+        '<td style="color:var(--mut)">' + (r.ddd || '—') + '</td>' +
+        '<td>' + repBmax + '</td>' +
+        '<td>' + vendTxt + '</td>' +
+        '</tr>';
+    }
+
+    repEl.innerHTML = '<div style="overflow-x:auto"><table class="rtbl">' +
+      '<thead><tr><th>DDD</th><th>Representante BMax</th><th>Vendedor Boxer</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+
+  } catch(e) {
+    hint.textContent = 'Erro: ' + e.message;
+  }
+
+  await cobRenderRevendas(estado, cidade);
+}
+
+async function cobRenderRevendas(estado, cidade) {
+  var revEl = document.getElementById('cob-rev-content');
+  var lista = revendas.filter(function(r){ return r.ativo !== false && r.classe !== 'Não Aplica'; });
+  var listaEstado = estado ? lista.filter(function(r){ return (r.estado||'').toUpperCase() === estado.toUpperCase(); }) : lista;
+
+  if (!listaEstado.length) {
+    revEl.innerHTML = '<p style="font-size:13px;color:var(--mut)">Nenhuma revenda BMax neste estado.</p>';
+    return;
+  }
+
+  // Se há cidade, tenta filtrar por raio de 50km
+  if (cidade && estado) {
+    revEl.innerHTML = '<p style="font-size:13px;color:var(--mut)">📍 Calculando distâncias...</p>';
+
+    var origemCoords = await _geocodeCity(cidade, estado);
+
+    if (origemCoords) {
+      // Geocodifica cada revenda em paralelo (cache evita chamadas duplicadas)
+      var promises = listaEstado.map(function(r) {
+        return _geocodeCep(r.cep, r.cidade, r.estado).then(function(coords) {
+          return { rev: r, coords: coords };
+        });
+      });
+      var resultados = await Promise.all(promises);
+
+      // Calcula distância e filtra ≤ 50km
+      var comDistancia = [];
+      var semCoords = [];
+      for (var i = 0; i < resultados.length; i++) {
+        var item = resultados[i];
+        if (item.coords) {
+          var dist = _haversineKm(origemCoords.lat, origemCoords.lng, item.coords.lat, item.coords.lng);
+          if (dist <= 50) comDistancia.push({ rev: item.rev, dist: dist });
+        } else {
+          semCoords.push(item.rev);
+        }
+      }
+
+      comDistancia.sort(function(a, b) { return a.dist - b.dist; });
+
+      if (comDistancia.length > 0) {
+        var rows = '';
+        for (var j = 0; j < comDistancia.length; j++) {
+          var r = comDistancia[j].rev;
+          var dist = comDistancia[j].dist;
+          var cls = r.classe === 'Ouro' ? 'chip-o' : 'chip-p';
+          var lbl = r.classe === 'Ouro' ? '🥇 Ouro' : '🥈 Prata';
+          var cidUF = r.estado ? (r.cidade||'') + '/' + r.estado : r.cidade||'—';
+          rows += '<tr>' +
+            '<td style="font-weight:500">' + r.nome + '</td>' +
+            '<td>' + cidUF + '</td>' +
+            '<td style="color:var(--mut)">' + dist.toFixed(0) + ' km</td>' +
+            '<td>' + (r.rep||'—') + '</td>' +
+            '<td><span class="chip ' + cls + '">' + lbl + '</span></td>' +
+            '</tr>';
+        }
+        var aviso = '<p style="font-size:12px;color:var(--mut);margin-bottom:10px">' +
+          comDistancia.length + ' revenda(s) em raio de 50 km de ' + cidade + '</p>';
+        revEl.innerHTML = aviso + '<div style="overflow-x:auto"><table class="rtbl">' +
+          '<thead><tr><th>Revenda</th><th>Cidade / UF</th><th>Distância</th><th>Representante</th><th>Classificação</th></tr></thead>' +
+          '<tbody>' + rows + '</tbody></table></div>';
+        return;
+      } else {
+        // Nenhuma no raio — mostrar estado com aviso
+        revEl.innerHTML = '<p style="font-size:12px;color:var(--mut);margin-bottom:10px">' +
+          'Nenhuma revenda em 50 km de ' + cidade + '. Exibindo todas de ' + estado + ':</p>' +
+          _cobRevTabela(listaEstado);
+        return;
+      }
+    }
+    // Se não conseguiu geocodificar a cidade, cai no fallback de estado
+  }
+
+  // Fallback: lista do estado sem distância
+  revEl.innerHTML = _cobRevTabela(listaEstado);
+}
+
+function _cobRevTabela(lista) {
+  var ordenada = lista.slice().sort(function(a,b){
+    var o = {Ouro:0,Prata:1};
+    return ((o[a.classe]||2) - (o[b.classe]||2)) || a.nome.localeCompare(b.nome);
+  });
+  var rows = '';
+  for (var i = 0; i < ordenada.length; i++) {
+    var r = ordenada[i];
+    var cls = r.classe === 'Ouro' ? 'chip-o' : 'chip-p';
+    var lbl = r.classe === 'Ouro' ? '🥇 Ouro' : '🥈 Prata';
+    var cidUF = r.estado ? (r.cidade||'') + '/' + r.estado : r.cidade||'—';
+    rows += '<tr>' +
+      '<td style="font-weight:500">' + r.nome + '</td>' +
+      '<td>' + cidUF + '</td>' +
+      '<td>' + (r.rep||'—') + '</td>' +
+      '<td><span class="chip ' + cls + '">' + lbl + '</span></td>' +
+      '</tr>';
+  }
+  return '<div style="overflow-x:auto"><table class="rtbl">' +
+    '<thead><tr><th>Revenda</th><th>Cidade / UF</th><th>Representante</th><th>Classificação</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div>';
 }
 </script>
 </body>

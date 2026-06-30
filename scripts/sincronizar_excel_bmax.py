@@ -6,11 +6,10 @@ Fluxo:
   1. Baixa o Excel do SharePoint via MSAL / Graph API
   2. Extrai revendas Ouro e Prata (aba REVENDA, col 0=Cliente, col 14=Nota, col 15=Classificação)
   3. Compara com Supabase (comercial_revendas_bmax)
-  4. Adiciona novas revendas (com geocodificação automática por cidade/estado)
-  5. Atualiza nome/rep/classe de revendas existentes
-  6. Marca como inativas revendas que saíram do Excel
-  7. Reativa revendas que voltaram ao Excel
-  8. NÃO toca lat/lng de revendas já geocodificadas
+  4. Adiciona novas revendas encontradas no Excel (com geocodificação automática)
+  5. Atualiza rep/classe de revendas existentes se mudaram no Excel
+  6. NUNCA altera o campo `ativo` — gerenciado exclusivamente pelo portal BMax
+  7. NÃO toca lat/lng de revendas já geocodificadas
 
 Env vars necessárias (GitHub Secrets ou .env):
   MSAL_TOKEN_CACHE       — cache JSON do token SharePoint (via renovar_msal_ci.py)
@@ -204,7 +203,7 @@ def main():
     sb_idx = {norm(r["nome"]): r for r in sb_revs}
     excel_nomes = {norm(r["nome"]) for r in excel_revs}
 
-    adicionadas = inseridas = atualizadas = reativadas = inativadas = 0
+    adicionadas = inseridas = atualizadas = 0
     erros = []
 
     # 4. Processar cada revenda do Excel
@@ -221,11 +220,6 @@ def main():
                 val_xl = str(rev.get(campo) or "").strip()
                 if val_xl and val_xl != val_ex:
                     updates[campo] = rev[campo]
-            # Reativa se estava inativa
-            if not existing["ativo"]:
-                updates["ativo"] = True
-                reativadas += 1
-                print(f"  ▶ Reativada:  {rev['nome']}")
             if updates:
                 try:
                     sb(f"/comercial_revendas_bmax?id=eq.{existing['id']}", "PATCH", updates)
@@ -254,21 +248,10 @@ def main():
             except Exception as e:
                 erros.append(f"{rev['nome']}: {e}")
 
-    # 5. Inativar revendas que sumiram do Excel (somente as que ainda estão ativas)
-    for r in sb_revs:
-        if norm(r["nome"]) not in excel_nomes and r["ativo"]:
-            try:
-                sb(f"/comercial_revendas_bmax?id=eq.{r['id']}", "PATCH", {"ativo": False})
-                inativadas += 1
-                print(f"  ⏸ Inativada:  {r['nome']} (não está mais no Excel)")
-            except Exception as e:
-                erros.append(f"{r['nome']}: {e}")
-
     print(f"\n=== Resultado ===")
-    print(f"  Inseridas:  {inseridas}")
+    print(f"  Inseridas:   {inseridas}")
     print(f"  Atualizadas: {atualizadas}")
-    print(f"  Reativadas: {reativadas}")
-    print(f"  Inativadas: {inativadas}")
+    print(f"  (ativo gerenciado pelo portal — sem inativação automática)")
     if erros:
         print(f"  Erros ({len(erros)}):")
         for e in erros:
