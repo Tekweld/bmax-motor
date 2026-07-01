@@ -442,7 +442,7 @@ main{padding:30px 32px;overflow-y:auto}
     </div>
     <div id="dist-block"></div>
     <div class="brow">
-      <button class="btn btn-p" onclick="goWs('produto')">Próximo →</button>
+      <button class="btn btn-p" onclick="goStep1Next()">Próximo →</button>
     </div>
   </div>
 
@@ -1369,6 +1369,11 @@ function nav(id, btn) {
   document.getElementById('pg-' + id).classList.add('on');
   document.querySelectorAll('.ni,.mtab').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
+}
+
+function goStep1Next() {
+  if (!leadCoords) { alert('Informe um CEP válido antes de continuar.'); return; }
+  goWs('produto');
 }
 
 function goWs(id) {
