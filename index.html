@@ -2094,16 +2094,18 @@ function renderTabela() {
             ? '<span class="ck-na">—</span>'
             : `<span style="color:var(--acc2);font-weight:700">${typeof v==='number'?v+'%':v}</span>`;
           const atLabel = p.atend === 'RCA' ? 'RCA' : 'V1/VT';
+          const na = '<span class="ck-na">—</span>';
+          const blank = p.id === 'PCI15';
           return `<tr>
             <td class="pci-id" style="color:${mc}">${p.id}</td>
             <td>${ck(p.dist)}</td>
             <td>${ck(p.rep)}</td>
             <td style="font-size:11px">${p.origem}</td>
-            <td style="font-weight:600;font-size:11px">${atLabel}</td>
-            <td style="color:${mc};font-size:11px;font-weight:600">${p.modelo}</td>
-            <td>${fP(p.repPct)}</td>
-            <td>${fP(p.viPct)}</td>
-            <td>${fP(p.revPct)}</td>
+            <td style="font-weight:600;font-size:11px">${blank ? na : atLabel}</td>
+            <td style="color:${mc};font-size:11px;font-weight:600">${blank ? na : p.modelo}</td>
+            <td>${blank ? na : fP(p.repPct)}</td>
+            <td>${blank ? na : fP(p.viPct)}</td>
+            <td>${blank ? na : fP(p.revPct)}</td>
             <td style="font-size:11px;color:var(--mut)">${p.portal}</td>
           </tr>`;
         }).join('')}
