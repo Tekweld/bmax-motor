@@ -440,6 +440,14 @@ main{padding:30px 32px;overflow-y:auto}
         <input type="text" id="i-addr" placeholder="Aguardando CEP..." readonly>
       </div>
     </div>
+    <div style="margin-top:14px;position:relative">
+      <div class="fi">
+        <label>Lead indicado por uma revenda? <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="i-rev-ind" placeholder="Digite o nome da revenda..." oninput="filtrarRevInd(this.value)" autocomplete="off">
+        <div id="rev-ind-list" style="display:none;position:absolute;left:0;right:0;background:#1a2a5e;border:1px solid rgba(255,255,255,.15);border-radius:8px;z-index:100;max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+      </div>
+      <div id="rev-ind-chip" style="display:none;margin-top:6px"></div>
+    </div>
     <div id="dist-block"></div>
     <div class="brow">
       <button class="btn btn-p" onclick="goStep1Next()">Próximo →</button>
@@ -472,7 +480,7 @@ main{padding:30px 32px;overflow-y:auto}
     </div>
     <div class="brow">
       <button class="btn btn-g" onclick="goWs('cep')">← Voltar</button>
-      <button class="btn btn-p" onclick="goWs('origem')">Próximo →</button>
+      <button class="btn btn-p" onclick="goStep2Next()">Próximo →</button>
     </div>
   </div>
 
@@ -515,7 +523,7 @@ main{padding:30px 32px;overflow-y:auto}
       </button>
     </div>
     <div class="brow">
-      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
+      <button class="btn btn-g" onclick="goCondutorVoltar()">← Voltar</button>
       <button class="btn btn-p" onclick="classify()">⚡ Classificar Agora</button>
     </div>
   </div>
@@ -1218,6 +1226,7 @@ let leadCoords = null;
 let leadGeo    = null;   // {state, city, ddd, ibge, repBmax} para dimensão geográfica
 let distMap    = {};
 let ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
+let revendaIndicante = null;
 
 // ════════════════════════════════════════════════════
 // INIT
@@ -1369,6 +1378,60 @@ function nav(id, btn) {
   document.getElementById('pg-' + id).classList.add('on');
   document.querySelectorAll('.ni,.mtab').forEach(b => b.classList.remove('on'));
   if (btn) btn.classList.add('on');
+}
+
+function filtrarRevInd(q) {
+  const list = document.getElementById('rev-ind-list');
+  if (!q.trim()) { list.innerHTML = ''; list.style.display = 'none'; return; }
+  const hits = revendas.filter(r => r.ativo !== false && r.nome.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+  if (!hits.length) {
+    list.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:rgba(255,255,255,.4)">Nenhuma revenda encontrada</div>';
+    list.style.display = 'block'; return;
+  }
+  list.innerHTML = hits.map(r => `
+    <div onclick="selectRevInd('${r.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.06)"
+         onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background=''">
+      <strong>${r.nome}</strong>
+      <span style="font-size:11px;color:rgba(255,255,255,.4);margin-left:6px">${r.cidade||''}${r.estado?'/'+r.estado:''} · ${r.classe}</span>
+    </div>`).join('');
+  list.style.display = 'block';
+}
+
+function selectRevInd(id) {
+  revendaIndicante = revendas.find(r => r.id === id) || null;
+  if (!revendaIndicante) return;
+  document.getElementById('i-rev-ind').value = '';
+  document.getElementById('rev-ind-list').style.display = 'none';
+  const chip = document.getElementById('rev-ind-chip');
+  chip.style.display = 'block';
+  chip.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,187,238,.15);border:1px solid rgba(37,187,238,.3);border-radius:20px;padding:4px 12px">
+    <span style="font-size:13px;font-weight:600;color:#25bbee">${revendaIndicante.nome}</span>
+    <span style="font-size:11px;color:rgba(255,255,255,.4)">${revendaIndicante.cidade||''}${revendaIndicante.estado?'/'+revendaIndicante.estado:''}</span>
+    <span onclick="clearRevInd()" style="cursor:pointer;color:rgba(255,255,255,.5);font-size:14px;line-height:1" title="Remover">✕</span>
+  </div>`;
+}
+
+function clearRevInd() {
+  revendaIndicante = null;
+  document.getElementById('i-rev-ind').value = '';
+  document.getElementById('rev-ind-list').style.display = 'none';
+  document.getElementById('rev-ind-chip').style.display = 'none';
+  document.getElementById('rev-ind-chip').innerHTML = '';
+}
+
+function goStep2Next() {
+  if (!ans.produto) { toast('Selecione o produto.', 'err'); return; }
+  if (revendaIndicante) {
+    ans.origem = 'revenda';
+    goWs('condutor');
+  } else {
+    goWs('origem');
+  }
+}
+
+function goCondutorVoltar() {
+  if (revendaIndicante) goWs('produto');
+  else goWs('origem');
 }
 
 function goStep1Next() {
@@ -1743,9 +1806,35 @@ async function classify() {
     return `<span class="cpct">${v}%</span>`;
   };
 
-  const principal = revendaPrincipal();
+  let principal;
+  if (revendaIndicante) {
+    const km = (leadCoords && revendaIndicante.lat && revendaIndicante.lng)
+      ? hav(leadCoords.lat, leadCoords.lng, revendaIndicante.lat, revendaIndicante.lng)
+      : null;
+    principal = { ...revendaIndicante, km: km ?? 0, _foraRaio: km !== null && km > CFG.raio };
+  } else {
+    principal = revendaPrincipal();
+  }
   let revHtml = '';
-  if (hasCEP && dentro.length) {
+  if (revendaIndicante && principal) {
+    const cls = principal.classe === 'Ouro'
+      ? '<span class="chip chip-o">🥇 Ouro</span>'
+      : '<span class="chip chip-p">🥈 Prata</span>';
+    const distTxt = principal.km ? `${principal.km.toFixed(1)} km` : 'distância não calculada';
+    revHtml = `
+      <div class="al al-g">
+        <div style="margin-bottom:6px"><strong>🏪 Revenda indicante (selecionada manualmente):</strong></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${cls}
+          <span style="font-weight:600">${principal.nome}</span>
+          <span style="color:var(--mut);font-size:12px">${principal.rep||''} · ${distTxt}</span>
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--mut)">
+          📍 ${[principal.endereco, [principal.cidade, principal.estado].filter(Boolean).join('/'), principal.cep ? principal.cep.replace(/(\d{5})(\d{3})/,'$1-$2') : ''].filter(Boolean).join(', ') || 'Endereço não cadastrado'}
+        </div>
+        ${principal._foraRaio ? `<div style="margin-top:6px;font-size:12px;color:#f59e0b">⚠️ Fora do raio padrão de ${CFG.raio} km — indicação manual</div>` : ''}
+      </div>`;
+  } else if (hasCEP && dentro.length) {
     const cls = principal.classe==='Ouro'
       ? '<span class="chip chip-o">🥇 Ouro</span>'
       : '<span class="chip chip-p">🥈 Prata</span>';
@@ -1882,6 +1971,7 @@ function copyRes(id, desc, modelo, atend) {
 function resetWiz() {
   ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
   leadCoords = null; leadGeo = null; distMap = {};
+  clearRevInd();
   document.getElementById('i-cep').value  = '';
   document.getElementById('i-addr').value = '';
   document.getElementById('s-cep').innerHTML = '';
