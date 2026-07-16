@@ -1249,7 +1249,6 @@ async function loadRevendas() {
     const { data, error } = await sbClient
       .from('comercial_revendas_bmax')
       .select('*')
-      .eq('ativo', true)
       .order('classe')
       .order('nome');
     if (!error && data?.length) {
