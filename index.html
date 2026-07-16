@@ -2010,7 +2010,7 @@ async function saveRev() {
   };
   if (!r.nome) { toast('Informe o nome da revenda.', 'err'); return; }
   r.editado_em  = new Date().toISOString();
-  r.editado_por = SESSION?.user?.email || 'desconhecido';
+  r.editado_por = adminSession?.user?.email || 'desconhecido';
 
   const rid = document.getElementById('r-id').value;
   try {
@@ -2115,7 +2115,7 @@ async function toggleRevAtivo(id, atualAtivo) {
 async function _doToggleRev(id, novoAtivo) {
   try {
     const rev = revendas.find(x => x.id === id);
-    const email = SESSION?.user?.email || 'desconhecido';
+    const email = adminSession?.user?.email || 'desconhecido';
     const { error } = await sbClient.from('comercial_revendas_bmax').update({
       ativo: novoAtivo, editado_em: new Date().toISOString(), editado_por: email
     }).eq('id', id);
