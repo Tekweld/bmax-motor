@@ -1331,10 +1331,10 @@ async function recarregarRevendas() {
 }
 
 function updateSb() {
-  const at = revendas.filter(r => r.classe !== 'Não Aplica');
+  const at = revendas.filter(r => r.ativo !== false && r.classe !== 'Não Aplica');
   document.getElementById('sb-n').textContent = at.length;
-  const o = revendas.filter(r => r.classe === 'Ouro').length;
-  const p = revendas.filter(r => r.classe === 'Prata').length;
+  const o = revendas.filter(r => r.ativo !== false && r.classe === 'Ouro').length;
+  const p = revendas.filter(r => r.ativo !== false && r.classe === 'Prata').length;
   document.getElementById('sb-s').textContent = `${o} Ouro · ${p} Prata`;
 }
 
@@ -1623,7 +1623,7 @@ async function geocodeLead() {
   leadCoords = { lat:geo.lat, lng:geo.lng };
   s.innerHTML = `<span class="pill pill-ok">✓ ${geo.city||''}/${geo.state||''} · ${geo.lat.toFixed(5)}, ${geo.lng.toFixed(5)}</span>`;
 
-  const comCoords = revendas.filter(r => r.lat && r.lng && r.classe !== 'Não Aplica');
+  const comCoords = revendas.filter(r => r.ativo !== false && r.lat && r.lng && r.classe !== 'Não Aplica');
   if (!comCoords.length) {
     db.innerHTML = '<div class="al al-i">ℹ️ Nenhuma revenda com CEP geocodificado. Execute o script de enriquecimento ZEN para ativar cálculo automático.</div>';
     return;
