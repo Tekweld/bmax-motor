@@ -418,15 +418,15 @@ main{padding:30px 32px;overflow-y:auto}
 <!-- ══════ CLASSIFICAR ══════ -->
 <div class="pg on" id="pg-classificar">
   <div class="ph">
-    <div class="ph-tag">Motor PCI · 2ª Versão · 17 Perfis</div>
+    <div class="ph-tag">Motor PCI · 2ª Versão · 16 Perfis</div>
     <h1 class="ph-title">Classificar Lead Industrial</h1>
     <p class="ph-sub">Preencha os critérios. O motor consulta distâncias reais e classifica automaticamente conforme a planilha BMax.</p>
   </div>
 
   <!-- STEP 1: CEP -->
   <div class="card ws on" id="ws-cep">
-    <div class="step-n">Passo 1 de 5</div>
-    <div class="pbar"><div class="pfill" style="width:20%"></div></div>
+    <div class="step-n">Passo 1</div>
+    <div class="pbar"><div class="pfill" style="width:15%"></div></div>
     <div class="sq">Qual o CEP da indústria (lead)?</div>
     <div class="sh">O motor calculará a distância até todas as revendas BMax e verificará se alguma está dentro dos <strong id="h-raio">50</strong> km.</div>
     <div class="fr c2">
@@ -456,8 +456,8 @@ main{padding:30px 32px;overflow-y:auto}
 
   <!-- STEP 2: PRODUTO -->
   <div class="card ws" id="ws-produto">
-    <div class="step-n">Passo 2 de 5</div>
-    <div class="pbar"><div class="pfill" style="width:40%"></div></div>
+    <div class="step-n">Passo 2</div>
+    <div class="pbar"><div class="pfill" style="width:30%"></div></div>
     <div class="sq">Qual é o produto / categoria da oportunidade?</div>
     <div class="sh">Somente Robô, Laser e Máquina Industrial (≥300A) fazem parte do escopo BMax.</div>
     <div class="og">
@@ -465,13 +465,9 @@ main{padding:30px 32px;overflow-y:auto}
         <div class="on-name">🤖 Robô / Automação</div>
         <div class="on-desc">Braços robóticos, células automatizadas de soldagem</div>
       </button>
-      <button class="ob" data-v="laser_multi" onclick="pick('produto',this)">
-        <div class="on-name">⚡ Laser — mais de 2 unidades</div>
-        <div class="on-desc">Operação com mais de 2 máquinas laser (cluster +2)</div>
-      </button>
-      <button class="ob" data-v="laser_single" onclick="pick('produto',this)">
-        <div class="on-name">⚡ Laser — apenas 1 unidade</div>
-        <div class="on-desc">Operação com somente 1 máquina laser (cluster ×1)</div>
+      <button class="ob" data-v="laser" onclick="pick('produto',this)">
+        <div class="on-name">⚡ Laser</div>
+        <div class="on-desc">Máquinas laser de corte (qualquer quantidade)</div>
       </button>
       <button class="ob" data-v="maquina" onclick="pick('produto',this)">
         <div class="on-name">🔧 Máquina Industrial ≥300A</div>
@@ -486,10 +482,10 @@ main{padding:30px 32px;overflow-y:auto}
 
   <!-- STEP 3: ORIGEM -->
   <div class="card ws" id="ws-origem">
-    <div class="step-n">Passo 3 de 5</div>
+    <div class="step-n">Passo 3</div>
     <div class="pbar"><div class="pfill" style="width:60%"></div></div>
     <div class="sq">Qual é a origem deste lead?</div>
-    <div class="sh">Leads gerados pela Revenda seguem para PCI16 ou PCI17. Leads Boxer seguem o fluxo completo.</div>
+    <div class="sh">Leads gerados pela Revenda seguem para PCI13–15 ou PCI16. Leads Boxer seguem o fluxo completo.</div>
     <div class="og">
       <button class="ob" data-v="boxer" onclick="pick('origem',this)">
         <div class="on-name">📡 Gerado pela Boxer</div>
@@ -501,25 +497,25 @@ main{padding:30px 32px;overflow-y:auto}
       </button>
     </div>
     <div class="brow">
-      <button class="btn btn-g" onclick="goWs('produto')">← Voltar</button>
+      <button class="btn btn-g" onclick="goOrigemVoltar()">← Voltar</button>
       <button class="btn btn-p" onclick="goOrigemNext()">Próximo →</button>
     </div>
   </div>
 
   <!-- STEP 3b: CONDUTOR (somente leads revenda) -->
   <div class="card ws" id="ws-condutor">
-    <div class="step-n">Passo 3 de 3 — Lead Revenda</div>
+    <div class="step-n">Passo — Lead Revenda</div>
     <div class="pbar"><div class="pfill" style="width:100%"></div></div>
     <div class="sq">Quem conduz a negociação com o cliente final?</div>
-    <div class="sh">Define se é <strong>PCI16</strong> (Boxer participa junto) ou <strong>PCI17</strong> (Revenda conduz sozinha). A revenda escolhe o modelo.</div>
+    <div class="sh">Define se é <strong>PCI13/14/15</strong> (Boxer + Revenda juntos) ou <strong>PCI16</strong> (Revenda conduz sozinha). A revenda escolhe o modelo.</div>
     <div class="og">
       <button class="ob" data-v="juntos" onclick="pick('condutor',this)">
-        <div class="on-name">🤝 Boxer + Revenda juntos — PCI16</div>
-        <div class="on-desc">BOX+REV&gt;IND · Rep 3% · Revenda 4–10% · Portal TODOS</div>
+        <div class="on-name">🤝 Boxer + Revenda juntos — PCI13/14/15</div>
+        <div class="on-desc">BOX+REV&gt;IND · Revenda recebe comissão por classe · Portal TODOS</div>
       </button>
       <button class="ob" data-v="revenda_lidera" onclick="pick('condutor',this)">
-        <div class="on-name">🏪 Revenda conduz sozinha — PCI17</div>
-        <div class="on-desc">BOX&gt;REV · Rep 5% · Revenda Margem · Portal NÃO</div>
+        <div class="on-name">🏪 Revenda conduz sozinha — PCI16</div>
+        <div class="on-desc">BOX&gt;REV · Boxer vende à revenda · Portal NÃO</div>
       </button>
     </div>
     <div class="brow">
@@ -530,23 +526,23 @@ main{padding:30px 32px;overflow-y:auto}
 
   <!-- STEP 3 (antes 4): VALOR NF — rep determinado automaticamente pelo leadGeo -->
   <div class="card ws" id="ws-nf">
-    <div class="step-n">Passo 3 de 3</div>
-    <div class="pbar"><div class="pfill" style="width:100%"></div></div>
+    <div class="step-n">Passo</div>
+    <div class="pbar"><div class="pfill" style="width:75%"></div></div>
     <div class="sq">Qual o valor estimado da venda?</div>
-    <div class="sh">Para Máquina Industrial, o valor define o cluster: ≥ R$ 50.000 → PCI 10–12 · &lt; R$ 50.000 → PCI 13–15.</div>
+    <div class="sh">Para Máquina Industrial, o valor define o cluster: &gt; R$ 25.000 → PCI 7–9 · ≤ R$ 25.000 → PCI 10–12.</div>
     <div class="og">
       <button class="ob" data-v="acima" onclick="pick('nf',this)">
-        <div class="on-name" id="lbl-acima">✦ Acima de R$ 50.000</div>
+        <div class="on-name" id="lbl-acima">✦ Acima de R$ 25.000</div>
         <div class="on-desc">Venda de maior valor — Boxer lidera a negociação</div>
       </button>
       <button class="ob" data-v="abaixo" onclick="pick('nf',this)">
-        <div class="on-name" id="lbl-abaixo">◇ Abaixo de R$ 50.000</div>
+        <div class="on-name" id="lbl-abaixo">◇ Até R$ 25.000</div>
         <div class="on-desc">Venda menor — revenda e rep têm prioridade</div>
       </button>
     </div>
     <div class="brow">
-      <button class="btn btn-g" onclick="goWs('origem')">← Voltar</button>
-      <button class="btn btn-p" onclick="classify()">⚡ Classificar Agora</button>
+      <button class="btn btn-g" onclick="goWs('produto')">← Voltar</button>
+      <button class="btn btn-p" onclick="goNfNext()">Próximo →</button>
     </div>
   </div>
 
@@ -616,7 +612,7 @@ main{padding:30px 32px;overflow-y:auto}
   <div class="ph">
     <div class="ph-tag">Referência Completa</div>
     <h1 class="ph-title">Tabela de PCIs</h1>
-    <p class="ph-sub">17 perfis da 2ª versão — fonte: planilha BMax_CRITERIOS. PCI16 e PCI17 diferenciados pela condução da venda.</p>
+    <p class="ph-sub">16 perfis da 2ª versão — fonte: planilha BMax_CRITERIOS. PCI13–15 (Lead Revenda junto) e PCI16 (Revenda conduz sozinha).</p>
   </div>
   <div id="tabela-content"></div>
 </div>
@@ -635,7 +631,7 @@ main{padding:30px 32px;overflow-y:auto}
       <div class="ct">📐 Thresholds</div>
       <div class="fr c2">
         <div class="fi"><label>Raio máximo de revenda (km)</label><input type="number" id="c-raio" value="50"></div>
-        <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="50000"></div>
+        <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="25000"></div>
         <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="120"></div>
       </div>
     </div>
@@ -1032,140 +1028,129 @@ async function submitNewPassword() {
 })();
 
 // ════════════════════════════════════════════════════
-// TABELA EXATA DOS 17 PCIs (planilha BMAX_CRITERIOS — 2ª Versão)
-// PCI16 = BOX+REV>IND (Boxer lidera), PCI17 = BOX>REV (Revenda lidera)
+// 16 PCIs — V2 (planilha BMAX_CRITERIOS — versão atual)
+// viBase: 'std'=VI padrão / 'lr'=Lead Revenda / null=n/a
+// revBase: 'fixed-1.5'|'fixed-2.0'|'lr_robo'|'lr_laser'|'lr_maq'|null
+// forcedClass: força classe de preço (somente PCI12B → 6)
 // ════════════════════════════════════════════════════
 const PCIS = [
-  // ── CLUSTER ROBÔ ────────────────────────────────────────────
-  { id:'PCI1',  grupo:'Robô',
-    robo:true,  laser:null, maq:null,
-    dist:false, rep:false, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
+  // ── CLUSTER ROBÔ ──────────────────────────────────────────────
+  { id:'PCI1',  grupo:'Robô',         prod:'robo',    dist:false, rep:false, origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:0, viBase:'std', revBase:null,        portal:'ADM',
     desc:'Robô · sem revenda no raio · sem representante' },
-
-  { id:'PCI2',  grupo:'Robô',
-    robo:true,  laser:null, maq:null,
-    dist:false, rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+  { id:'PCI2',  grupo:'Robô',         prod:'robo',    dist:false, rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:1, viBase:'std', revBase:null,        portal:'ADM + REP',
     desc:'Robô · sem revenda no raio · com representante' },
-
-  { id:'PCI3',  grupo:'Robô',
-    robo:true,  laser:null, maq:null,
-    dist:true,  rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
+  { id:'PCI3',  grupo:'Robô',         prod:'robo',    dist:true,  rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:1, viBase:'std', revBase:null,        portal:'ADM + REP',
     desc:'Robô · com revenda no raio · com representante' },
 
-  // ── CLUSTER LASER +2 ────────────────────────────────────────
-  { id:'PCI4',  grupo:'Laser +2',
-    robo:false, laser:'+2', maq:null,
-    dist:false, rep:false, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
-    desc:'Laser múltiplo · sem revenda · sem representante' },
+  // ── CLUSTER LASER (unificado) ─────────────────────────────────
+  { id:'PCI4',  grupo:'Laser',        prod:'laser',   dist:false, rep:false, origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:0, viBase:'std', revBase:null,        portal:'ADM',
+    desc:'Laser · sem revenda no raio · sem representante' },
+  { id:'PCI5',  grupo:'Laser',        prod:'laser',   dist:false, rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:1, viBase:'std', revBase:null,        portal:'ADM + REP',
+    desc:'Laser · sem revenda no raio · com representante' },
+  { id:'PCI6',  grupo:'Laser',        prod:'laser',   dist:true,  rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:1, viBase:'std', revBase:'fixed-1.5', portal:'TODOS',
+    desc:'Laser · com revenda no raio · com representante' },
 
-  { id:'PCI5',  grupo:'Laser +2',
-    robo:false, laser:'+2', maq:null,
-    dist:false, rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
-    desc:'Laser múltiplo · sem revenda · com representante' },
+  // ── MÁQUINA >R$25k ────────────────────────────────────────────
+  { id:'PCI7',  grupo:'Máquina >R$25k', prod:'maquina', dist:false, rep:false, origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:0, viBase:'std', revBase:null,        portal:'ADM',
+    desc:'Máquina >R$25k · sem revenda · sem representante' },
+  { id:'PCI8',  grupo:'Máquina >R$25k', prod:'maquina', dist:false, rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:1, viBase:'std', revBase:null,        portal:'ADM + REP',
+    desc:'Máquina >R$25k · sem revenda · com representante' },
+  { id:'PCI9',  grupo:'Máquina >R$25k', prod:'maquina', dist:true,  rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:1, viBase:'std', revBase:'fixed-2.0', portal:'TODOS',
+    desc:'Máquina >R$25k · com revenda · com representante' },
 
-  { id:'PCI6',  grupo:'Laser +2',
-    robo:false, laser:'+2', maq:null,
-    dist:true,  rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
-    desc:'Laser múltiplo · com revenda · com representante' },
+  // ── MÁQUINA ≤R$25k ────────────────────────────────────────────
+  { id:'PCI10', grupo:'Máquina ≤R$25k', prod:'maquina', dist:false, rep:false, origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:0, viBase:'std', revBase:null,        portal:'ADM',
+    desc:'Máquina ≤R$25k · sem revenda · sem representante' },
+  { id:'PCI11', grupo:'Máquina ≤R$25k', prod:'maquina', dist:false, rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX>IND',    repPct:1, viBase:'std', revBase:null,        portal:'ADM + REP',
+    desc:'Máquina ≤R$25k · sem revenda · com representante' },
+  { id:'PCI12A',grupo:'Máquina ≤R$25k', prod:'maquina', dist:true,  rep:true,  origem:'BOXER',
+    atend:'REVENDA',modelo:'BOX>REV',   repPct:null,viBase:null, revBase:null,       portal:'NÃO',   forcedClass:6,
+    desc:'Máquina ≤R$25k · revenda decide conduzir (BOX>REV) · Classe 6' },
+  { id:'PCI12B',grupo:'Máquina ≤R$25k', prod:'maquina', dist:true,  rep:true,  origem:'BOXER',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:1, viBase:'std', revBase:'fixed-2.0', portal:'TODOS', forcedClass:6,
+    desc:'Máquina ≤R$25k · Boxer conduz + cashback revenda · Classe 6' },
 
-  // ── CLUSTER LASER ×1 ────────────────────────────────────────
-  { id:'PCI7',  grupo:'Laser ×1',
-    robo:false, laser:'1', maq:null,
-    dist:false, rep:false, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
-    desc:'Laser unitário · sem revenda · sem representante' },
-
-  { id:'PCI8',  grupo:'Laser ×1',
-    robo:false, laser:'1', maq:null,
-    dist:false, rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:1,   viPct:1.2, revPct:null, portal:'ADM + REP',
-    desc:'Laser unitário · sem revenda · com representante' },
-
-  { id:'PCI9',  grupo:'Laser ×1',
-    robo:false, laser:'1', maq:null,
-    dist:true,  rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX+REV>IND',
-    repPct:3,   viPct:1.2, revPct:'4–10% (classe tabela)', portal:'TODOS',
-    desc:'Laser unitário · com revenda · com representante' },
-
-  // ── MÁQUINA ≥R$50k ─────────────────────────────────────────
-  { id:'PCI10', grupo:'Máquina ≥R$50k',
-    robo:false, laser:null, maq:'>50k',
-    dist:false, rep:false, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
-    desc:'Máquina ≥R$50k · sem revenda · sem representante' },
-
-  { id:'PCI11', grupo:'Máquina ≥R$50k',
-    robo:false, laser:null, maq:'>50k',
-    dist:false, rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:3,   viPct:1.2, revPct:null, portal:'ADM + REP',
-    desc:'Máquina ≥R$50k · sem revenda · com representante' },
-
-  { id:'PCI12', grupo:'Máquina ≥R$50k',
-    robo:false, laser:null, maq:'>50k',
-    dist:true,  rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX+REV>IND',
-    repPct:3,   viPct:1.2, revPct:'4–10% (classe tabela)', portal:'TODOS',
-    desc:'Máquina ≥R$50k · com revenda · com representante' },
-
-  // ── MÁQUINA <R$50k ─────────────────────────────────────────
-  { id:'PCI13', grupo:'Máquina <R$50k',
-    robo:false, laser:null, maq:'<50k',
-    dist:false, rep:false, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:0,   viPct:1.2, revPct:null, portal:'ADM',
-    desc:'Máquina <R$50k · sem revenda · sem representante' },
-
-  { id:'PCI14', grupo:'Máquina <R$50k',
-    robo:false, laser:null, maq:'<50k',
-    dist:false, rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>IND',
-    repPct:3,   viPct:1.2, revPct:null, portal:'REP',
-    desc:'Máquina <R$50k · sem revenda · com representante' },
-
-  { id:'PCI15', grupo:'Máquina <R$50k',
-    robo:false, laser:null, maq:'<50k',
-    dist:true,  rep:true, origem:'BOXER',
-    atend:'VI',  modelo:'BOX>REV',
-    repPct:5,   viPct:1.2, revPct:'Margem', portal:'TODOS',
-    desc:'Máquina <R$50k · com revenda · com representante' },
-
-  // ── LEAD REVENDA ─────────────────────────────────────────────
-  { id:'PCI16', grupo:'Lead Revenda',
-    robo:true, laser:true, maq:true,
-    dist:true, rep:true, origem:'REVENDA',
-    atend:'RCA', modelo:'BOX+REV>IND',
-    repPct:3,  viPct:0, revPct:'4–10% (classe tabela)', portal:'TODOS',
-    desc:'Lead Revenda · Boxer + Revenda conduzem juntos' },
-
-  { id:'PCI17', grupo:'Lead Revenda',
-    robo:true, laser:true, maq:true,
-    dist:true, rep:true, origem:'REVENDA',
-    atend:'RCA', modelo:'BOX>REV',
-    repPct:5,  viPct:0, revPct:'Margem', portal:'NÃO',
-    desc:'Lead Revenda · Revenda conduz sozinha (sem Boxer)' },
+  // ── LEAD REVENDA ──────────────────────────────────────────────
+  { id:'PCI13', grupo:'Lead Revenda', prod:'robo',    dist:true,  rep:true,  origem:'REVENDA',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:1, viBase:'lr', revBase:'lr_robo',   portal:'TODOS',
+    desc:'Lead Revenda · Robô · Boxer + Revenda conduzem' },
+  { id:'PCI14', grupo:'Lead Revenda', prod:'laser',   dist:true,  rep:true,  origem:'REVENDA',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:2, viBase:'lr', revBase:'lr_laser',  portal:'TODOS',
+    desc:'Lead Revenda · Laser · Boxer + Revenda conduzem' },
+  { id:'PCI15', grupo:'Lead Revenda', prod:'maquina', dist:true,  rep:true,  origem:'REVENDA',
+    atend:'VI_VT', modelo:'BOX+REV>IND',repPct:2, viBase:'lr', revBase:'lr_maq',    portal:'TODOS',
+    desc:'Lead Revenda · Máquina · Boxer + Revenda conduzem' },
+  { id:'PCI16', grupo:'Lead Revenda', prod:null,      dist:true,  rep:true,  origem:'REVENDA',
+    atend:'REVENDA',modelo:'BOX>REV',   repPct:null,viBase:null, revBase:null,       portal:'NÃO',
+    desc:'Lead Revenda · Revenda conduz sozinha (BOX>REV)' },
 ];
+
+// Tabelas de comissão VI por classe 1–6
+const VI_STD  = [1.2, 1.5, 1.7, 1.9, 2.0, 2.1]; // PCIs padrão Boxer
+const VI_LR   = [1.0, 1.3, 1.5, 1.7, 1.8, 1.9]; // PCIs Lead Revenda
+
+// Tabelas de comissão Revenda por classe 1–6
+const REV_CLASSES = {
+  'lr_robo':  [1.5, 2.0, 2.5, 3.0, 3.5, 4.0],
+  'lr_laser': [1.7, 2.0, 2.5, 3.0, 3.5, 4.0],
+  'lr_maq':   [3.0, 3.5, 4.0, 4.5, 5.0, 5.0],
+};
+
+// Comissão exceção (rep conduz, sem VI/VT) por classe 1–6
+const EXC_CLASSES = {
+  PCI2:  [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
+  PCI3:  [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
+  PCI5:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
+  PCI6:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
+  PCI8:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
+  PCI9:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
+  PCI11: [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
+  PCI12B:[3.1, 3.1, 3.1, 3.1, 3.1, 3.1],
+  PCI13: [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
+  PCI14: [3.0, 3.3, 3.5, 3.7, 3.8, 3.9],
+  PCI15: [3.0, 3.3, 3.5, 3.7, 3.8, 3.9],
+};
+
+function fmtVI(pci) {
+  if (!pci.viBase) return '<span class="czero">—</span>';
+  const arr = pci.viBase === 'lr' ? VI_LR : VI_STD;
+  if (pci.forcedClass) {
+    const v = arr[pci.forcedClass - 1];
+    return `<span class="cpct">${String(v).replace('.',',')}%</span><small style="font-size:10px;color:var(--mut);margin-left:4px">(classe ${pci.forcedClass} — fixo)</small>`;
+  }
+  return `<span class="cpct">${String(arr[0]).replace('.',',')}% a ${String(arr[arr.length-1]).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">por classe</small>`;
+}
+
+function fmtRevPct(pci) {
+  if (!pci.revBase) return '<span class="czero">—</span>';
+  if (pci.revBase === 'fixed-1.5') return '<span class="cpct">1,5%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
+  if (pci.revBase === 'fixed-2.0') return '<span class="cpct">2,0%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
+  const arr = REV_CLASSES[pci.revBase];
+  if (!arr) return '<span class="czero">—</span>';
+  return `<span class="cpct">${String(arr[0]).replace('.',',')}% a ${String(arr[arr.length-1]).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">por classe</small>`;
+}
+
+function fmtRepPct(pci) {
+  if (pci.repPct === null || pci.repPct === undefined) return '<span class="czero">—</span>';
+  if (pci.repPct === 0) return '<span class="czero">—</span>';
+  return `<span class="cpct">${pci.repPct}%</span>`;
+}
 
 // ════════════════════════════════════════════════════
 // ESTADO
 // ════════════════════════════════════════════════════
-let CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+let CFG = { raio:50, nf:25000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
 
 // ── Vendedores Boxer — carregados do Supabase, fallback hardcoded ──
 const _VND_BOXER_FALLBACK = {
@@ -1284,6 +1269,7 @@ async function loadConfig() {
       if (map.rep_pct_r3b)  CFG.rep3b  = +map.rep_pct_r3b;
       if (map.rep_pct_r5)   CFG.rep5   = +map.rep_pct_r5;
       if (map.vi_pct)       CFG.vi     = +map.vi_pct;
+      if (CFG.nf === 50000) CFG.nf = 25000; // migração V2: threshold 50k→25k
     }
   } catch {}
 }
@@ -1418,14 +1404,37 @@ function clearRevInd() {
   document.getElementById('rev-ind-chip').innerHTML = '';
 }
 
+function calcSteps() {
+  const hasRevInd = !!revendaIndicante;
+  const prod = ans.produto;
+  const isMaq = prod === 'maquina';
+  const isRev = ans.origem === 'revenda';
+  if (hasRevInd)       return { cep:1, produto:2, condutor:3, total:3 };
+  if (isMaq && isRev)  return { cep:1, produto:2, nf:3, origem:4, condutor:5, total:5 };
+  if (isMaq)           return { cep:1, produto:2, nf:3, origem:4, total:4 };
+  if (!isMaq && isRev) return { cep:1, produto:2, origem:3, condutor:4, total:4 };
+  return                      { cep:1, produto:2, origem:3, total:3 };
+}
+
 function goStep2Next() {
   if (!ans.produto) { toast('Selecione o produto.', 'err'); return; }
   if (revendaIndicante) {
     ans.origem = 'revenda';
     goWs('condutor');
+  } else if (ans.produto === 'maquina') {
+    goWs('nf');
   } else {
     goWs('origem');
   }
+}
+
+function goNfNext() {
+  if (!ans.nf) { toast('Selecione o valor estimado da venda.', 'err'); return; }
+  goWs('origem');
+}
+
+function goOrigemVoltar() {
+  goWs(ans.produto === 'maquina' ? 'nf' : 'produto');
 }
 
 function goCondutorVoltar() {
@@ -1441,7 +1450,18 @@ function goStep1Next() {
 function goWs(id) {
   document.querySelectorAll('.ws').forEach(s => s.classList.remove('on'));
   const el = document.getElementById('ws-' + id);
-  if (el) { el.classList.add('on'); el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  if (!el) return;
+  el.classList.add('on');
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
+  const steps = calcSteps();
+  const num = steps[id];
+  if (num !== undefined) {
+    const sn = el.querySelector('.step-n');
+    const pf = el.querySelector('.pfill');
+    const sfx = id === 'condutor' ? ' — Lead Revenda' : '';
+    if (sn) sn.textContent = `Passo ${num} de ${steps.total}${sfx}`;
+    if (pf) pf.style.width = Math.round((num / steps.total) * 100) + '%';
+  }
 }
 
 function pick(field, btn) {
@@ -1711,7 +1731,7 @@ function revendaPrincipal() {
 
 // Dimensão geográfica: Interior SP → VT1/VT2; outros → V1
 function getAtendLabel(pci) {
-  if (pci.atend === 'RCA') return 'RCA (Representante Comercial Autorizado)';
+  if (pci.atend === 'REVENDA') return 'Revenda conduz';
   if (leadGeo?.state === 'SP') {
     const city = (leadGeo.city || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
     if (city && city !== 'sao paulo') return 'VT1 ou VT2 (Interior SP)';
@@ -1726,16 +1746,10 @@ function goOrigemNext() {
     goWs('condutor');
     return;
   }
-  // Boxer lead: rep determinado automaticamente pelo mapa de cobertura
   ans.rep = (leadGeo && leadGeo.repBmax) ? 'sim' : 'nao';
-  // Robô e Laser não dependem de NF — classificar direto
-  const prod = ans.produto;
-  if (prod === 'robo' || prod === 'laser_multi' || prod === 'laser_single') {
-    ans.nf = 'acima';
-    classify();
-  } else {
-    goWs('nf');
-  }
+  if (ans.produto === 'robo' || ans.produto === 'laser') ans.nf = 'acima';
+  // Para máquina, ans.nf já foi definido no passo anterior (ws-nf)
+  classify();
 }
 
 function matchPCI() {
@@ -1743,13 +1757,15 @@ function matchPCI() {
   const orig     = ans.origem;
   const repAtivo = ans.rep === 'sim';
   const revProx  = temRevenda();
-  const nfAcima  = ans.nf === 'acima';
+  const nfAcima  = ans.nf === 'acima'; // acima = >R$25k
 
-  // Lead revenda: PCI16 ou PCI17 conforme condutor
+  // Lead Revenda: condutor decide PCI16 ou PCI13/14/15 por produto
   if (orig === 'revenda') {
-    return ans.condutor === 'juntos'
-      ? PCIS.find(p => p.id === 'PCI16')
-      : PCIS.find(p => p.id === 'PCI17');
+    if (ans.condutor === 'revenda_lidera') return PCIS.find(p => p.id === 'PCI16');
+    if (prod === 'robo')    return PCIS.find(p => p.id === 'PCI13');
+    if (prod === 'laser')   return PCIS.find(p => p.id === 'PCI14');
+    if (prod === 'maquina') return PCIS.find(p => p.id === 'PCI15');
+    return PCIS.find(p => p.id === 'PCI13');
   }
 
   // ROBÔ
@@ -1759,30 +1775,26 @@ function matchPCI() {
     return PCIS.find(p => p.id === 'PCI3');
   }
 
-  // LASER +2
-  if (prod === 'laser_multi') {
+  // LASER (unificado)
+  if (prod === 'laser') {
     if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI4');
     if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI5');
     return PCIS.find(p => p.id === 'PCI6');
   }
 
-  // LASER ×1
-  if (prod === 'laser_single') {
-    if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI7');
-    if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI8');
-    return PCIS.find(p => p.id === 'PCI9');
-  }
-
   // MÁQUINA
   if (prod === 'maquina') {
-    if (nfAcima) {
+    if (nfAcima) { // >R$25k
+      if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI7');
+      if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI8');
+      return PCIS.find(p => p.id === 'PCI9');
+    } else { // ≤R$25k
       if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI10');
       if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI11');
-      return PCIS.find(p => p.id === 'PCI12');
-    } else {
-      if (!revProx && !repAtivo) return PCIS.find(p => p.id === 'PCI13');
-      if (!revProx &&  repAtivo) return PCIS.find(p => p.id === 'PCI14');
-      return PCIS.find(p => p.id === 'PCI15');
+      // Revenda próxima: PCI12 aguarda definição da revenda (12A ou 12B)
+      return { id:'PCI12', _isPCI12:true, grupo:'Máquina ≤R$25k', prod:'maquina',
+               dist:true, origem:'BOXER', atend:'VI_VT',
+               modelo:'BOX>REV ou BOX+REV>IND', portal:'—', forcedClass:6 };
     }
   }
   return PCIS[0];
@@ -1792,19 +1804,150 @@ async function classify() {
   const pci    = matchPCI();
   const dentro = revendasDentro();
   const hasCEP = !!leadCoords;
+
+  // ── PCI12: resultado pendente validação com revenda ───────────
+  if (pci._isPCI12) {
+    const pci12a = PCIS.find(p => p.id === 'PCI12A');
+    const pci12b = PCIS.find(p => p.id === 'PCI12B');
+    // Revenda principal
+    const p12principal = revendaIndicante ? (() => {
+      const km = (leadCoords && revendaIndicante.lat && revendaIndicante.lng)
+        ? hav(leadCoords.lat, leadCoords.lng, revendaIndicante.lat, revendaIndicante.lng) : null;
+      return { ...revendaIndicante, km: km ?? 0, _foraRaio: km !== null && km > CFG.raio };
+    })() : revendaPrincipal();
+    // Vendedor e rep
+    const p12vnd = (leadGeo && leadGeo.ddd) ? getVendedorBoxer(leadGeo.ddd) : null;
+    const p12vndInner = leadGeo
+      ? (p12vnd
+          ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+               <span style="font-weight:700;font-size:15px;color:${p12vnd.cor}">${p12vnd.nome}</span>
+               <span style="font-size:12px;color:#fff">${p12vnd.tipo==='VT1'?'Vendedor Técnico 1 (VT1)':p12vnd.tipo==='VT2'?'Vendedor Técnico 2 (VT2)':'Vendedor Interno (VI)'}</span>
+               <span style="font-size:11px;color:#fff;background:rgba(255,255,255,.12);padding:2px 7px;border-radius:4px">DDD ${leadGeo.ddd}</span>
+             </div>`
+          : `<div style="font-size:13px;color:rgba(255,255,255,.6)">DDD não identificado — verificar manualmente</div>`)
+      : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
+    const p12repNome = p12principal?.rep || leadGeo?.repBmax || null;
+    const p12repInner = leadGeo
+      ? (p12repNome
+          ? `<div style="display:flex;align-items:center;gap:8px">
+               <span style="font-weight:700;font-size:15px;color:#4ade80">✓ ${p12repNome}</span>
+               <span style="font-size:12px;color:#fff">${p12principal?.rep ? 'rep da revenda' : 'cobre esta cidade'}</span>
+             </div>`
+          : `<div style="display:flex;align-items:center;gap:6px">
+               <span style="font-weight:600;font-size:14px;color:#e30613">✗ Sem representante BMax</span>
+             </div>`)
+      : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
+    // Card revenda no grid
+    const p12revCardInner = p12principal
+      ? `<div style="font-weight:700;font-size:14px;color:#fff">${p12principal.nome}</div>
+         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">${p12principal.cidade||''}${p12principal.estado?'/'+p12principal.estado:''} · ${p12principal.km != null ? p12principal.km.toFixed(1)+' km' : '—'}</div>`
+      : `<div style="font-size:13px;color:rgba(255,255,255,.4)">Nenhuma no raio</div>`;
+    const p12grid = leadGeo ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px">
+        <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Vendedor Boxer Responsável</div>
+          ${p12vndInner}
+        </div>
+        <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Representante BMax</div>
+          ${p12repInner}
+        </div>
+        <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
+          <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Revenda Selecionada</div>
+          ${p12revCardInner}
+        </div>
+      </div>` : '';
+    // Bloco revenda completo
+    let p12revHtml = '';
+    if (revendaIndicante && p12principal) {
+      const cls = p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
+      const distTxt = p12principal.km != null ? `${p12principal.km.toFixed(1)} km` : 'distância não calculada';
+      p12revHtml = `<div class="al al-g">
+        <div style="margin-bottom:6px"><strong>🏪 Revenda indicante (selecionada manualmente):</strong></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${cls}<span style="font-weight:600">${p12principal.nome}</span><span style="color:var(--mut);font-size:12px">${p12principal.rep||''} · ${distTxt}</span></div>
+        <div style="margin-top:6px;font-size:12px;color:var(--mut)">📍 ${[p12principal.endereco,[p12principal.cidade,p12principal.estado].filter(Boolean).join('/'),p12principal.cep?p12principal.cep.replace(/(\d{5})(\d{3})/,'$1-$2'):''].filter(Boolean).join(', ')||'Endereço não cadastrado'}</div>
+        ${p12principal._foraRaio?`<div style="margin-top:6px;font-size:12px;color:#f59e0b">⚠️ Fora do raio padrão de ${CFG.raio} km — indicação manual</div>`:''}
+      </div>`;
+    } else if (hasCEP && dentro.length && p12principal) {
+      const cls = p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
+      const demais = dentro.filter(r => r !== p12principal);
+      p12revHtml = `<div class="al al-g">
+        <div style="margin-bottom:6px"><strong>🏪 Revenda selecionada (prioridade ${p12principal.classe}):</strong></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${cls}<span style="font-weight:600">${p12principal.nome}</span><span style="color:var(--mut);font-size:12px">${p12principal.rep||''} · ${p12principal.km.toFixed(1)} km</span></div>
+        <div style="margin-top:6px;font-size:12px;color:var(--mut)">📍 ${[p12principal.endereco,[p12principal.cidade,p12principal.estado].filter(Boolean).join('/'),p12principal.cep?p12principal.cep.replace(/(\d{5})(\d{3})/,'$1-$2'):''].filter(Boolean).join(', ')||'Endereço não cadastrado'}</div>
+        ${demais.length?`<div style="margin-top:6px;font-size:12px;color:var(--mut)">Também no raio: ${demais.map(r=>`${r.nome} (${r.km.toFixed(1)} km · ${r.classe})`).join(' · ')}</div>`:''}
+      </div>`;
+    } else if (!hasCEP) {
+      p12revHtml = `<div class="al al-i">ℹ️ CEP não geocodificado — distância verificada manualmente.</div>`;
+    }
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML = `
+      <p class="ph-tag" style="margin-bottom:8px">✦ Resultado</p>
+      <div class="res-hero" style="margin-bottom:14px">
+        <div class="res-pci-lbl" style="color:var(--gold)">Perfil do Cliente Indústria</div>
+        <div class="res-pci" style="color:var(--gold)">PCI12</div>
+        <div class="res-name">Máquina ≤R$25k · Lead Boxer · Revenda no raio</div>
+        <div class="badges" style="margin-bottom:6px">
+          <div class="badge"><span class="dot" style="background:var(--gold)"></span>Classe 6 — fixo</div>
+          <div class="badge"><span class="dot db"></span>Rev. no raio</div>
+        </div>
+        ${p12grid}
+      </div>
+      <div class="al al-w" style="margin-bottom:14px">
+        ⏳ <strong>PCI12 requer validação com a revenda.</strong> Contate a revenda mais próxima para definir como ela quer participar da operação.
+        O modelo de negociação determina se o atendimento segue como <strong>12A</strong> (revenda conduz) ou <strong>12B</strong> (Boxer conduz com cashback para revenda). Em ambos os casos, a <strong>Classe de Preço é 6</strong>.
+      </div>
+      <p class="ph-tag" style="margin-bottom:10px">🔀 Caminhos possíveis</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div class="card" style="padding:16px;border:1px solid rgba(245,166,35,.3)">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:4px">PCI12A</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Revenda conduz sozinha</div>
+          <div style="font-size:11px;color:var(--mut);margin-bottom:12px">BOX → REV · Boxer vende à revenda · revenda negocia com o cliente</div>
+          <table class="ctbl">
+            <tr><td>🏪 Revenda</td><td><span style="font-size:12px;color:var(--mut)">Margem própria c/ cliente</span></td></tr>
+            <tr><td>🤝 Representante</td><td><span class="czero">—</span></td></tr>
+            <tr><td>👤 VI / VT</td><td><span class="czero">—</span></td></tr>
+          </table>
+          <div style="margin-top:10px;font-size:11px;color:var(--mut)">Portal: NÃO · Revenda não acessa portal BMax neste modelo</div>
+        </div>
+        <div class="card" style="padding:16px;border:1px solid rgba(0,229,176,.25)">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--acc2);margin-bottom:4px">PCI12B</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Boxer conduz + cashback revenda</div>
+          <div style="font-size:11px;color:var(--mut);margin-bottom:12px">BOX+REV → IND · Boxer lidera · revenda recebe cashback portal</div>
+          <table class="ctbl">
+            <tr><td>🏪 Revenda</td><td>${fmtRevPct(pci12b)}</td></tr>
+            <tr><td>🤝 Representante</td><td>${fmtRepPct(pci12b)}</td></tr>
+            <tr><td>👤 VI / VT</td><td>${fmtVI(pci12b)}</td></tr>
+          </table>
+          <div class="al al-i" style="margin-top:10px;font-size:11px;line-height:1.6">
+            ℹ️ <strong>Exceção:</strong> se o representante conduzir o atendimento sem auxílio do vendedor Boxer, sua comissão passa a ser de <strong>3,1%</strong> e o VI ou VT não são remunerados.
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px 20px;margin-bottom:14px;background:rgba(29,50,123,.25);border:1px solid rgba(37,187,238,.22)">
+        <div style="font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--acc);margin-bottom:10px">📋 Tabela de Preços — Classe 6 (fixo)</div>
+        <div style="font-size:13px;color:var(--mut);margin-bottom:12px">Use a Tabela de Preços com Origem <strong style="color:var(--whi)">Boxer</strong> · Categoria <strong style="color:var(--whi)">Máquinas</strong> · <strong style="color:var(--gold)">Classe 6</strong></div>
+        <a href="https://app.boxersoldas.com.br/tabela-de-precos.html?t=2" target="_blank"
+           style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,187,238,.15);border:1px solid rgba(37,187,238,.3);border-radius:8px;padding:8px 16px;color:var(--acc);font-size:13px;font-weight:600;text-decoration:none">
+          🔗 Abrir Tabela de Preços
+        </a>
+      </div>
+      ${p12revHtml}
+      <div class="brow">
+        <button class="btn btn-p" onclick="resetWiz()">🔄 Nova Classificação</button>
+      </div>`;
+    document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
+    try { await logClassificacao(pci); } catch {}
+    return;
+  }
+
   const atendLabel = getAtendLabel(pci);
 
   const mc = {
     'BOX>IND':'var(--acc)', 'BOX+REV>IND':'var(--acc2)', 'BOX>REV':'var(--gold)'
   }[pci.modelo] || 'var(--acc)';
 
-  const fmtPct = v => {
-    if (v === null || v === undefined) return '<span class="czero">—</span>';
-    if (typeof v === 'string') return `<span class="cpct">${v}</span>`;
-    if (v === 0) return '<span class="czero">—</span>';
-    return `<span class="cpct">${v}%</span>`;
-  };
-
+  // ── Revenda principal ──────────────────────────────────────────
   let principal;
   if (revendaIndicante) {
     const km = (leadCoords && revendaIndicante.lat && revendaIndicante.lng)
@@ -1814,7 +1957,10 @@ async function classify() {
   } else {
     principal = revendaPrincipal();
   }
+
+  // ── Bloco revenda (debaixo do hero) ───────────────────────────
   let revHtml = '';
+  const showRevBlock = pci.modelo === 'BOX>REV' || pci.revBase !== null;
   if (revendaIndicante && principal) {
     const cls = principal.classe === 'Ouro'
       ? '<span class="chip chip-o">🥇 Ouro</span>'
@@ -1833,7 +1979,7 @@ async function classify() {
         </div>
         ${principal._foraRaio ? `<div style="margin-top:6px;font-size:12px;color:#f59e0b">⚠️ Fora do raio padrão de ${CFG.raio} km — indicação manual</div>` : ''}
       </div>`;
-  } else if (hasCEP && dentro.length) {
+  } else if (showRevBlock && hasCEP && dentro.length) {
     const cls = principal.classe==='Ouro'
       ? '<span class="chip chip-o">🥇 Ouro</span>'
       : '<span class="chip chip-p">🥈 Prata</span>';
@@ -1857,13 +2003,13 @@ async function classify() {
     revHtml = `<div class="al al-i">ℹ️ CEP não geocodificado — distância verificada manualmente.</div>`;
   }
 
-  // Vendedor Boxer responsável
+  // ── Vendedor Boxer responsável ─────────────────────────────────
   const vnd = (leadGeo && leadGeo.ddd) ? getVendedorBoxer(leadGeo.ddd) : null;
   const vndInner = leadGeo
     ? (vnd
         ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:15px;color:${vnd.cor}">${vnd.nome}</span>
-              <span style="font-size:12px;color:#fff">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2' : 'Vendedor Interno'}</span>
+              <span style="font-size:12px;color:#fff">${vnd.tipo === 'VT1' ? 'Vendedor Técnico 1 (VT1)' : vnd.tipo === 'VT2' ? 'Vendedor Técnico 2 (VT2)' : 'Vendedor Interno (VI)'}</span>
               <span style="font-size:11px;color:#fff;background:rgba(255,255,255,.12);padding:2px 7px;border-radius:4px">DDD ${leadGeo.ddd}</span>
            </div>`
         : `<div style="font-size:13px;color:rgba(255,255,255,.6)">DDD não identificado — verificar manualmente</div>`)
@@ -1881,10 +2027,22 @@ async function classify() {
            </div>`)
     : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
 
-  const revCardInner = principal
-    ? `<div style="font-weight:700;font-size:14px;color:#fff">${principal.nome}</div>
-       <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">${principal.cidade||''}${principal.estado?'/'+principal.estado:''} · ${principal.km.toFixed(1)} km</div>`
-    : `<div style="font-size:13px;color:rgba(255,255,255,.4)">Nenhuma no raio</div>`;
+  // Card revenda no grid: mostra se PCI envolve comissão ou modelo BOX>REV
+  const showRevCard = pci.modelo === 'BOX>REV' || pci.revBase !== null;
+  let revCardInner;
+  if (showRevCard) {
+    revCardInner = principal
+      ? `<div style="font-weight:700;font-size:14px;color:#fff">${principal.nome}</div>
+         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:3px">${principal.cidade||''}${principal.estado?'/'+principal.estado:''} · ${principal.km.toFixed(1)} km</div>`
+      : `<div style="font-size:13px;color:rgba(255,255,255,.4)">Nenhuma no raio</div>`;
+  } else {
+    revCardInner = principal
+      ? `<div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">
+           Mais próxima: <strong style="color:#fff">${principal.nome}</strong>
+           <div style="margin-top:4px;font-size:11px;color:var(--gold)">⚠️ Sem comissão neste PCI</div>
+         </div>`
+      : `<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>`;
+  }
 
   const vndRepGrid = leadGeo ? `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px">
@@ -1893,7 +2051,7 @@ async function classify() {
         ${vndInner}
       </div>
       <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
-        <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Representante BMax Responsável</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Representante BMax</div>
         ${repInner}
       </div>
       <div style="padding:12px 14px;background:rgba(255,255,255,.06);border-radius:8px;border:1px solid rgba(255,255,255,.12)">
@@ -1902,7 +2060,62 @@ async function classify() {
       </div>
     </div>` : '';
 
-  const geoTag = '';
+  // ── Tabela de Preços — orientação ─────────────────────────────
+  const PROD_LABEL = { robo:'Robô', laser:'Laser', maquina:'Máquinas' };
+  const origemTab  = pci.origem === 'REVENDA' ? 'Revenda' : 'Boxer';
+  const catTab     = PROD_LABEL[pci.prod] || '—';
+  const classeTab  = pci.forcedClass
+    ? `<strong style="color:var(--gold)">Classe ${pci.forcedClass} (definida automaticamente para este PCI)</strong>`
+    : '<strong>Classe 1 a 6</strong> (conforme margem negociada)';
+
+  const tabelaGuidance = pci.modelo === 'BOX>REV'
+    ? `<div class="al al-w" style="margin-bottom:14px">🏪 <strong>BOX&gt;REV:</strong> A revenda negocia diretamente com o cliente. A Tabela de Preços BMax não é utilizada nesta operação.</div>`
+    : `<div class="card" style="padding:16px 20px;margin-bottom:14px;background:rgba(29,50,123,.25);border:1px solid rgba(37,187,238,.22)">
+        <div style="font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--acc);margin-bottom:10px">📋 Como negociar — Tabela de Preços</div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;line-height:1.7">
+          <div><span style="color:var(--mut)">Origem:</span> <strong>${origemTab}</strong></div>
+          <div><span style="color:var(--mut)">Categoria:</span> <strong>${catTab}</strong></div>
+          <div><span style="color:var(--mut)">Classe:</span> ${classeTab}</div>
+        </div>
+        <a href="https://app.boxersoldas.com.br/tabela-de-precos.html?t=2" target="_blank"
+           style="display:inline-flex;align-items:center;gap:6px;background:rgba(37,187,238,.15);border:1px solid rgba(37,187,238,.3);border-radius:8px;padding:8px 16px;color:var(--acc);font-size:13px;font-weight:600;text-decoration:none"
+           onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+          🔗 Abrir Tabela de Preços
+        </a>
+      </div>`;
+
+  // ── Nota de Classe forçada ────────────────────────────────────
+  const classeForcedNote = pci.forcedClass
+    ? `<div class="al al-w" style="margin-bottom:8px">⚠️ <strong>Classe ${pci.forcedClass} definida automaticamente</strong> para máquinas ≤R$25k próximas a revenda. Os valores de comissão abaixo já refletem essa classe.</div>`
+    : '';
+
+  // ── Nota de exceção do representante ─────────────────────────
+  const excArr = EXC_CLASSES[pci.id];
+  let excNota = '';
+  if (excArr) {
+    const vals = excArr.map(v => parseFloat(v.toFixed(1)));
+    const minV = Math.min(...vals).toFixed(1).replace('.',',');
+    const maxV = Math.max(...vals).toFixed(1).replace('.',',');
+    const rangeStr = minV === maxV ? `${minV}%` : `${minV}% a ${maxV}%`;
+    excNota = `<div class="al al-i" style="margin-top:8px;font-size:12px;line-height:1.6">
+      ℹ️ <strong>Exceção:</strong> se o representante conduzir o atendimento comercial, sem auxílio do vendedor Boxer, sua comissão passa a ser de <strong>${rangeStr}</strong> (de acordo com a classe de preço selecionada) e o VI ou VT não são remunerados.
+    </div>`;
+  }
+
+  // ── Bloco de comissão para BOX>REV ───────────────────────────
+  const commBlock = pci.modelo === 'BOX>REV'
+    ? `<div class="al al-w" style="margin-bottom:14px">🏪 Modelo <strong>BOX&gt;REV</strong>: a revenda negocia a margem diretamente com o cliente. Não há comissão Boxer nesta operação.</div>`
+    : `<div class="card" style="padding:14px;margin-bottom:14px">
+        <table class="ctbl">
+          <tr><td>🏪 Revenda</td><td>${fmtRevPct(pci)}</td></tr>
+          <tr><td>🤝 Representante BMax</td><td>${fmtRepPct(pci)}</td></tr>
+          <tr><td>👤 Vendedor Interno / Técnico (VI · VT)</td><td>${fmtVI(pci)}</td></tr>
+        </table>
+        ${excNota}
+        <p style="font-size:11px;color:var(--mut);margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.06)">
+          Percentuais sobre valor da NF · Liberados após liquidação · Revenda recebe via cashback/bonificação no portal BMax
+        </p>
+      </div>`;
 
   document.getElementById('result').style.display = 'block';
   document.getElementById('result').innerHTML = `
@@ -1913,39 +2126,17 @@ async function classify() {
       <div class="res-name">${pci.desc}</div>
       <div class="badges" style="margin-bottom:10px">
         <div class="badge"><span class="dot da"></span>Modelo: ${pci.modelo}</div>
-        <div class="badge"><span class="dot db"></span>${atendLabel}</div>
         <div class="badge"><span class="dot dg"></span>Portal: ${pci.portal}</div>
-        <div class="badge"><span class="dot ${pci.dist?'db':'dr'}"></span>Rev. ${pci.dist?'no raio':'fora do raio'}</div>
+        <div class="badge"><span class="dot ${pci.origem==='REVENDA'?'da':pci.dist?'db':'dr'}"></span>${pci.origem==='REVENDA'?'Lead de Revenda':pci.modelo==='BOX>REV'?'Rev. como compradora':pci.dist?'Rev. no raio':'Sem rev. no raio'}</div>
       </div>
       ${vndRepGrid}
     </div>
 
-    <div class="sgrid">
-      <div class="sc"><div class="sc-l">Modelo</div>
-        <div class="sc-v" style="font-size:13px">${pci.modelo}</div>
-        <div class="sc-s">${{'BOX>IND':'Boxer → Indústria','BOX+REV>IND':'Boxer + Revenda → Indústria','BOX>REV':'Boxer → Revenda'}[pci.modelo]||''}</div>
-      </div>
-      <div class="sc"><div class="sc-l">Quem Atende</div>
-        <div class="sc-v" style="font-size:11px">${atendLabel}</div>
-        <div class="sc-s">Portal: ${pci.portal}</div>
-      </div>
-      <div class="sc"><div class="sc-l">Vínculo</div>
-        <div class="sc-v">${CFG.vinculo}d</div>
-        <div class="sc-s">Após validação no portal</div>
-      </div>
-    </div>
+    ${classeForcedNote}
+    ${tabelaGuidance}
 
     <p class="ph-tag" style="margin-bottom:10px">💰 Comissionamento</p>
-    <div class="card" style="padding:14px">
-      <table class="ctbl">
-        <tr><td>🏪 Revenda</td><td>${fmtPct(pci.revPct)}</td></tr>
-        <tr><td>🤝 Representante</td><td>${fmtPct(pci.repPct)}</td></tr>
-        <tr><td>👤 Vendedor Interno</td><td>${fmtPct(pci.viPct)}</td></tr>
-      </table>
-      <p style="font-size:11px;color:var(--mut);margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.06)">
-        Percentuais sobre valor da NF · Liberados após liquidação · Revenda recebe via cashback/bonificação no portal BMax
-      </p>
-    </div>
+    ${commBlock}
 
     ${revHtml}
 
@@ -1956,7 +2147,6 @@ async function classify() {
   `;
   document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
 
-  // Log assíncrono — não bloqueia o resultado
   logClassificacao(pci);
 }
 
@@ -1975,7 +2165,7 @@ function resetWiz() {
   document.getElementById('i-addr').value = '';
   document.getElementById('s-cep').innerHTML = '';
   document.getElementById('dist-block').innerHTML = '';
-  document.getElementById('rep-auto-msg').innerHTML = '';
+  const _ram = document.getElementById('rep-auto-msg'); if (_ram) _ram.innerHTML = '';
   document.querySelectorAll('.ob').forEach(b => b.classList.remove('sel'));
   document.getElementById('result').style.display = 'none';
   goWs('cep');
@@ -2167,15 +2357,34 @@ const BASE_REVENDAS = [
 // TABELA DE REFERÊNCIA
 // ════════════════════════════════════════════════════
 const GRUPOS_TABELA = [
-  {label:'🤖 Cluster Robô — Lead Boxer',           ids:['PCI1','PCI2','PCI3']},
-  {label:'⚡ Laser +2 (múltiplas unidades)',        ids:['PCI4','PCI5','PCI6']},
-  {label:'⚡ Laser ×1 (unitário)',                  ids:['PCI7','PCI8','PCI9']},
-  {label:'🔧 Máquina Industrial ≥R$50k',           ids:['PCI10','PCI11','PCI12']},
-  {label:'🔧 Máquina Industrial &lt;R$50k',           ids:['PCI13','PCI14','PCI15']},
-  {label:'🏪 Qualquer produto — Lead Revenda',      ids:['PCI16','PCI17']},
+  {label:'🤖 Cluster Robô — Lead Boxer',              ids:['PCI1','PCI2','PCI3']},
+  {label:'⚡ Laser — Lead Boxer',                      ids:['PCI4','PCI5','PCI6']},
+  {label:'🔧 Máquina >R$25k — Lead Boxer',            ids:['PCI7','PCI8','PCI9']},
+  {label:'🔧 Máquina ≤R$25k — Lead Boxer',            ids:['PCI10','PCI11','PCI12A','PCI12B']},
+  {label:'🏪 Lead Revenda — Boxer + Revenda juntos',  ids:['PCI13','PCI14','PCI15']},
+  {label:'🏪 Lead Revenda — Revenda conduz sozinha',  ids:['PCI16']},
 ];
 
 function renderTabela() {
+  const na = '<span class="ck-na">—</span>';
+  const ck = v => v ? '<span class="ck-y">✓</span>' : '<span class="ck-n">✗</span>';
+  const fVI = p => {
+    if (!p.viBase) return na;
+    const arr = p.viBase === 'lr' ? VI_LR : VI_STD;
+    if (p.forcedClass) return `<span style="color:var(--acc2);font-weight:700">${String(arr[p.forcedClass-1]).replace('.',',')}%</span><small style="color:var(--mut)"> cl.${p.forcedClass}</small>`;
+    return `<span style="color:var(--acc2);font-weight:700">${String(arr[0]).replace('.',',')}–${String(arr[arr.length-1]).replace('.',',')}%</span>`;
+  };
+  const fRev = p => {
+    if (!p.revBase) return na;
+    if (p.revBase === 'fixed-1.5') return '<span style="color:var(--acc2);font-weight:700">1,5%</span>';
+    if (p.revBase === 'fixed-2.0') return '<span style="color:var(--acc2);font-weight:700">2,0%</span>';
+    const arr = REV_CLASSES[p.revBase];
+    if (!arr) return na;
+    return `<span style="color:var(--acc2);font-weight:700">${String(arr[0]).replace('.',',')}–${String(arr[arr.length-1]).replace('.',',')}%</span>`;
+  };
+  const fRep = p => (p.repPct === null || p.repPct === 0) ? na : `<span style="color:var(--acc2);font-weight:700">${p.repPct}%</span>`;
+  const atLabel = p => p.atend === 'REVENDA' ? 'Revenda' : p.atend === 'VI_VT' ? 'VI/VT' : na;
+
   let html = '';
   GRUPOS_TABELA.forEach(g => {
     html += `<div class="card" style="margin-bottom:12px">
@@ -2189,23 +2398,17 @@ function renderTabela() {
         ${g.ids.map(id => {
           const p = PCIS.find(x => x.id === id); if (!p) return '';
           const mc = {'BOX>IND':'var(--acc)','BOX+REV>IND':'var(--acc2)','BOX>REV':'var(--gold)'}[p.modelo]||'var(--acc)';
-          const ck = v => v ? '<span class="ck-y">✓</span>' : '<span class="ck-n">✗</span>';
-          const fP = v => v===null||v===0
-            ? '<span class="ck-na">—</span>'
-            : `<span style="color:var(--acc2);font-weight:700">${typeof v==='number'?v+'%':v}</span>`;
-          const atLabel = p.atend === 'RCA' ? 'RCA' : 'V1/VT';
-          const na = '<span class="ck-na">—</span>';
-          const blank = p.id === 'PCI15';
+          const fcTag = p.forcedClass ? `<span style="font-size:9px;color:var(--gold);margin-left:3px">Cl.${p.forcedClass}</span>` : '';
           return `<tr>
-            <td class="pci-id" style="color:${mc}">${p.id}</td>
+            <td class="pci-id" style="color:${mc}">${p.id}${fcTag}</td>
             <td>${ck(p.dist)}</td>
             <td>${ck(p.rep)}</td>
             <td style="font-size:11px">${p.origem}</td>
-            <td style="font-weight:600;font-size:11px">${blank ? na : atLabel}</td>
-            <td style="color:${mc};font-size:11px;font-weight:600">${blank ? na : p.modelo}</td>
-            <td>${blank ? na : fP(p.repPct)}</td>
-            <td>${blank ? na : fP(p.viPct)}</td>
-            <td>${blank ? na : fP(p.revPct)}</td>
+            <td style="font-weight:600;font-size:11px">${atLabel(p)}</td>
+            <td style="color:${mc};font-size:11px;font-weight:600">${p.modelo}</td>
+            <td>${fRep(p)}</td>
+            <td>${fVI(p)}</td>
+            <td>${fRev(p)}</td>
             <td style="font-size:11px;color:var(--mut)">${p.portal}</td>
           </tr>`;
         }).join('')}
@@ -2258,7 +2461,7 @@ async function saveCfg() {
 }
 
 async function resetCfg() {
-  CFG = { raio:50, nf:50000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+  CFG = { raio:50, nf:25000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
   await saveConfigToSb();
   applyConfig(); renderTabela();
   toast('Configurações restauradas para os valores padrão.', 'ok');
@@ -2964,13 +3167,20 @@ function _haversineKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+var _UF_NOMES = {AC:'Acre',AL:'Alagoas',AM:'Amazonas',AP:'Amapá',BA:'Bahia',CE:'Ceará',
+  DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MG:'Minas Gerais',
+  MS:'Mato Grosso do Sul',MT:'Mato Grosso',PA:'Pará',PB:'Paraíba',PE:'Pernambuco',
+  PI:'Piauí',PR:'Paraná',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RO:'Rondônia',
+  RR:'Roraima',RS:'Rio Grande do Sul',SC:'Santa Catarina',SE:'Sergipe',SP:'São Paulo',TO:'Tocantins'};
+
 async function _geocodeCity(cidade, estado) {
   var key = 'city:' + cidade + '|' + estado;
   if (_geoCache[key] !== undefined) return _geoCache[key];
   try {
+    var estadoNome = _UF_NOMES[estado.toUpperCase()] || estado;
     var url = 'https://nominatim.openstreetmap.org/search?city=' + encodeURIComponent(cidade) +
-              '&state=' + encodeURIComponent(estado) + '&country=Brazil&format=json&limit=1';
-    var r = await fetch(url, { headers: { 'Accept-Language': 'pt-BR', 'User-Agent': 'BMaxMotorPCI/1.0' } });
+              '&state=' + encodeURIComponent(estadoNome) + '&country=Brazil&format=json&limit=1';
+    var r = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
     var data = await r.json();
     var result = (data && data[0]) ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) } : null;
     _geoCache[key] = result;
@@ -3283,17 +3493,16 @@ async function cobRenderRevendas(estado, cidade) {
           '<tbody>' + rows + '</tbody></table></div>';
         return;
       } else {
-        // Nenhuma no raio — mostrar estado com aviso
-        revEl.innerHTML = '<p style="font-size:12px;color:var(--mut);margin-bottom:10px">' +
-          'Nenhuma revenda em 50 km de ' + cidade + '. Exibindo todas de ' + estado + ':</p>' +
-          _cobRevTabela(listaEstado);
+        revEl.innerHTML = '<div class="al al-w">⚠️ Nenhuma revenda BMax em raio de 50 km de <strong>' + cidade + '</strong>.</div>';
         return;
       }
     }
-    // Se não conseguiu geocodificar a cidade, cai no fallback de estado
+    // Geocode falhou
+    revEl.innerHTML = '<div class="al al-i">ℹ️ Não foi possível calcular a distância para <strong>' + cidade + ' / ' + estado + '</strong>. Verifique se a cidade está correta ou tente outra.</div>';
+    return;
   }
 
-  // Fallback: lista do estado sem distância
+  // Sem cidade selecionada — lista do estado sem distância
   revEl.innerHTML = _cobRevTabela(listaEstado);
 }
 
