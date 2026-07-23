@@ -1715,9 +1715,15 @@ function temRevenda() {
 
 function revendasDentro() {
   const BONUS_OURO_KM = 15;
+  const PROXIMIDADE_MAX = 5;
   return Object.values(distMap)
     .filter(d => d.km <= CFG.raio)
     .sort((a,b) => {
+      const aProx = a.km <= PROXIMIDADE_MAX;
+      const bProx = b.km <= PROXIMIDADE_MAX;
+      if (aProx && !bProx) return -1;
+      if (!aProx && bProx) return 1;
+      if (aProx && bProx) return a.km - b.km;
       const efA = a.km - (a.classe === 'Ouro' ? BONUS_OURO_KM : 0);
       const efB = b.km - (b.classe === 'Ouro' ? BONUS_OURO_KM : 0);
       return efA - efB;
