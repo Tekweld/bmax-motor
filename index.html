@@ -188,7 +188,8 @@ main{padding:30px 32px;overflow-y:auto}
   text-align:center;margin-bottom:16px;position:relative;
   box-shadow:0 8px 40px rgba(37,187,238,.08),inset 0 1px 0 rgba(255,255,255,.06)}
 .res-pci-lbl{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
-.res-pci{font-family:'Syne',sans-serif;font-weight:800;font-size:52px;letter-spacing:-2px;line-height:1}
+.res-pci{font-family:'Syne',sans-serif;font-weight:800;font-size:64px;letter-spacing:-1px;line-height:1;display:inline-flex;align-items:baseline;justify-content:center;gap:6px}
+.res-pci .pci-prefix{font-size:32px;letter-spacing:1px}
 .res-name{font-size:14px;font-weight:500;margin:8px 0 4px}
 .res-desc{font-size:12px;color:var(--mut);max-width:440px;margin:0 auto 20px}
 .badges{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
@@ -632,7 +633,7 @@ main{padding:30px 32px;overflow-y:auto}
       <div class="fr c2">
         <div class="fi"><label>Raio máximo de revenda (km)</label><input type="number" id="c-raio" value="50"></div>
         <div class="fi"><label>Limiar de valor de NF (R$)</label><input type="number" id="c-nf" value="25000"></div>
-        <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="120"></div>
+        <div class="fi"><label>Prazo do vínculo (dias)</label><input type="number" id="c-vinculo" value="60"></div>
       </div>
     </div>
     <div class="card">
@@ -641,8 +642,8 @@ main{padding:30px 32px;overflow-y:auto}
         <div class="fi"><label>Rep Robô/Laser múltiplo sem revenda</label><input type="number" id="c-rep0" value="0" step="0.1"></div>
         <div class="fi"><label>Rep Robô/Laser múltiplo com revenda</label><input type="number" id="c-rep1" value="1" step="0.1"></div>
         <div class="fi"><label>Rep Laser simples com revenda</label><input type="number" id="c-rep3a" value="3" step="0.1"></div>
-        <div class="fi"><label>Rep Máquina ≥50k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
-        <div class="fi"><label>Rep Máquina &lt;50k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
+        <div class="fi"><label>Rep Máquina ≥25k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
+        <div class="fi"><label>Rep Máquina &lt;25k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
         <div class="fi"><label>Vendedor Interno (todos os PCIs Boxer)</label><input type="number" id="c-vi" value="1.2" step="0.1"></div>
       </div>
     </div>
@@ -1116,7 +1117,7 @@ const EXC_CLASSES = {
   PCI8:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
   PCI9:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
   PCI11: [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
-  PCI12B:[3.1, 3.1, 3.1, 3.1, 3.1, 3.1],
+  PCI12B:[2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
   PCI13: [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
   PCI14: [3.0, 3.3, 3.5, 3.7, 3.8, 3.9],
   PCI15: [3.0, 3.3, 3.5, 3.7, 3.8, 3.9],
@@ -1150,7 +1151,7 @@ function fmtRepPct(pci) {
 // ════════════════════════════════════════════════════
 // ESTADO
 // ════════════════════════════════════════════════════
-let CFG = { raio:50, nf:25000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+let CFG = { raio:50, nf:25000, vinculo:60, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
 
 // ── Vendedores Boxer — carregados do Supabase, fallback hardcoded ──
 const _VND_BOXER_FALLBACK = {
@@ -1891,7 +1892,7 @@ async function classify() {
       <p class="ph-tag" style="margin-bottom:8px">✦ Resultado</p>
       <div class="res-hero" style="margin-bottom:14px">
         <div class="res-pci-lbl" style="color:var(--gold)">Perfil do Cliente Indústria</div>
-        <div class="res-pci" style="color:var(--gold)">PCI12</div>
+        <div class="res-pci" style="color:var(--gold)"><span class="pci-prefix">PCI</span>12</div>
         <div class="res-name">Máquina ≤R$25k · Lead Boxer · Revenda no raio</div>
         <div class="badges" style="margin-bottom:6px">
           <div class="badge"><span class="dot" style="background:var(--gold)"></span>Classe 6 — fixo</div>
@@ -1906,7 +1907,7 @@ async function classify() {
       <p class="ph-tag" style="margin-bottom:10px">🔀 Caminhos possíveis</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div class="card" style="padding:16px;border:1px solid rgba(245,166,35,.3)">
-          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--gold);margin-bottom:4px">PCI12A</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:36px;color:var(--gold);margin-bottom:4px;display:flex;align-items:baseline;gap:4px"><span style="font-size:18px">PCI</span>12A</div>
           <div style="font-size:13px;font-weight:600;margin-bottom:6px">Revenda conduz sozinha</div>
           <div style="font-size:11px;color:var(--mut);margin-bottom:12px">BOX → REV · Boxer vende à revenda · revenda negocia com o cliente</div>
           <table class="ctbl">
@@ -1917,7 +1918,7 @@ async function classify() {
           <div style="margin-top:10px;font-size:11px;color:var(--mut)">Portal: NÃO · Revenda não acessa portal BMax neste modelo</div>
         </div>
         <div class="card" style="padding:16px;border:1px solid rgba(0,229,176,.25)">
-          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:var(--acc2);margin-bottom:4px">PCI12B</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:36px;color:var(--acc2);margin-bottom:4px;display:flex;align-items:baseline;gap:4px"><span style="font-size:18px">PCI</span>12B</div>
           <div style="font-size:13px;font-weight:600;margin-bottom:6px">Boxer conduz + cashback revenda</div>
           <div style="font-size:11px;color:var(--mut);margin-bottom:12px">BOX+REV → IND · Boxer lidera · revenda recebe cashback portal</div>
           <table class="ctbl">
@@ -2128,7 +2129,7 @@ async function classify() {
     <p class="ph-tag" style="margin-bottom:8px">✦ Resultado</p>
     <div class="res-hero">
       <div class="res-pci-lbl" style="color:${mc}">Perfil do Cliente Indústria</div>
-      <div class="res-pci" style="color:${mc}">${pci.id}</div>
+      <div class="res-pci" style="color:${mc}"><span class="pci-prefix">PCI</span>${pci.id.replace('PCI','')}</div>
       <div class="res-name">${pci.desc}</div>
       <div class="badges" style="margin-bottom:10px">
         <div class="badge"><span class="dot da"></span>Modelo: ${pci.modelo}</div>
@@ -2467,7 +2468,7 @@ async function saveCfg() {
 }
 
 async function resetCfg() {
-  CFG = { raio:50, nf:25000, vinculo:120, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+  CFG = { raio:50, nf:25000, vinculo:60, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
   await saveConfigToSb();
   applyConfig(); renderTabela();
   toast('Configurações restauradas para os valores padrão.', 'ok');
