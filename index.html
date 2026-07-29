@@ -209,6 +209,16 @@ main{padding:30px 32px;overflow-y:auto}
 .ctbl td:last-child{text-align:right;font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
 .ctbl tr:last-child td{border-bottom:none}
 .cpct{color:var(--acc2)}.czero{color:var(--mut)}
+.ctbl-edit{width:100%;border-collapse:collapse;font-size:12px}
+.ctbl-edit th{padding:5px 4px;font-size:10px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid rgba(255,255,255,.1);text-align:center;white-space:nowrap}
+.ctbl-edit td{padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.ctbl-edit input[type="number"],.ctbl-edit input[type="text"]{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--fg);font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 6px}
+.ctbl-edit input:focus{border-color:var(--acc2);outline:none}
+.ctbl-edit select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:4px;color:var(--fg);font-family:'DM Sans',sans-serif;padding:4px 4px}
+.btn-x{background:none;border:1px solid rgba(227,6,19,.3);color:#e30613;border-radius:4px;font-size:11px;cursor:pointer;padding:2px 6px;opacity:.6}
+.btn-x:hover{opacity:1;background:rgba(227,6,19,.1)}
+.btn-s{background:rgba(37,187,238,.1);border:1px solid rgba(37,187,238,.25);color:var(--acc2);border-radius:6px;font-size:11px;font-weight:500;padding:4px 10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-s:hover{background:rgba(37,187,238,.2)}
 .al{border-radius:10px;padding:13px 16px;font-size:13px;line-height:1.6;margin-bottom:12px}
 .al-i{background:rgba(37,187,238,.07);border:1px solid rgba(37,187,238,.2);color:var(--acc)}
 .al-w{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);color:var(--gold)}
@@ -638,15 +648,23 @@ main{padding:30px 32px;overflow-y:auto}
       </div>
     </div>
     <div class="card">
-      <div class="ct">💰 Comissões padrão (%)</div>
-      <div class="fr c2">
-        <div class="fi"><label>Rep Robô/Laser múltiplo sem revenda</label><input type="number" id="c-rep0" value="0" step="0.1"></div>
-        <div class="fi"><label>Rep Robô/Laser múltiplo com revenda</label><input type="number" id="c-rep1" value="1" step="0.1"></div>
-        <div class="fi"><label>Rep Laser simples com revenda</label><input type="number" id="c-rep3a" value="3" step="0.1"></div>
-        <div class="fi"><label>Rep Máquina ≥25k com revenda</label><input type="number" id="c-rep3b" value="3" step="0.1"></div>
-        <div class="fi"><label>Rep Máquina &lt;25k</label><input type="number" id="c-rep5" value="5" step="0.1"></div>
-        <div class="fi"><label>Vendedor Interno (todos os PCIs Boxer)</label><input type="number" id="c-vi" value="1.2" step="0.1"></div>
+      <div class="ct" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>💰 Tabela de Comissões (%)</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" onclick="comAddClasse()" title="Adicionar classe">+ Classe</button>
+          <button class="btn btn-s" onclick="comAddLinha()" title="Adicionar linha">+ Linha</button>
+        </div>
       </div>
+      <div id="com-tabela-grid" style="overflow-x:auto;margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="ct" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span>ℹ️ Informações Complementares</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s" onclick="comAddComplemento()" title="Adicionar linha">+ Adicionar</button>
+        </div>
+      </div>
+      <div id="com-compl-grid" style="overflow-x:auto;margin-top:8px"></div>
     </div>
     <div class="brow">
       <button class="btn btn-p" onclick="saveCfg()">💾 Salvar Configurações</button>
@@ -1098,19 +1116,15 @@ const PCIS = [
     desc:'Lead Revenda · Revenda conduz sozinha (BOX>REV)' },
 ];
 
-// Tabelas de comissão VI por classe 1–6
-const VI_STD  = [1.2, 1.5, 1.7, 1.9, 2.0, 2.1]; // PCIs padrão Boxer
-const VI_LR   = [1.0, 1.3, 1.5, 1.7, 1.8, 1.9]; // PCIs Lead Revenda
-
-// Tabelas de comissão Revenda por classe 1–6
-const REV_CLASSES = {
+// ── Tabelas de comissão — fallback hardcoded (usado apenas se Supabase não tiver dados) ──
+const _VI_STD  = [1.2, 1.5, 1.7, 1.9, 2.0, 2.1];
+const _VI_LR   = [1.0, 1.3, 1.5, 1.7, 1.8, 1.9];
+const _REV_CLASSES = {
   'lr_robo':  [1.5, 2.0, 2.5, 3.0, 3.5, 4.0],
   'lr_laser': [1.7, 2.0, 2.5, 3.0, 3.5, 4.0],
   'lr_maq':   [3.0, 3.5, 4.0, 4.5, 5.0, 5.0],
 };
-
-// Comissão exceção (rep conduz, sem VI/VT) por classe 1–6
-const EXC_CLASSES = {
+const _EXC_CLASSES = {
   PCI2:  [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
   PCI3:  [2.0, 2.3, 2.5, 2.7, 2.8, 2.9],
   PCI5:  [2.2, 2.5, 2.7, 2.9, 3.0, 3.1],
@@ -1124,29 +1138,91 @@ const EXC_CLASSES = {
   PCI15: [3.0, 3.3, 3.5, 3.7, 3.8, 3.9],
 };
 
-function fmtVI(pci) {
-  if (!pci.viBase) return '<span class="czero">—</span>';
-  const arr = pci.viBase === 'lr' ? VI_LR : VI_STD;
-  if (pci.forcedClass) {
-    const v = arr[pci.forcedClass - 1];
-    return `<span class="cpct">${String(v).replace('.',',')}%</span><small style="font-size:10px;color:var(--mut);margin-left:4px">(classe ${pci.forcedClass} — fixo)</small>`;
+// ── Estado dinâmico de comissões (carregado do Supabase) ──
+let COM_TABELA = null;
+let COM_COMPLEMENTOS = null;
+
+function buildDefaultComTabela() {
+  const classes = ['Classe 1','Classe 2','Classe 3','Classe 4','Classe 5','Classe 6'];
+  const linhas = [];
+  for (const p of PCIS) {
+    const viArr = !p.viBase ? [0,0,0,0,0,0] : p.viBase==='lr' ? [..._VI_LR] : [..._VI_STD];
+    let repArr;
+    if (p.repPct===null||p.repPct===undefined) repArr=[0,0,0,0,0,0];
+    else repArr=[p.repPct,p.repPct,p.repPct,p.repPct,p.repPct,p.repPct];
+    let revArr=[0,0,0,0,0,0];
+    if (p.revBase==='fixed-1.5') revArr=[1.5,1.5,1.5,1.5,1.5,1.5];
+    else if (p.revBase==='fixed-2.0') revArr=[2.0,2.0,2.0,2.0,2.0,2.0];
+    else if (p.revBase && _REV_CLASSES[p.revBase]) revArr=[..._REV_CLASSES[p.revBase]];
+    linhas.push({pci:p.id, agente:'VI/VT', valores:viArr});
+    linhas.push({pci:p.id, agente:'Rep', valores:repArr});
+    linhas.push({pci:p.id, agente:'Revenda', valores:revArr});
   }
-  return `<span class="cpct">${String(arr[0]).replace('.',',')}% a ${String(arr[arr.length-1]).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">por classe</small>`;
+  return {classes, linhas};
+}
+
+function buildDefaultComComplementos() {
+  const comps = [];
+  for (const [pciId, arr] of Object.entries(_EXC_CLASSES)) {
+    comps.push({pci:pciId, agente:'Rep', condicao:'Rep conduz sozinho', valores:[...arr]});
+  }
+  return comps;
+}
+
+function comGetLinha(pciId, agente) {
+  if (!COM_TABELA) return null;
+  return COM_TABELA.linhas.find(l=>l.pci===pciId && l.agente===agente) || null;
+}
+
+function comGetComplementos(pciId) {
+  if (!COM_COMPLEMENTOS) return [];
+  return COM_COMPLEMENTOS.filter(c=>c.pci===pciId);
+}
+
+function _fmtRange(arr, forcedClass) {
+  if (!arr || arr.every(v=>v===0)) return '<span class="czero">—</span>';
+  if (forcedClass) {
+    const v = arr[forcedClass-1]||0;
+    return `<span class="cpct">${String(v).replace('.',',')}%</span><small style="font-size:10px;color:var(--mut);margin-left:4px">(classe ${forcedClass} — fixo)</small>`;
+  }
+  const nonZero = arr.filter(v=>v>0);
+  if (!nonZero.length) return '<span class="czero">—</span>';
+  const mn = Math.min(...nonZero), mx = Math.max(...nonZero);
+  if (mn===mx) return `<span class="cpct">${String(mn).replace('.',',')}%</span>`;
+  return `<span class="cpct">${String(mn).replace('.',',')}% a ${String(mx).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">por classe</small>`;
+}
+
+function fmtVI(pci) {
+  const linha = comGetLinha(pci.id, 'VI/VT');
+  if (!linha) {
+    if (!pci.viBase) return '<span class="czero">—</span>';
+    const arr = pci.viBase==='lr'?_VI_LR:_VI_STD;
+    return _fmtRange(arr, pci.forcedClass);
+  }
+  return _fmtRange(linha.valores, pci.forcedClass);
 }
 
 function fmtRevPct(pci) {
-  if (!pci.revBase) return '<span class="czero">—</span>';
-  if (pci.revBase === 'fixed-1.5') return '<span class="cpct">1,5%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
-  if (pci.revBase === 'fixed-2.0') return '<span class="cpct">2,0%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
-  const arr = REV_CLASSES[pci.revBase];
-  if (!arr) return '<span class="czero">—</span>';
-  return `<span class="cpct">${String(arr[0]).replace('.',',')}% a ${String(arr[arr.length-1]).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">por classe</small>`;
+  const linha = comGetLinha(pci.id, 'Revenda');
+  if (!linha) {
+    if (!pci.revBase) return '<span class="czero">—</span>';
+    if (pci.revBase==='fixed-1.5') return '<span class="cpct">1,5%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
+    if (pci.revBase==='fixed-2.0') return '<span class="cpct">2,0%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>';
+    const arr = _REV_CLASSES[pci.revBase];
+    return arr ? _fmtRange(arr, pci.forcedClass) : '<span class="czero">—</span>';
+  }
+  const allSame = linha.valores.every(v=>v===linha.valores[0]) && linha.valores[0]>0;
+  if (allSame) return `<span class="cpct">${String(linha.valores[0]).replace('.',',')}%</span><small style="font-size:11px;color:var(--mut);margin-left:4px">fixo · cashback portal</small>`;
+  return _fmtRange(linha.valores, pci.forcedClass);
 }
 
 function fmtRepPct(pci) {
-  if (pci.repPct === null || pci.repPct === undefined) return '<span class="czero">—</span>';
-  if (pci.repPct === 0) return '<span class="czero">—</span>';
-  return `<span class="cpct">${pci.repPct}%</span>`;
+  const linha = comGetLinha(pci.id, 'Rep');
+  if (!linha) {
+    if (pci.repPct===null||pci.repPct===undefined||pci.repPct===0) return '<span class="czero">—</span>';
+    return `<span class="cpct">${pci.repPct}%</span>`;
+  }
+  return _fmtRange(linha.valores, pci.forcedClass);
 }
 
 // ════════════════════════════════════════════════════
@@ -1272,7 +1348,15 @@ async function loadConfig() {
       if (map.rep_pct_r5)   CFG.rep5   = +map.rep_pct_r5;
       if (map.vi_pct)       CFG.vi     = +map.vi_pct;
       if (CFG.nf === 50000) CFG.nf = 25000; // migração V2: threshold 50k→25k
+      if (map.comissao_tabela) {
+        try { COM_TABELA = JSON.parse(map.comissao_tabela); } catch { COM_TABELA = null; }
+      }
+      if (map.comissao_complementos) {
+        try { COM_COMPLEMENTOS = JSON.parse(map.comissao_complementos); } catch { COM_COMPLEMENTOS = null; }
+      }
     }
+    if (!COM_TABELA) COM_TABELA = buildDefaultComTabela();
+    if (!COM_COMPLEMENTOS) COM_COMPLEMENTOS = buildDefaultComComplementos();
   } catch {}
 }
 
@@ -1286,6 +1370,8 @@ async function saveConfigToSb() {
     ['rep_pct_r3b',  CFG.rep3b],
     ['rep_pct_r5',   CFG.rep5],
     ['vi_pct',       CFG.vi],
+    ['comissao_tabela',       JSON.stringify(COM_TABELA)],
+    ['comissao_complementos', JSON.stringify(COM_COMPLEMENTOS)],
   ];
   for (const [chave, valor] of entries) {
     await sbClient.from('comercial_bmax_config')
@@ -2110,17 +2196,21 @@ async function classify() {
     ? `<div class="al al-w" style="margin-bottom:8px">⚠️ <strong>Classe ${pci.forcedClass} definida automaticamente</strong> para máquinas ≤R$25k próximas a revenda. Os valores de comissão abaixo já refletem essa classe.</div>`
     : '';
 
-  // ── Nota de exceção do representante ─────────────────────────
-  const excArr = EXC_CLASSES[pci.id];
+  // ── Informações complementares de comissão ──────────────────
+  const compEntries = comGetComplementos(pci.id);
   let excNota = '';
-  if (excArr) {
-    const vals = excArr.map(v => parseFloat(v.toFixed(1)));
-    const minV = Math.min(...vals).toFixed(1).replace('.',',');
-    const maxV = Math.max(...vals).toFixed(1).replace('.',',');
-    const rangeStr = minV === maxV ? `${minV}%` : `${minV}% a ${maxV}%`;
-    excNota = `<div class="al al-i" style="margin-top:8px;font-size:12px;line-height:1.6">
-      ℹ️ <strong>Exceção:</strong> se o representante conduzir o atendimento comercial, sem auxílio do vendedor Boxer, sua comissão passa a ser de <strong>${rangeStr}</strong> (de acordo com a classe de preço selecionada) e o VI ou VT não são remunerados.
-    </div>`;
+  if (compEntries.length) {
+    excNota = compEntries.map(c => {
+      const vals = c.valores.map(v => parseFloat((+v).toFixed(1)));
+      const nonZero = vals.filter(v=>v>0);
+      if (!nonZero.length) return '';
+      const minV = Math.min(...nonZero).toFixed(1).replace('.',',');
+      const maxV = Math.max(...nonZero).toFixed(1).replace('.',',');
+      const rangeStr = minV===maxV ? `${minV}%` : `${minV}% a ${maxV}%`;
+      return `<div class="al al-i" style="margin-top:8px;font-size:12px;line-height:1.6">
+        ℹ️ <strong>${c.condicao}:</strong> comissão ${c.agente} passa a ser de <strong>${rangeStr}</strong> por classe.
+      </div>`;
+    }).join('');
   }
 
   // ── Bloco de comissão para BOX>REV ───────────────────────────
@@ -2389,21 +2479,18 @@ const GRUPOS_TABELA = [
 function renderTabela() {
   const na = '<span class="ck-na">—</span>';
   const ck = v => v ? '<span class="ck-y">✓</span>' : '<span class="ck-n">✗</span>';
-  const fVI = p => {
-    if (!p.viBase) return na;
-    const arr = p.viBase === 'lr' ? VI_LR : VI_STD;
-    if (p.forcedClass) return `<span style="color:var(--acc2);font-weight:700">${String(arr[p.forcedClass-1]).replace('.',',')}%</span><small style="color:var(--mut)"> cl.${p.forcedClass}</small>`;
-    return `<span style="color:var(--acc2);font-weight:700">${String(arr[0]).replace('.',',')}–${String(arr[arr.length-1]).replace('.',',')}%</span>`;
+  const _tblRange = (arr, fc) => {
+    if (!arr || arr.every(v=>v===0)) return na;
+    const nz = arr.filter(v=>v>0);
+    if (!nz.length) return na;
+    if (fc) return `<span style="color:var(--acc2);font-weight:700">${String(arr[fc-1]).replace('.',',')}%</span><small style="color:var(--mut)"> cl.${fc}</small>`;
+    const mn=Math.min(...nz), mx=Math.max(...nz);
+    if (mn===mx) return `<span style="color:var(--acc2);font-weight:700">${String(mn).replace('.',',')}%</span>`;
+    return `<span style="color:var(--acc2);font-weight:700">${String(mn).replace('.',',')}–${String(mx).replace('.',',')}%</span>`;
   };
-  const fRev = p => {
-    if (!p.revBase) return na;
-    if (p.revBase === 'fixed-1.5') return '<span style="color:var(--acc2);font-weight:700">1,5%</span>';
-    if (p.revBase === 'fixed-2.0') return '<span style="color:var(--acc2);font-weight:700">2,0%</span>';
-    const arr = REV_CLASSES[p.revBase];
-    if (!arr) return na;
-    return `<span style="color:var(--acc2);font-weight:700">${String(arr[0]).replace('.',',')}–${String(arr[arr.length-1]).replace('.',',')}%</span>`;
-  };
-  const fRep = p => (p.repPct === null || p.repPct === 0) ? na : `<span style="color:var(--acc2);font-weight:700">${p.repPct}%</span>`;
+  const fVI  = p => { const l=comGetLinha(p.id,'VI/VT');  return l ? _tblRange(l.valores,p.forcedClass) : na; };
+  const fRev = p => { const l=comGetLinha(p.id,'Revenda');return l ? _tblRange(l.valores,p.forcedClass) : na; };
+  const fRep = p => { const l=comGetLinha(p.id,'Rep');    return l ? _tblRange(l.valores,p.forcedClass) : na; };
   const atLabel = p => p.atend === 'REVENDA' ? 'Revenda' : p.atend === 'VI_VT' ? 'VI/VT' : na;
 
   let html = '';
@@ -2448,30 +2535,127 @@ function applyConfig() {
   document.getElementById('c-raio').value   = CFG.raio;
   document.getElementById('c-nf').value     = CFG.nf;
   document.getElementById('c-vinculo').value= CFG.vinculo;
-  document.getElementById('c-rep0').value   = CFG.rep0;
-  document.getElementById('c-rep1').value   = CFG.rep1;
-  document.getElementById('c-rep3a').value  = CFG.rep3a;
-  document.getElementById('c-rep3b').value  = CFG.rep3b;
-  document.getElementById('c-rep5').value   = CFG.rep5;
-  document.getElementById('c-vi').value     = CFG.vi;
   const hraio = document.getElementById('h-raio');
   if (hraio) hraio.textContent = CFG.raio;
   const la = document.getElementById('lbl-acima');
   const lb = document.getElementById('lbl-abaixo');
   if (la) la.textContent = `✦ Acima de R$ ${CFG.nf.toLocaleString('pt-BR')}`;
   if (lb) lb.textContent = `◇ Abaixo de R$ ${CFG.nf.toLocaleString('pt-BR')}`;
+  renderComTabelaConfig();
+  renderComComplConfig();
+}
+
+function renderComTabelaConfig() {
+  const el = document.getElementById('com-tabela-grid');
+  if (!el || !COM_TABELA) return;
+  const cls = COM_TABELA.classes;
+  const nCls = cls.length;
+  let h = `<table class="ctbl-edit"><thead><tr><th style="min-width:60px">PCI</th><th style="min-width:55px">Agente</th>`;
+  for (let c=0;c<nCls;c++) h += `<th><input type="text" class="com-cls-inp" data-ci="${c}" value="${cls[c]}" style="width:64px;text-align:center;font-size:10px"></th>`;
+  h += `<th style="width:30px"></th></tr></thead><tbody>`;
+  let prevPci = '';
+  COM_TABELA.linhas.forEach((l,i) => {
+    const border = l.pci!==prevPci && prevPci ? 'border-top:2px solid rgba(255,255,255,.12);' : '';
+    prevPci = l.pci;
+    const agCor = {'VI/VT':'var(--acc2)','Rep':'#22c55e','Revenda':'var(--gold)'}[l.agente]||'var(--fg)';
+    h += `<tr style="${border}"><td style="font-weight:600;font-size:11px">${l.pci}</td>`;
+    h += `<td style="color:${agCor};font-size:11px;font-weight:500">${l.agente}</td>`;
+    for (let c=0;c<nCls;c++) {
+      h += `<td><input type="number" step="0.1" min="0" class="com-val-inp" data-li="${i}" data-ci="${c}" value="${l.valores[c]||0}" style="width:52px;text-align:center"></td>`;
+    }
+    h += `<td><button class="btn-x" onclick="comRemoveLinha(${i})" title="Remover">✕</button></td></tr>`;
+  });
+  h += '</tbody></table>';
+  el.innerHTML = h;
+}
+
+function renderComComplConfig() {
+  const el = document.getElementById('com-compl-grid');
+  if (!el || !COM_COMPLEMENTOS) return;
+  const nCls = COM_TABELA ? COM_TABELA.classes.length : 6;
+  let h = `<table class="ctbl-edit"><thead><tr><th>PCI</th><th>Agente</th><th style="min-width:120px">Condição</th>`;
+  for (let c=0;c<nCls;c++) h += `<th style="font-size:10px">Cl.${c+1}</th>`;
+  h += `<th style="width:30px"></th></tr></thead><tbody>`;
+  if (!COM_COMPLEMENTOS.length) {
+    h += `<tr><td colspan="${nCls+4}" style="text-align:center;color:var(--mut);padding:12px">Nenhuma informação complementar cadastrada</td></tr>`;
+  }
+  COM_COMPLEMENTOS.forEach((c,i) => {
+    const pciOpts = PCIS.map(p=>`<option value="${p.id}"${p.id===c.pci?' selected':''}>${p.id}</option>`).join('');
+    const agOpts = ['VI/VT','Rep','Revenda'].map(a=>`<option${a===c.agente?' selected':''}>${a}</option>`).join('');
+    h += `<tr>`;
+    h += `<td><select class="compl-pci" data-ci="${i}" style="font-size:11px;width:70px">${pciOpts}</select></td>`;
+    h += `<td><select class="compl-ag" data-ci="${i}" style="font-size:11px;width:65px">${agOpts}</select></td>`;
+    h += `<td><input type="text" class="compl-cond" data-ci="${i}" value="${c.condicao}" style="font-size:11px;width:130px"></td>`;
+    for (let ci=0;ci<nCls;ci++) {
+      h += `<td><input type="number" step="0.1" min="0" class="compl-val" data-ci="${i}" data-vi="${ci}" value="${c.valores[ci]||0}" style="width:52px;text-align:center"></td>`;
+    }
+    h += `<td><button class="btn-x" onclick="comRemoveComplemento(${i})" title="Remover">✕</button></td></tr>`;
+  });
+  h += '</tbody></table>';
+  el.innerHTML = h;
+}
+
+function readComTabelaFromDOM() {
+  document.querySelectorAll('.com-cls-inp').forEach(inp => {
+    COM_TABELA.classes[+inp.dataset.ci] = inp.value;
+  });
+  document.querySelectorAll('.com-val-inp').forEach(inp => {
+    COM_TABELA.linhas[+inp.dataset.li].valores[+inp.dataset.ci] = +(+inp.value).toFixed(2);
+  });
+  COM_COMPLEMENTOS.forEach((c,i) => {
+    const pciSel = document.querySelector(`.compl-pci[data-ci="${i}"]`);
+    const agSel  = document.querySelector(`.compl-ag[data-ci="${i}"]`);
+    const condInp= document.querySelector(`.compl-cond[data-ci="${i}"]`);
+    if (pciSel)  c.pci = pciSel.value;
+    if (agSel)   c.agente = agSel.value;
+    if (condInp) c.condicao = condInp.value;
+  });
+  document.querySelectorAll('.compl-val').forEach(inp => {
+    COM_COMPLEMENTOS[+inp.dataset.ci].valores[+inp.dataset.vi] = +(+inp.value).toFixed(2);
+  });
+}
+
+function comAddClasse() {
+  if (!COM_TABELA) return;
+  const n = COM_TABELA.classes.length + 1;
+  COM_TABELA.classes.push('Classe ' + n);
+  COM_TABELA.linhas.forEach(l => l.valores.push(0));
+  COM_COMPLEMENTOS.forEach(c => c.valores.push(0));
+  renderComTabelaConfig();
+  renderComComplConfig();
+}
+
+function comAddLinha() {
+  if (!COM_TABELA) return;
+  const nCls = COM_TABELA.classes.length;
+  COM_TABELA.linhas.push({pci:'PCI1', agente:'VI/VT', valores:Array(nCls).fill(0)});
+  renderComTabelaConfig();
+}
+
+function comRemoveLinha(idx) {
+  if (!COM_TABELA) return;
+  readComTabelaFromDOM();
+  COM_TABELA.linhas.splice(idx, 1);
+  renderComTabelaConfig();
+}
+
+function comAddComplemento() {
+  const nCls = COM_TABELA ? COM_TABELA.classes.length : 6;
+  COM_COMPLEMENTOS.push({pci:'PCI1', agente:'Rep', condicao:'', valores:Array(nCls).fill(0)});
+  renderComComplConfig();
+}
+
+function comRemoveComplemento(idx) {
+  readComTabelaFromDOM();
+  COM_COMPLEMENTOS.splice(idx, 1);
+  renderComComplConfig();
 }
 
 async function saveCfg() {
   CFG.raio   = +document.getElementById('c-raio').value;
   CFG.nf     = +document.getElementById('c-nf').value;
   CFG.vinculo= +document.getElementById('c-vinculo').value;
-  CFG.rep0   = +document.getElementById('c-rep0').value;
-  CFG.rep1   = +document.getElementById('c-rep1').value;
-  CFG.rep3a  = +document.getElementById('c-rep3a').value;
-  CFG.rep3b  = +document.getElementById('c-rep3b').value;
-  CFG.rep5   = +document.getElementById('c-rep5').value;
-  CFG.vi     = +document.getElementById('c-vi').value;
+  readComTabelaFromDOM();
   try {
     await saveConfigToSb();
     applyConfig(); renderTabela();
@@ -2483,6 +2667,8 @@ async function saveCfg() {
 
 async function resetCfg() {
   CFG = { raio:50, nf:25000, vinculo:60, rep0:0, rep1:1, rep3a:3, rep3b:3, rep5:5, vi:1.2 };
+  COM_TABELA = buildDefaultComTabela();
+  COM_COMPLEMENTOS = buildDefaultComComplementos();
   await saveConfigToSb();
   applyConfig(); renderTabela();
   toast('Configurações restauradas para os valores padrão.', 'ok');
