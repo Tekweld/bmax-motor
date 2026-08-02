@@ -182,6 +182,7 @@ main{padding:30px 32px;overflow-y:auto}
 .srch-opt:hover,.srch-opt.hi{background:rgba(37,187,238,.15);color:#25bbee}
 .chip-o{background:rgba(245,166,35,.14);color:var(--gold);border:1px solid rgba(245,166,35,.28)}
 .chip-p{background:rgba(148,163,184,.1);color:var(--sil);border:1px solid rgba(148,163,184,.22)}
+.chip-d{background:rgba(37,187,238,.14);color:var(--acc);border:1px solid rgba(37,187,238,.28)}
 .chip-n{background:rgba(255,255,255,.05);color:var(--mut);border:1px solid rgba(255,255,255,.09)}
 .res-hero{
   background:linear-gradient(135deg,rgba(29,50,123,.4),rgba(37,187,238,.08));
@@ -586,11 +587,25 @@ main{padding:30px 32px;overflow-y:auto}
       <div class="fi"><label>Endereço (auto)</label><input type="text" id="r-end" placeholder="Preenchido pelo CEP" readonly></div>
       <div class="fi">
         <label>Classificação BMax</label>
-        <select id="r-class">
+        <select id="r-class" onchange="toggleDiamanteFields()">
           <option value="Ouro">🥇 Ouro (6+ critérios)</option>
           <option value="Prata">🥈 Prata (3–5 critérios)</option>
+          <option value="Diamante">💎 Diamante (Laser · fora SP)</option>
           <option value="Não Aplica">✗ Não Aplica</option>
         </select>
+      </div>
+    </div>
+    <div id="diamante-fields" class="fr c3" style="display:none">
+      <div class="fi">
+        <label>Mesorregião IBGE</label>
+        <input type="text" id="r-meso" placeholder="Ex: Metropolitana de Curitiba">
+      </div>
+      <div class="fi">
+        <label>Nome do Demonstrador</label>
+        <input type="text" id="r-demo" placeholder="Funcionário capacitado p/ Laser">
+      </div>
+      <div class="fi" style="align-self:end">
+        <div id="meso-status" style="font-size:11px;color:var(--mut)"></div>
       </div>
     </div>
     <div class="brow">
@@ -1273,15 +1288,15 @@ async function getRepBmax(ibge, cidade, estado) {
   const hdrs = { 'apikey': SB_ANON, 'Authorization': `Bearer ${SB_ANON}` };
   try {
     if (ibge) {
-      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax,ddd`, { headers: hdrs });
-      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null }; }
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?ibge_codigo=eq.${ibge}&select=rep_bmax,ddd,mesorregiao`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null, mesorregiao: d[0].mesorregiao||null }; }
     }
     if (cidade && estado) {
-      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?cidade=ilike.${encodeURIComponent(cidade)}&estado=eq.${estado}&select=rep_bmax,ddd&limit=1`, { headers: hdrs });
-      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null }; }
+      const r = await fetch(`${SB_URL}/rest/v1/comercial_bmax_cobertura?cidade=ilike.${encodeURIComponent(cidade)}&estado=eq.${estado}&select=rep_bmax,ddd,mesorregiao&limit=1`, { headers: hdrs });
+      if (r.ok) { const d = await r.json(); if (d?.length) return { rep_bmax: d[0].rep_bmax||null, ddd: d[0].ddd||null, mesorregiao: d[0].mesorregiao||null }; }
     }
   } catch {}
-  return { rep_bmax: null, ddd: null };
+  return { rep_bmax: null, ddd: null, mesorregiao: null };
 }
 
 let revendas  = [];
@@ -1379,9 +1394,9 @@ async function saveConfigToSb() {
   }
 }
 
-async function logClassificacao(pci) {
+async function logClassificacao(pci, diamanteInfo) {
   try {
-    await sbClient.from('comercial_bmax_classificacoes').insert({
+    const row = {
       usuario_email: 'boxer',
       pci_id:   pci.id,
       produto:  ans.produto,
@@ -1393,8 +1408,54 @@ async function logClassificacao(pci) {
       lat_lead: leadCoords?.lat || null,
       lng_lead: leadCoords?.lng || null,
       resultado: { pci: pci.id, modelo: pci.modelo, atend: pci.atend, portal: pci.portal },
-    });
+    };
+    if (diamanteInfo) {
+      row.diamante_disponivel = true;
+      row.diamante_revenda_id = diamanteInfo.id;
+    }
+    await sbClient.from('comercial_bmax_classificacoes').insert(row);
   } catch {}
+}
+
+function toggleDiamanteFields() {
+  const v = document.getElementById('r-class').value;
+  document.getElementById('diamante-fields').style.display = v === 'Diamante' ? 'grid' : 'none';
+}
+
+function checkDiamante(pci) {
+  if (!leadGeo || leadGeo.state === 'SP') return null;
+  if (ans.produto !== 'laser') return null;
+  const diamantes = revendas.filter(r => r.ativo !== false && r.classe === 'Diamante' && r.mesorregiao_ibge);
+  if (!diamantes.length) return null;
+  const leadMeso = leadGeo.mesorregiao || null;
+  if (leadMeso) {
+    const match = diamantes.find(d => d.mesorregiao_ibge.toLowerCase() === leadMeso.toLowerCase());
+    if (match) return match;
+  }
+  const leadState = leadGeo.state;
+  const sameState = diamantes.filter(d => d.estado === leadState);
+  if (sameState.length === 1) return sameState[0];
+  return sameState.length ? sameState[0] : (diamantes.length === 1 ? diamantes[0] : null);
+}
+
+function renderDiamanteBanner(diamanteRev) {
+  const demo = diamanteRev.demonstrador_nome ? `<div style="margin-top:6px;font-size:12px">👤 Demonstrador: <strong>${diamanteRev.demonstrador_nome}</strong></div>` : '';
+  return `
+    <div style="margin-bottom:14px;padding:16px 20px;background:rgba(37,187,238,.08);border:1px solid rgba(37,187,238,.3);border-radius:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:20px">💎</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--acc)">Revenda Diamante disponível para demonstração</span>
+      </div>
+      <div style="font-size:13px;line-height:1.7">
+        <div>🏪 <strong>${diamanteRev.nome}</strong> — ${diamanteRev.cidade||''}${diamanteRev.estado?'/'+diamanteRev.estado:''}</div>
+        <div style="margin-top:4px">📍 Mesorregião: <strong>${diamanteRev.mesorregiao_ibge||'—'}</strong></div>
+        ${demo}
+        <div style="margin-top:8px;padding:10px 14px;background:rgba(37,187,238,.06);border-radius:8px;font-size:12px;color:var(--acc);line-height:1.6">
+          <strong>Ação:</strong> Solicitar apoio de demonstração Laser ao <strong>Gerente Industrial</strong>, que acionará a Revenda Diamante.<br>
+          <strong>Premiação:</strong> R$ 550,00 por laser vendido → demonstrador da revenda.
+        </div>
+      </div>
+    </div>`;
 }
 
 async function recarregarRevendas() {
@@ -1409,7 +1470,8 @@ function updateSb() {
   document.getElementById('sb-n').textContent = at.length;
   const o = revendas.filter(r => r.ativo !== false && r.classe === 'Ouro').length;
   const p = revendas.filter(r => r.ativo !== false && r.classe === 'Prata').length;
-  document.getElementById('sb-s').textContent = `${o} Ouro · ${p} Prata`;
+  const d = revendas.filter(r => r.ativo !== false && r.classe === 'Diamante').length;
+  document.getElementById('sb-s').textContent = `${d} Diamante · ${o} Ouro · ${p} Prata`;
 }
 
 // ════════════════════════════════════════════════════
@@ -1720,7 +1782,7 @@ async function geocodeLead() {
   a.value = geo.addr || `${geo.city||''}/${geo.state||''}`;
   const cobInfo = await getRepBmax(geo.ibge, geo.city, geo.state);
   const dddFinal = geo.ddd ? +geo.ddd : (cobInfo.ddd || null);
-  leadGeo = { city: geo.city, state: geo.state, ddd: dddFinal, ibge: geo.ibge || null, repBmax: cobInfo.rep_bmax };
+  leadGeo = { city: geo.city, state: geo.state, ddd: dddFinal, ibge: geo.ibge || null, repBmax: cobInfo.rep_bmax, mesorregiao: cobInfo.mesorregiao || null };
 
   if (!geo.lat) {
     s.innerHTML = '<span class="pill pill-warn">⚠️ Endereço ok · sem coordenadas — distância indisponível</span>';
@@ -1747,7 +1809,7 @@ async function geocodeLead() {
   let html = `<div style="overflow-x:auto"><table class="dtable">
     <thead><tr><th>Classe</th><th>Revenda</th><th>Cidade</th><th>Rep</th><th>Distância</th></tr></thead><tbody>`;
   inside.forEach(({r,km}) => {
-    const cls = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : 'chip-n';
+    const cls = r.classe==='Ouro' ? 'chip-o' : r.classe==='Prata' ? 'chip-p' : r.classe==='Diamante' ? 'chip-d' : 'chip-n';
     html += `<tr class="near">
       <td><span class="chip ${cls}">${r.classe}</span></td>
       <td style="font-weight:500">${r.nome}</td>
@@ -1802,7 +1864,7 @@ function temRevenda() {
 }
 
 function revendasDentro() {
-  const BONUS_OURO_KM = 15;
+  const BONUS_KM = { Diamante: 30, Ouro: 15, Prata: 0, 'Não Aplica': 0 };
   const PROXIMIDADE_MAX = 5;
   return Object.values(distMap)
     .filter(d => d.km <= CFG.raio)
@@ -1812,8 +1874,8 @@ function revendasDentro() {
       if (aProx && !bProx) return -1;
       if (!aProx && bProx) return 1;
       if (aProx && bProx) return a.km - b.km;
-      const efA = a.km - (a.classe === 'Ouro' ? BONUS_OURO_KM : 0);
-      const efB = b.km - (b.classe === 'Ouro' ? BONUS_OURO_KM : 0);
+      const efA = a.km - (BONUS_KM[a.classe] || 0);
+      const efB = b.km - (BONUS_KM[b.classe] || 0);
       return efA - efB;
     });
 }
@@ -1954,7 +2016,7 @@ async function classify() {
     // Bloco revenda completo
     let p12revHtml = '';
     if (revendaIndicante && p12principal) {
-      const cls = p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
+      const cls = p12principal.classe==='Diamante' ? '<span class="chip chip-d">💎 Diamante</span>' : p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
       const distTxt = p12principal.km != null ? `${p12principal.km.toFixed(1)} km` : 'distância não calculada';
       p12revHtml = `<div class="al al-g">
         <div style="margin-bottom:6px"><strong>🏪 Revenda indicante (selecionada manualmente):</strong></div>
@@ -1963,7 +2025,7 @@ async function classify() {
         ${p12principal._foraRaio?`<div style="margin-top:6px;font-size:12px;color:#f59e0b">⚠️ Fora do raio padrão de ${CFG.raio} km — indicação manual</div>`:''}
       </div>`;
     } else if (hasCEP && dentro.length && p12principal) {
-      const cls = p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
+      const cls = p12principal.classe==='Diamante' ? '<span class="chip chip-d">💎 Diamante</span>' : p12principal.classe==='Ouro' ? '<span class="chip chip-o">🥇 Ouro</span>' : '<span class="chip chip-p">🥈 Prata</span>';
       const demais = dentro.filter(r => r !== p12principal);
       p12revHtml = `<div class="al al-g">
         <div style="margin-bottom:6px"><strong>🏪 Revenda selecionada (prioridade ${p12principal.classe}):</strong></div>
@@ -2037,7 +2099,7 @@ async function classify() {
         <button class="btn btn-p" onclick="resetWiz()">🔄 Nova Classificação</button>
       </div>`;
     document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
-    try { await logClassificacao(pci); } catch {}
+    try { await logClassificacao(pci, null); } catch {}
     return;
   }
 
@@ -2062,7 +2124,9 @@ async function classify() {
   let revHtml = '';
   const showRevBlock = pci.modelo === 'BOX>REV' || pci.revBase !== null;
   if (revendaIndicante && principal) {
-    const cls = principal.classe === 'Ouro'
+    const cls = principal.classe === 'Diamante'
+      ? '<span class="chip chip-d">💎 Diamante</span>'
+      : principal.classe === 'Ouro'
       ? '<span class="chip chip-o">🥇 Ouro</span>'
       : '<span class="chip chip-p">🥈 Prata</span>';
     const distTxt = principal.km ? `${principal.km.toFixed(1)} km` : 'distância não calculada';
@@ -2251,14 +2315,22 @@ async function classify() {
 
     ${revHtml}
 
+    <div id="diamante-banner-slot"></div>
+
     <div class="brow">
       <button class="btn btn-p" onclick="resetWiz()">🔄 Nova Classificação</button>
       <button class="btn btn-g" onclick="copyRes('${pci.id}','${pci.desc.replace(/'/g,"\\'")}','${pci.modelo}','${atendLabel.replace(/'/g,"\\'")}')">📋 Copiar</button>
     </div>
   `;
+
+  const diamanteMatch = checkDiamante(pci);
+  if (diamanteMatch) {
+    document.getElementById('diamante-banner-slot').innerHTML = renderDiamanteBanner(diamanteMatch);
+  }
+
   document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
 
-  logClassificacao(pci);
+  logClassificacao(pci, diamanteMatch);
 }
 
 function copyRes(id, desc, modelo, atend) {
@@ -2306,9 +2378,12 @@ async function saveRev() {
     lat:      cepEl.dataset.lat ? parseFloat(cepEl.dataset.lat) : null,
     lng:      cepEl.dataset.lng ? parseFloat(cepEl.dataset.lng) : null,
     classe:   document.getElementById('r-class').value,
+    mesorregiao_ibge: document.getElementById('r-meso').value.trim() || null,
+    demonstrador_nome: document.getElementById('r-demo').value.trim() || null,
     ativo:    true,
   };
   if (!r.nome) { toast('Informe o nome da revenda.', 'err'); return; }
+  if (r.classe === 'Diamante' && !r.mesorregiao_ibge) { toast('Mesorregião IBGE é obrigatória para Diamante.', 'err'); return; }
   r.editado_em  = new Date().toISOString();
   r.editado_por = adminSession?.user?.email || 'desconhecido';
 
@@ -2342,10 +2417,12 @@ async function saveRev() {
 }
 
 function clearRevForm() {
-  ['r-id','r-nome','r-rep','r-cidade','r-end','r-estado-hidden'].forEach(id => document.getElementById(id).value = '');
+  ['r-id','r-nome','r-rep','r-cidade','r-end','r-estado-hidden','r-meso','r-demo'].forEach(id => document.getElementById(id).value = '');
   const c = document.getElementById('r-cep'); c.value=''; c.dataset.lat=''; c.dataset.lng='';
   document.getElementById('r-class').value = 'Ouro';
   document.getElementById('sr-cep').innerHTML = '';
+  document.getElementById('meso-status').innerHTML = '';
+  toggleDiamanteFields();
 }
 
 function editRev(id) {
@@ -2361,6 +2438,9 @@ function editRev(id) {
   c.dataset.lat = r.lat || ''; c.dataset.lng = r.lng || '';
   document.getElementById('r-end').value   = r.endereco || '';
   document.getElementById('r-class').value = r.classe;
+  document.getElementById('r-meso').value = r.mesorregiao_ibge || '';
+  document.getElementById('r-demo').value = r.demonstrador_nome || '';
+  toggleDiamanteFields();
   if (r.lat) document.getElementById('sr-cep').innerHTML = '<span class="pill pill-ok">✓ Coords disponíveis</span>';
   nav('revendas'); window.scrollTo({ top:0, behavior:'smooth' });
 }
