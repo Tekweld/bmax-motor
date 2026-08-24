@@ -817,13 +817,13 @@ main{padding:30px 32px;overflow-y:auto}
 
     <div class="adm-card">
       <div class="adm-card-header">
-        <div class="adm-card-title">Representantes BMax</div>
-        <button class="adm-btn adm-btn-p" onclick="adm_openRepBmaxModal()">+ Novo representante</button>
+        <div class="adm-card-title">Consulta de Representantes</div>
+        <span style="font-size:11px;color:#93b4d4">Gerenciar no <a href="https://boxer-portal-bmax.vercel.app" target="_blank" style="color:#25bbee">Portal BMax</a></span>
       </div>
       <div style="overflow-x:auto">
         <table class="adm-tbl">
-          <thead><tr><th>Nome</th><th>Status</th><th style="width:120px"></th></tr></thead>
-          <tbody id="adm-repbmax-body"><tr><td colspan="3" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
+          <thead><tr><th>Nome</th><th>Status</th></tr></thead>
+          <tbody id="adm-repbmax-body"><tr><td colspan="2" style="text-align:center;color:#718096;padding:20px">Carregando...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -887,15 +887,15 @@ main{padding:30px 32px;overflow-y:auto}
       </div>
     </div>
 
-    <!-- Gestão de representantes inline -->
+    <!-- Consulta de representantes (somente leitura) -->
     <div class="adm-card" style="margin-bottom:16px">
       <div class="adm-card-header" style="cursor:pointer" onclick="var p=document.getElementById('repr-mgmt-panel');p.style.display=p.style.display==='none'?'block':'none'">
         <div class="adm-card-title">👥 Representantes BMax</div>
-        <button class="adm-btn adm-btn-p" onclick="event.stopPropagation();adm_openRepBmaxModal()">+ Novo</button>
+        <span style="font-size:11px;color:#93b4d4">Gerenciar no <a href="https://boxer-portal-bmax.vercel.app" target="_blank" style="color:#25bbee" onclick="event.stopPropagation()">Portal BMax</a></span>
       </div>
       <div id="repr-mgmt-panel" style="display:none;overflow-x:auto">
         <table class="adm-tbl">
-          <thead><tr><th>Nome</th><th>Status</th><th style="width:200px"></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Status</th></tr></thead>
           <tbody id="adm-repbmax-body2"></tbody>
         </table>
       </div>
@@ -3054,15 +3054,11 @@ async function _saveRepBmaxConfig() {
 
 function adm_renderRepBmax() {
   const row_html = !_repBmaxList.length
-    ? '<tr><td colspan="3" style="text-align:center;color:#718096;padding:20px">Nenhum representante cadastrado.</td></tr>'
+    ? '<tr><td colspan="2" style="text-align:center;color:#718096;padding:20px">Nenhum representante cadastrado.</td></tr>'
     : _repBmaxList.map((r, i) => `<tr style="${r.ativo ? '' : 'opacity:.5'}">
     <td><strong>${r.nome}</strong></td>
     <td>${r.ativo ? '<span style="color:#16a34a">✓ ativo</span>' : '<span style="color:#718096">✗ inativo</span>'}</td>
-    <td style="display:flex;gap:5px">
-      <button class="adm-btn adm-btn-o adm-btn-sm" onclick="adm_openRepBmaxModal(${i})">Editar</button>
-      <button class="adm-btn adm-btn-d adm-btn-sm" onclick="adm_toggleRepBmax(${i})">${r.ativo ? 'Desativar' : 'Ativar'}</button>
-      <button class="adm-btn adm-btn-sm" style="background:#fff;color:#e30613;border-color:#fecaca" onclick="adm_deleteRepBmax(${i})">Excluir</button>
-    </td></tr>`).join('');
+    </tr>`).join('');
   const t1 = document.getElementById('adm-repbmax-body');
   if (t1) t1.innerHTML = row_html;
   const t2 = document.getElementById('adm-repbmax-body2');
