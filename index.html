@@ -456,10 +456,46 @@ main{padding:30px 32px;overflow-y:auto}
     <div style="margin-top:14px;position:relative">
       <div class="fi">
         <label>Lead indicado por uma revenda? <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
-        <input type="text" id="i-rev-ind" placeholder="Digite o nome da revenda..." oninput="filtrarRevInd(this.value)" autocomplete="off">
-        <div id="rev-ind-list" style="display:none;position:absolute;left:0;right:0;background:#1a2a5e;border:1px solid rgba(255,255,255,.15);border-radius:8px;z-index:100;max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-g" style="flex:1;text-align:left;position:relative" onclick="toggleRevIndDropdown()" id="btnRevInd">Selecionar revenda...</button>
+        </div>
+        <div id="rev-ind-list" style="display:none;position:absolute;left:0;right:0;background:#1a2a5e;border:1px solid rgba(255,255,255,.15);border-radius:8px;z-index:100;max-height:280px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+          <div style="padding:6px 10px;position:sticky;top:0;background:#1a2a5e;border-bottom:1px solid rgba(255,255,255,.1);z-index:1">
+            <input type="text" id="rev-ind-search" placeholder="Buscar revenda..." oninput="filterRevIndList(this.value)" autocomplete="off"
+              style="width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.06);color:#fff;font-size:12px;outline:none">
+          </div>
+          <div id="rev-ind-items"></div>
+        </div>
       </div>
       <div id="rev-ind-chip" style="display:none;margin-top:6px"></div>
+      <div id="rev-ind-custom" style="display:none;margin-top:8px">
+        <div class="fi">
+          <label>Nome da revenda (não BMax)</label>
+          <input type="text" id="i-rev-ind-custom" placeholder="Digite o nome da revenda...">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;position:relative">
+      <div class="fi">
+        <label>Lead indicado por um representante? <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-g" style="flex:1;text-align:left;position:relative" onclick="toggleRepIndDropdown()" id="btnRepInd">Selecionar representante...</button>
+        </div>
+        <div id="rep-ind-list" style="display:none;position:absolute;left:0;right:0;background:#1a2a5e;border:1px solid rgba(255,255,255,.15);border-radius:8px;z-index:100;max-height:280px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+          <div style="padding:6px 10px;position:sticky;top:0;background:#1a2a5e;border-bottom:1px solid rgba(255,255,255,.1);z-index:1">
+            <input type="text" id="rep-ind-search" placeholder="Buscar representante..." oninput="filterRepIndList(this.value)" autocomplete="off"
+              style="width:100%;padding:6px 10px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:rgba(255,255,255,.06);color:#fff;font-size:12px;outline:none">
+          </div>
+          <div id="rep-ind-items"></div>
+        </div>
+      </div>
+      <div id="rep-ind-chip" style="display:none;margin-top:6px"></div>
+      <div id="rep-ind-custom" style="display:none;margin-top:8px">
+        <div class="fi">
+          <label>Nome do representante (não BMax)</label>
+          <input type="text" id="i-rep-ind-custom" placeholder="Digite o nome do representante...">
+        </div>
+      </div>
     </div>
     <div id="dist-block"></div>
     <div class="brow">
@@ -1305,12 +1341,14 @@ let leadGeo    = null;   // {state, city, ddd, ibge, repBmax} para dimensão geo
 let distMap    = {};
 let ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
 let revendaIndicante = null;
+let repIndicante = null;      // {nome, bmax:true/false}
+let revIndCustom = false;     // true se revenda indicante é não-BMax
 
 // ════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════
 async function initApp() {
-  await Promise.all([loadRevendas(), loadConfig(), loadVendedoresFromSB()]);
+  await Promise.all([loadRevendas(), loadConfig(), loadVendedoresFromSB(), loadRepBmaxList()]);
   applyConfig();
   renderRevTable();
   renderTabela();
@@ -1417,6 +1455,17 @@ async function logClassificacao(pci, diamanteInfo) {
   } catch {}
 }
 
+async function loadRepBmaxList() {
+  if (_repBmaxList.length) return;
+  try {
+    const { data } = await sbClient.from('comercial_bmax_config')
+      .select('valor').eq('chave', 'representantes_bmax').maybeSingle();
+    if (data?.valor) {
+      try { _repBmaxList = JSON.parse(data.valor); } catch { _repBmaxList = []; }
+    }
+  } catch {}
+}
+
 function toggleDiamanteFields() {
   const v = document.getElementById('r-class').value;
   document.getElementById('diamante-fields').style.display = v === 'Diamante' ? 'grid' : 'none';
@@ -1515,28 +1564,43 @@ function nav(id, btn) {
   if (btn) btn.classList.add('on');
 }
 
-function filtrarRevInd(q) {
+// ── Revenda indicante (dropdown) ──────────────────────────────────
+function toggleRevIndDropdown() {
   const list = document.getElementById('rev-ind-list');
-  if (!q.trim()) { list.innerHTML = ''; list.style.display = 'none'; return; }
-  const hits = revendas.filter(r => r.ativo !== false && r.nome.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
-  if (!hits.length) {
-    list.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:rgba(255,255,255,.4)">Nenhuma revenda encontrada</div>';
-    list.style.display = 'block'; return;
-  }
-  list.innerHTML = hits.map(r => `
+  if (list.style.display !== 'none') { list.style.display = 'none'; return; }
+  filterRevIndList('');
+  list.style.display = 'block';
+  const s = document.getElementById('rev-ind-search');
+  s.value = '';
+  setTimeout(() => s.focus(), 50);
+}
+
+function filterRevIndList(q) {
+  const items = document.getElementById('rev-ind-items');
+  const ativas = revendas.filter(r => r.ativo !== false);
+  const hits = q.trim()
+    ? ativas.filter(r => r.nome.toLowerCase().includes(q.toLowerCase()))
+    : ativas;
+  let html = hits.slice(0, 30).map(r => `
     <div onclick="selectRevInd('${r.id}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.06)"
          onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background=''">
       <strong>${r.nome}</strong>
       <span style="font-size:11px;color:rgba(255,255,255,.4);margin-left:6px">${r.cidade||''}${r.estado?'/'+r.estado:''} · ${r.classe}</span>
     </div>`).join('');
-  list.style.display = 'block';
+  html += `<div onclick="selectRevIndCustom()" style="padding:10px 12px;cursor:pointer;font-size:13px;color:#f59e0b;border-top:1px solid rgba(255,255,255,.1)"
+               onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background=''">
+    ⚠️ <strong>Não é Revenda BMax</strong> — digitar nome manualmente
+  </div>`;
+  items.innerHTML = html;
 }
 
 function selectRevInd(id) {
   revendaIndicante = revendas.find(r => r.id === id) || null;
   if (!revendaIndicante) return;
-  document.getElementById('i-rev-ind').value = '';
+  revIndCustom = false;
   document.getElementById('rev-ind-list').style.display = 'none';
+  document.getElementById('rev-ind-custom').style.display = 'none';
+  document.getElementById('btnRevInd').textContent = revendaIndicante.nome;
   const chip = document.getElementById('rev-ind-chip');
   chip.style.display = 'block';
   chip.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(37,187,238,.15);border:1px solid rgba(37,187,238,.3);border-radius:20px;padding:4px 12px">
@@ -1546,13 +1610,99 @@ function selectRevInd(id) {
   </div>`;
 }
 
+function selectRevIndCustom() {
+  revendaIndicante = null;
+  revIndCustom = true;
+  document.getElementById('rev-ind-list').style.display = 'none';
+  document.getElementById('rev-ind-custom').style.display = 'block';
+  document.getElementById('btnRevInd').textContent = 'Não é Revenda BMax';
+  document.getElementById('rev-ind-chip').style.display = 'none';
+  document.getElementById('i-rev-ind-custom').value = '';
+  setTimeout(() => document.getElementById('i-rev-ind-custom').focus(), 50);
+}
+
 function clearRevInd() {
   revendaIndicante = null;
-  document.getElementById('i-rev-ind').value = '';
+  revIndCustom = false;
   document.getElementById('rev-ind-list').style.display = 'none';
   document.getElementById('rev-ind-chip').style.display = 'none';
   document.getElementById('rev-ind-chip').innerHTML = '';
+  document.getElementById('rev-ind-custom').style.display = 'none';
+  document.getElementById('btnRevInd').textContent = 'Selecionar revenda...';
 }
+
+// ── Representante indicante (dropdown) ────────────────────────────
+function toggleRepIndDropdown() {
+  const list = document.getElementById('rep-ind-list');
+  if (list.style.display !== 'none') { list.style.display = 'none'; return; }
+  filterRepIndList('');
+  list.style.display = 'block';
+  const s = document.getElementById('rep-ind-search');
+  s.value = '';
+  setTimeout(() => s.focus(), 50);
+}
+
+function filterRepIndList(q) {
+  const items = document.getElementById('rep-ind-items');
+  const ativos = _repBmaxList.filter(r => r.ativo);
+  const hits = q.trim()
+    ? ativos.filter(r => r.nome.toLowerCase().includes(q.toLowerCase()))
+    : ativos;
+  let html = hits.slice(0, 30).map(r => `
+    <div onclick="selectRepInd('${encodeURIComponent(r.nome)}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,.06)"
+         onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background=''">
+      <strong>${r.nome}</strong>
+    </div>`).join('');
+  html += `<div onclick="selectRepIndCustom()" style="padding:10px 12px;cursor:pointer;font-size:13px;color:#f59e0b;border-top:1px solid rgba(255,255,255,.1)"
+               onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background=''">
+    ⚠️ <strong>Não é Representante BMax</strong> — digitar nome manualmente
+  </div>`;
+  items.innerHTML = html;
+}
+
+function selectRepInd(encodedNome) {
+  const nome = decodeURIComponent(encodedNome);
+  repIndicante = { nome, bmax: true };
+  document.getElementById('rep-ind-list').style.display = 'none';
+  document.getElementById('rep-ind-custom').style.display = 'none';
+  document.getElementById('btnRepInd').textContent = nome;
+  const chip = document.getElementById('rep-ind-chip');
+  chip.style.display = 'block';
+  chip.innerHTML = `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:4px 12px">
+    <span style="font-size:13px;font-weight:600;color:#4ade80">${nome}</span>
+    <span onclick="clearRepInd()" style="cursor:pointer;color:rgba(255,255,255,.5);font-size:14px;line-height:1" title="Remover">✕</span>
+  </div>`;
+}
+
+function selectRepIndCustom() {
+  repIndicante = null;
+  document.getElementById('rep-ind-list').style.display = 'none';
+  document.getElementById('rep-ind-custom').style.display = 'block';
+  document.getElementById('btnRepInd').textContent = 'Não é Representante BMax';
+  document.getElementById('rep-ind-chip').style.display = 'none';
+  document.getElementById('i-rep-ind-custom').value = '';
+  setTimeout(() => document.getElementById('i-rep-ind-custom').focus(), 50);
+}
+
+function clearRepInd() {
+  repIndicante = null;
+  document.getElementById('rep-ind-list').style.display = 'none';
+  document.getElementById('rep-ind-chip').style.display = 'none';
+  document.getElementById('rep-ind-chip').innerHTML = '';
+  document.getElementById('rep-ind-custom').style.display = 'none';
+  document.getElementById('btnRepInd').textContent = 'Selecionar representante...';
+}
+
+document.addEventListener('click', (e) => {
+  const revList = document.getElementById('rev-ind-list');
+  const repList = document.getElementById('rep-ind-list');
+  if (revList && revList.style.display !== 'none' && !e.target.closest('#rev-ind-list') && !e.target.closest('#btnRevInd')) {
+    revList.style.display = 'none';
+  }
+  if (repList && repList.style.display !== 'none' && !e.target.closest('#rep-ind-list') && !e.target.closest('#btnRepInd')) {
+    repList.style.display = 'none';
+  }
+});
 
 function calcSteps() {
   const hasRevInd = !!revendaIndicante;
@@ -1594,6 +1744,18 @@ function goCondutorVoltar() {
 
 function goStep1Next() {
   if (!leadCoords) { alert('Informe um CEP válido antes de continuar.'); return; }
+  // Capturar rep indicante custom (não-BMax)
+  const repCustomEl = document.getElementById('i-rep-ind-custom');
+  if (!repIndicante && repCustomEl && document.getElementById('rep-ind-custom').style.display !== 'none') {
+    const nome = repCustomEl.value.trim();
+    if (nome) repIndicante = { nome, bmax: false };
+  }
+  // Capturar revenda indicante custom (não-BMax)
+  const revCustomEl = document.getElementById('i-rev-ind-custom');
+  if (!revendaIndicante && revIndCustom && revCustomEl) {
+    const nome = revCustomEl.value.trim();
+    if (nome) revendaIndicante = { id: '_custom', nome, classe: 'Não-BMax', ativo: true, _custom: true };
+  }
   goWs('produto');
 }
 
@@ -1902,7 +2064,14 @@ function goOrigemNext() {
     goWs('condutor');
     return;
   }
-  ans.rep = (leadGeo && leadGeo.repBmax) ? 'sim' : 'nao';
+  // Se rep foi indicado manualmente, forçar como ativo
+  if (repIndicante) {
+    ans.rep = 'sim';
+    if (!leadGeo) leadGeo = {};
+    leadGeo.repBmax = repIndicante.nome;
+  } else {
+    ans.rep = (leadGeo && leadGeo.repBmax) ? 'sim' : 'nao';
+  }
   if (ans.produto === 'robo' || ans.produto === 'laser') ans.nf = 'acima';
   // Para máquina, ans.nf já foi definido no passo anterior (ws-nf)
   classify();
@@ -1982,12 +2151,14 @@ async function classify() {
              </div>`
           : `<div style="font-size:13px;color:rgba(255,255,255,.6)">DDD não identificado — verificar manualmente</div>`)
       : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
-    const p12repNome = p12principal?.rep || leadGeo?.repBmax || null;
-    const p12repInner = leadGeo
+    const p12repNome = repIndicante ? repIndicante.nome : (p12principal?.rep || leadGeo?.repBmax || null);
+    const p12repOrigem = repIndicante ? (repIndicante.bmax ? 'indicado manualmente' : 'não-BMax, indicado manualmente') : (p12principal?.rep ? 'rep da revenda' : 'cobre esta cidade');
+    const p12repInner = leadGeo || repIndicante
       ? (p12repNome
-          ? `<div style="display:flex;align-items:center;gap:8px">
+          ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                <span style="font-weight:700;font-size:15px;color:#4ade80">✓ ${p12repNome}</span>
-               <span style="font-size:12px;color:#fff">${p12principal?.rep ? 'rep da revenda' : 'cobre esta cidade'}</span>
+               <span style="font-size:12px;color:#fff">${p12repOrigem}</span>
+               ${repIndicante ? '<span style="font-size:10px;background:rgba(245,158,11,.2);color:#f59e0b;padding:2px 6px;border-radius:4px">OVERRIDE</span>' : ''}
              </div>`
           : `<div style="display:flex;align-items:center;gap:6px">
                <span style="font-weight:600;font-size:14px;color:#e30613">✗ Sem representante BMax</span>
@@ -2179,12 +2350,14 @@ async function classify() {
         : `<div style="font-size:13px;color:rgba(255,255,255,.6)">DDD não identificado — verificar manualmente</div>`)
     : '<div style="font-size:13px;color:rgba(255,255,255,.4)">—</div>';
 
-  const repNome = principal?.rep || leadGeo?.repBmax || null;
-  const repInner = leadGeo
+  const repNome = repIndicante ? repIndicante.nome : (principal?.rep || leadGeo?.repBmax || null);
+  const repOrigem = repIndicante ? (repIndicante.bmax ? 'indicado manualmente' : 'não-BMax, indicado manualmente') : (principal?.rep ? 'rep da revenda' : 'cobre esta cidade');
+  const repInner = leadGeo || repIndicante
     ? (repNome
-        ? `<div style="display:flex;align-items:center;gap:8px">
+        ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
              <span style="font-weight:700;font-size:15px;color:#4ade80">✓ ${repNome}</span>
-             <span style="font-size:12px;color:#fff">${principal?.rep ? 'rep da revenda' : 'cobre esta cidade'}</span>
+             <span style="font-size:12px;color:#fff">${repOrigem}</span>
+             ${repIndicante ? '<span style="font-size:10px;background:rgba(245,158,11,.2);color:#f59e0b;padding:2px 6px;border-radius:4px">OVERRIDE</span>' : ''}
            </div>`
         : `<div style="display:flex;align-items:center;gap:6px">
              <span style="font-weight:600;font-size:14px;color:#e30613">✗ Sem representante BMax</span>
@@ -2344,6 +2517,7 @@ function resetWiz() {
   ans = { produto:null, origem:null, condutor:null, rep:null, nf:null };
   leadCoords = null; leadGeo = null; distMap = {};
   clearRevInd();
+  clearRepInd();
   document.getElementById('i-cep').value  = '';
   document.getElementById('i-addr').value = '';
   document.getElementById('s-cep').innerHTML = '';
