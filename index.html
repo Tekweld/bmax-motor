@@ -601,11 +601,11 @@ main{padding:30px 32px;overflow-y:auto}
 <!-- ══════ REVENDAS ══════ -->
 <div class="pg" id="pg-revendas">
   <div class="ph">
-    <div class="ph-tag">Gestão de Parceiros</div>
+    <div class="ph-tag">Consulta de Parceiros</div>
     <h1 class="ph-title">Revendas BMax</h1>
-    <p class="ph-sub">Revendas carregadas do Supabase. Use o script de enriquecimento ZEN para atualizar CEPs e coordenadas.</p>
+    <p class="ph-sub">Visualização somente leitura. Para cadastrar ou editar revendas, acesse o <a href="https://boxer-portal-bmax.vercel.app" target="_blank" style="color:var(--acc)">Portal BMax</a> (aba Gestão → Revendas BMax).</p>
   </div>
-  <div id="rev-form-wrapper"><div class="card">
+  <div id="rev-form-wrapper" style="display:none"><div class="card">
     <div class="ct">➕ Adicionar / Editar Revenda</div>
     <input type="hidden" id="r-id">
     <input type="hidden" id="r-estado-hidden">
@@ -986,11 +986,11 @@ function showApp() {
   document.getElementById('glb-user-name').textContent = nome;
   const isAdmin = adminInfo?.perfil === 'admin';
   document.getElementById('sidebar-admin-section').style.display = isAdmin ? '' : 'none';
-  document.getElementById('rev-form-wrapper').style.display = isAdmin ? '' : 'none';
+  document.getElementById('rev-form-wrapper').style.display = 'none';
   const mnCfg = document.getElementById('mnav-config-tab');
   if (mnCfg) mnCfg.style.display = isAdmin ? '' : 'none';
   const acoesTh = document.getElementById('rev-acoes-th');
-  if (acoesTh) acoesTh.style.display = isAdmin ? '' : 'none';
+  if (acoesTh) acoesTh.style.display = 'none';
 }
 
 async function globalLogin() {
@@ -2640,9 +2640,7 @@ function renderRevTable() {
     const toggleBtn = ativo
       ? `<button class="btn btn-d btn-sm" onclick="toggleRevAtivo('${r.id}',true)" title="Inativar revenda">⏸ Inativar</button>`
       : `<button class="btn btn-g btn-sm" onclick="toggleRevAtivo('${r.id}',false)" title="Ativar revenda">▶ Ativar</button>`;
-    const acoesCell = (adminInfo?.perfil === 'admin')
-      ? `<td style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-g btn-sm" onclick="editRev('${r.id}')">✏️</button>${toggleBtn}</td>`
-      : '';
+    const acoesCell = '';
     return `<tr style="${rowStyle}">
       <td style="font-weight:500">${r.nome}</td>
       <td>${r.rep||'—'}</td>
