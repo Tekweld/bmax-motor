@@ -1,0 +1,251 @@
+{
+  "communities": {
+    "0": [
+      "scripts_enriquecer_cep_zen",
+      "scripts_enriquecer_cep_zen_fmt_cep",
+      "scripts_enriquecer_cep_zen_fmt_end",
+      "scripts_enriquecer_cep_zen_geocode_cep",
+      "scripts_enriquecer_cep_zen_hash_lista",
+      "scripts_enriquecer_cep_zen_hash_salvo",
+      "scripts_enriquecer_cep_zen_main",
+      "scripts_enriquecer_cep_zen_nominatim",
+      "scripts_enriquecer_cep_zen_norm",
+      "scripts_enriquecer_cep_zen_rationale_1",
+      "scripts_enriquecer_cep_zen_rationale_142",
+      "scripts_enriquecer_cep_zen_rationale_206",
+      "scripts_enriquecer_cep_zen_salvar_hash",
+      "scripts_enriquecer_cep_zen_sb",
+      "scripts_enriquecer_cep_zen_score",
+      "scripts_enriquecer_cep_zen_todos_matches",
+      "scripts_enriquecer_cep_zen_upsert_filial",
+      "scripts_enriquecer_cep_zen_zen_auth",
+      "scripts_enriquecer_cep_zen_zen_buscar"
+    ],
+    "1": [
+      "scripts_enriquecer_por_zen_id",
+      "scripts_enriquecer_por_zen_id_fmt_cep",
+      "scripts_enriquecer_por_zen_id_fmt_end",
+      "scripts_enriquecer_por_zen_id_geocode",
+      "scripts_enriquecer_por_zen_id_main",
+      "scripts_enriquecer_por_zen_id_nominatim",
+      "scripts_enriquecer_por_zen_id_rationale_1",
+      "scripts_enriquecer_por_zen_id_rationale_187",
+      "scripts_enriquecer_por_zen_id_rationale_291",
+      "scripts_enriquecer_por_zen_id_sb_auth",
+      "scripts_enriquecer_por_zen_id_sb_patch",
+      "scripts_enriquecer_por_zen_id_zen_auth",
+      "scripts_enriquecer_por_zen_id_zen_by_id",
+      "scripts_enriquecer_por_zen_id_zen_cidade",
+      "scripts_enriquecer_por_zen_id_zen_estado"
+    ],
+    "2": [
+      "scripts_enrich_revendas_bmax",
+      "scripts_enrich_revendas_bmax_geocode",
+      "scripts_enrich_revendas_bmax_lista_hash",
+      "scripts_enrich_revendas_bmax_main",
+      "scripts_enrich_revendas_bmax_nominatim",
+      "scripts_enrich_revendas_bmax_rationale_1",
+      "scripts_enrich_revendas_bmax_rationale_171",
+      "scripts_enrich_revendas_bmax_rationale_67",
+      "scripts_enrich_revendas_bmax_sb",
+      "scripts_enrich_revendas_bmax_upsert_revenda",
+      "scripts_enrich_revendas_bmax_zen_buscar",
+      "scripts_enrich_revendas_bmax_zen_token"
+    ],
+    "3": [
+      "scripts_enriquecer_enderecos_bmax",
+      "scripts_enriquecer_enderecos_bmax_fmt_cep",
+      "scripts_enriquecer_enderecos_bmax_fmt_end",
+      "scripts_enriquecer_enderecos_bmax_norm",
+      "scripts_enriquecer_enderecos_bmax_norm_cidade",
+      "scripts_enriquecer_enderecos_bmax_rationale_1",
+      "scripts_enriquecer_enderecos_bmax_rationale_61",
+      "scripts_enriquecer_enderecos_bmax_zen_auth"
+    ],
+    "4": [
+      "scripts_sincronizar_excel_bmax",
+      "scripts_sincronizar_excel_bmax_baixar_excel",
+      "scripts_sincronizar_excel_bmax_geocodificar",
+      "scripts_sincronizar_excel_bmax_get_graph_token",
+      "scripts_sincronizar_excel_bmax_main",
+      "scripts_sincronizar_excel_bmax_parsear_excel",
+      "scripts_sincronizar_excel_bmax_rationale_1",
+      "scripts_sincronizar_excel_bmax_sb"
+    ],
+    "5": [
+      "migrations_01_create_tables",
+      "migrations_01_create_tables_comercial_bmax_classificacoes",
+      "migrations_01_create_tables_comercial_bmax_config",
+      "migrations_01_create_tables_comercial_revendas_bmax",
+      "migrations_01_create_tables_log_alteracoes",
+      "migrations_01_create_tables_set_atualizado_em",
+      "migrations_01_create_tables_trg_bmax_rev_updated"
+    ],
+    "6": [
+      "scripts_corrigir_endereco_luitex",
+      "scripts_corrigir_endereco_luitex_fmt_cep",
+      "scripts_corrigir_endereco_luitex_fmt_end",
+      "scripts_corrigir_endereco_luitex_rationale_1",
+      "scripts_corrigir_endereco_luitex_zen_auth"
+    ],
+    "7": [
+      "scripts_geocode_por_cidade",
+      "scripts_geocode_por_cidade_main",
+      "scripts_geocode_por_cidade_nominatim",
+      "scripts_geocode_por_cidade_rationale_1",
+      "scripts_geocode_por_cidade_rationale_24"
+    ],
+    "8": [
+      "scripts_popular_ddd_cobertura",
+      "scripts_popular_ddd_cobertura_load_cobertura",
+      "scripts_popular_ddd_cobertura_main",
+      "scripts_popular_ddd_cobertura_norm",
+      "scripts_popular_ddd_cobertura_rationale_1"
+    ],
+    "9": [
+      "scripts_corrigir_banco_bmax",
+      "scripts_corrigir_banco_bmax_main",
+      "scripts_corrigir_banco_bmax_rationale_1",
+      "scripts_corrigir_banco_bmax_sb"
+    ],
+    "10": [
+      "scripts_baixar_bsis_sharepoint",
+      "scripts_baixar_bsis_sharepoint_get_token",
+      "scripts_baixar_bsis_sharepoint_rationale_1"
+    ],
+    "11": [
+      "scripts_criar_usuario_auth",
+      "scripts_criar_usuario_auth_hdr",
+      "scripts_criar_usuario_auth_rationale_1"
+    ],
+    "12": [
+      "migrations_02_cobertura_bmax",
+      "migrations_02_cobertura_bmax_comercial_bmax_cobertura"
+    ],
+    "13": [
+      "migrations_03_config_bmax",
+      "migrations_03_config_bmax_comercial_bmax_config"
+    ],
+    "14": [
+      "migrations_04_schema_updates",
+      "migrations_04_schema_updates_comercial_bmax_vendedores"
+    ],
+    "15": [
+      "migrations_05_bmax_admins",
+      "migrations_05_bmax_admins_comercial_bmax_admins"
+    ],
+    "16": [
+      "scripts_importar_cobertura_bmax",
+      "scripts_importar_cobertura_bmax_rationale_1"
+    ],
+    "17": [
+      "scripts_backup_revendas"
+    ],
+    "18": [
+      "scripts_fix_admins_rls"
+    ]
+  },
+  "cohesion": {
+    "0": 0.21052631578947367,
+    "1": 0.22857142857142856,
+    "2": 0.2727272727272727,
+    "3": 0.2857142857142857,
+    "4": 0.42857142857142855,
+    "5": 0.3333333333333333,
+    "6": 0.4,
+    "7": 0.5,
+    "8": 0.6,
+    "9": 0.6666666666666666,
+    "10": 0.6666666666666666,
+    "11": 0.6666666666666666,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "scripts_enriquecer_cep_zen_main",
+      "label": "main()",
+      "degree": 14
+    },
+    {
+      "id": "scripts_enriquecer_por_zen_id_main",
+      "label": "main()",
+      "degree": 10
+    },
+    {
+      "id": "scripts_enrich_revendas_bmax_main",
+      "label": "main()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_sincronizar_excel_bmax_main",
+      "label": "main()",
+      "degree": 6
+    },
+    {
+      "id": "scripts_enriquecer_cep_zen_score",
+      "label": "score()",
+      "degree": 5
+    },
+    {
+      "id": "scripts_enriquecer_cep_zen_sb",
+      "label": "sb()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_enriquecer_cep_zen_todos_matches",
+      "label": "todos_matches()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_enriquecer_cep_zen_upsert_filial",
+      "label": "upsert_filial()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_enrich_revendas_bmax_upsert_revenda",
+      "label": "upsert_revenda()",
+      "degree": 4
+    },
+    {
+      "id": "scripts_enriquecer_cep_zen_geocode_cep",
+      "label": "geocode_cep()",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "main()",
+      "target": "score()",
+      "source_files": [
+        "scripts/corrigir_banco_bmax.py",
+        "scripts/enriquecer_cep_zen.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "indirect_call",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `score()` connect `enriquecer_cep_zen.py` to `corrigir_banco_bmax.py`?",
+      "why": "High betweenness centrality (0.013) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `main()` connect `corrigir_banco_bmax.py` to `enriquecer_cep_zen.py`?",
+      "why": "High betweenness centrality (0.010) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `comercial_bmax_cobertura`, `comercial_bmax_config`, `comercial_bmax_vendedores` to the rest of the system?",
+      "why": "8 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

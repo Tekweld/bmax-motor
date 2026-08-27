@@ -1,0 +1,140 @@
+{
+  ".claude/launch.json": {
+    "mtime": 1781526088.1983018,
+    "seen": 1787840653.2487733,
+    "ast_hash": "79a90bb105dcb28fe797cecc56a370bc",
+    "semantic_hash": "79a90bb105dcb28fe797cecc56a370bc"
+  },
+  ".wrangler/cache/pages.json": {
+    "mtime": 1785344793.910438,
+    "seen": 1787840653.2487733,
+    "ast_hash": "4b5b6c04c4a1283b1f35b9dfd543c90a",
+    "semantic_hash": "4b5b6c04c4a1283b1f35b9dfd543c90a"
+  },
+  "migrations/01_create_tables.sql": {
+    "mtime": 1781481124.9685638,
+    "seen": 1787840653.2487733,
+    "ast_hash": "7a3b805a09b516587c4df0f6ce18ed07",
+    "semantic_hash": "7a3b805a09b516587c4df0f6ce18ed07"
+  },
+  "migrations/02_cobertura_bmax.sql": {
+    "mtime": 1781723519.517058,
+    "seen": 1787840653.2487733,
+    "ast_hash": "ee7dc1d8f6f924268bd593b2cde3623b",
+    "semantic_hash": "ee7dc1d8f6f924268bd593b2cde3623b"
+  },
+  "migrations/03_config_bmax.sql": {
+    "mtime": 1781729952.3135533,
+    "seen": 1787840653.2487733,
+    "ast_hash": "8fffe326212c51161975a2288d77ad0d",
+    "semantic_hash": "8fffe326212c51161975a2288d77ad0d"
+  },
+  "migrations/04_schema_updates.sql": {
+    "mtime": 1781882134.7237148,
+    "seen": 1787840653.2487733,
+    "ast_hash": "3f001279648caf909df7060a3227b7fd",
+    "semantic_hash": "3f001279648caf909df7060a3227b7fd"
+  },
+  "migrations/05_bmax_admins.sql": {
+    "mtime": 1781899254.3777578,
+    "seen": 1787840653.2487733,
+    "ast_hash": "f1cd0f0e83258c7be310af0a1d8d6e3d",
+    "semantic_hash": "f1cd0f0e83258c7be310af0a1d8d6e3d"
+  },
+  "revendas_lista.json": {
+    "mtime": 1781707346.9287052,
+    "seen": 1787840653.2487733,
+    "ast_hash": "6e2f49af0b416e6a033357842146aeca",
+    "semantic_hash": "6e2f49af0b416e6a033357842146aeca"
+  },
+  "scripts/backup_revendas.py": {
+    "mtime": 1782396240.8343563,
+    "seen": 1787840653.2487733,
+    "ast_hash": "8ffe22d36c36c4e590ccf719a2de9cde",
+    "semantic_hash": "8ffe22d36c36c4e590ccf719a2de9cde"
+  },
+  "scripts/baixar_bsis_sharepoint.py": {
+    "mtime": 1781888402.5309117,
+    "seen": 1787840653.2487733,
+    "ast_hash": "949fe0088f865497a8e48ec32c8c7627",
+    "semantic_hash": "949fe0088f865497a8e48ec32c8c7627"
+  },
+  "scripts/cobertura_bmax.json": {
+    "mtime": 1781725696.4957368,
+    "seen": 1787840653.2487733,
+    "ast_hash": "de620453576d513ca6725e27dfa30c72",
+    "semantic_hash": "de620453576d513ca6725e27dfa30c72"
+  },
+  "scripts/corrigir_banco_bmax.py": {
+    "mtime": 1781645487.6680303,
+    "seen": 1787840653.2487733,
+    "ast_hash": "f0747834c60c1b45040f4d38b48d3fc6",
+    "semantic_hash": "f0747834c60c1b45040f4d38b48d3fc6"
+  },
+  "scripts/corrigir_endereco_luitex.py": {
+    "mtime": 1781882516.6132748,
+    "seen": 1787840653.2487733,
+    "ast_hash": "185b8283289867400fd321a46e372e7f",
+    "semantic_hash": "185b8283289867400fd321a46e372e7f"
+  },
+  "scripts/criar_usuario_auth.py": {
+    "mtime": 1782157249.196792,
+    "seen": 1787840653.2487733,
+    "ast_hash": "b471b5cae6e57a4caafdfeb39bdd582a",
+    "semantic_hash": "b471b5cae6e57a4caafdfeb39bdd582a"
+  },
+  "scripts/enrich_revendas_bmax.py": {
+    "mtime": 1781634194.4940524,
+    "seen": 1787840653.2487733,
+    "ast_hash": "587f403eeaa179735532897d16705b83",
+    "semantic_hash": "587f403eeaa179735532897d16705b83"
+  },
+  "scripts/enriquecer_cep_zen.py": {
+    "mtime": 1781729946.7432268,
+    "seen": 1787840653.2487733,
+    "ast_hash": "d5094abcd09bf2df1480b1ce32fc2350",
+    "semantic_hash": "d5094abcd09bf2df1480b1ce32fc2350"
+  },
+  "scripts/enriquecer_enderecos_bmax.py": {
+    "mtime": 1781891517.6362562,
+    "seen": 1787840653.2487733,
+    "ast_hash": "27ef01e5706842ce043907c97a0e5d4f",
+    "semantic_hash": "27ef01e5706842ce043907c97a0e5d4f"
+  },
+  "scripts/enriquecer_por_zen_id.py": {
+    "mtime": 1782133640.610142,
+    "seen": 1787840653.2487733,
+    "ast_hash": "a5dd5b6b648c6ceac7bdd4bd8277f587",
+    "semantic_hash": "a5dd5b6b648c6ceac7bdd4bd8277f587"
+  },
+  "scripts/fix_admins_rls.sql": {
+    "mtime": 1782156952.854913,
+    "seen": 1787840653.2487733,
+    "ast_hash": "73b13b6727d3b845fe2429a992c774a7",
+    "semantic_hash": "73b13b6727d3b845fe2429a992c774a7"
+  },
+  "scripts/geocode_por_cidade.py": {
+    "mtime": 1781629277.390226,
+    "seen": 1787840653.2487733,
+    "ast_hash": "03a274dc315d66231bfbc7fbc5926648",
+    "semantic_hash": "03a274dc315d66231bfbc7fbc5926648"
+  },
+  "scripts/importar_cobertura_bmax.py": {
+    "mtime": 1781723530.1320302,
+    "seen": 1787840653.2487733,
+    "ast_hash": "6047b717adb6d3e15e2b986dacf834a1",
+    "semantic_hash": "6047b717adb6d3e15e2b986dacf834a1"
+  },
+  "scripts/popular_ddd_cobertura.py": {
+    "mtime": 1781875410.275806,
+    "seen": 1787840653.2487733,
+    "ast_hash": "a8866e73ae675689642930cd4c6f4948",
+    "semantic_hash": "a8866e73ae675689642930cd4c6f4948"
+  },
+  "scripts/sincronizar_excel_bmax.py": {
+    "mtime": 1782842728.7840493,
+    "seen": 1787840653.2487733,
+    "ast_hash": "e6aaf0565eb170c4bfbdb64202b425a9",
+    "semantic_hash": "e6aaf0565eb170c4bfbdb64202b425a9"
+  }
+}

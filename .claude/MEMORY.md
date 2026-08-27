@@ -1,0 +1,1 @@
+- [BMax Motor Graphify knowledge graph](project_bmax_motor_graphify.md) — 106 nodes, 134 edges, 19 communities; data enrichment backend; open `.claude/graph/graphify-out/graph.html` to explore.
