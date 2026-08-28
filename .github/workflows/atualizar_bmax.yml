@@ -128,3 +128,23 @@ jobs:
           name: backup-revendas-${{ github.run_id }}
           path: backups/
           retention-days: 30
+
+  notificar_falha:
+    name: Alertar em caso de falha
+    runs-on: ubuntu-latest
+    needs: [sincronizar_excel, corrigir_banco, importar_cobertura, publicar_portal, backup_revendas]
+    if: always() && contains(needs.*.result, 'failure')
+    steps:
+      - name: Enviar alerta por email (Resend)
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          curl -s -X POST "https://api.resend.com/emails" \
+            -H "Authorization: Bearer $RESEND_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "BMax Motor <noreply@boxersoldas.com.br>",
+              "to": ["andre.coelho@boxersoldas.com.br"],
+              "subject": "⚠️ Falha no pipeline diário do BMax Motor",
+              "html": "<p>Uma ou mais etapas do workflow <strong>Atualizar BMax (diário)</strong> falharam.</p><p>Veja o log completo em: <a href=\"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\">https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}</a></p>"
+            }'

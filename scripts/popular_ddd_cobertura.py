@@ -56,8 +56,10 @@ def load_cobertura(force: bool) -> list:
             f'{base}?select=ibge_codigo,cidade,estado{extra}&limit=1000&offset={page*1000}',
             headers=HEADERS, timeout=20
         )
+        if not r.ok:
+            raise RuntimeError(f'Supabase GET cobertura → {r.status_code}: {r.text[:300]}')
         data = r.json()
-        if not data: break
+        if not isinstance(data, list) or not data: break
         all_records.extend(data)
         if len(data) < 1000: break
         page += 1
@@ -110,6 +112,14 @@ def main():
 
     total_matches = sum(len(v) for v in ddd_to_ibges.values())
     print(f'\nTotal: {total_matches} matches | Sem match: {nao_encontrados}')
+
+    # Se nenhum DDD casou nenhum registro (ex: BrasilAPI fora do ar em todas as
+    # tentativas), o script terminaria "com sucesso" sem ter feito nada — melhor
+    # falhar alto e deixar o pipeline sinalizar o problema.
+    if total_matches == 0:
+        print('Nenhum match encontrado em nenhum DDD — provável falha da BrasilAPI. Abortando.')
+        sys.exit(1)
+
     print('Atualizando Supabase...')
 
     updated = 0
