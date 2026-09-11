@@ -4,6 +4,16 @@ Popula a coluna ddd na tabela comercial_bmax_cobertura usando a BrasilAPI.
 Estratégia: itera os 67 DDDs, busca cidades na BrasilAPI, cruza por nome+estado
 com os municípios do banco e faz PATCH em lote (uma chamada Supabase por DDD).
 Idempotente: só atualiza registros com ddd IS NULL por padrão.
+
+Resíduo (fallback por estado): alguns municípios nunca vão casar por nome exato
+— hífen/apóstrofo (`Olho d'Água do Borges`) ou porque a própria BrasilAPI não
+lista a cidade nesse DDD. Para esses, em vez de deixar ddd NULL para sempre
+(o que fazia este script falhar todo dia, sem nunca resolver), atribuímos o
+DDD mais frequente já usado no mesmo estado — um "chute" deliberado, melhor
+que nenhum valor, já que DDD aqui só serve para roteamento aproximado de
+vendedor/representante, não para discagem real. O log do job lista quais
+municípios levaram o valor exato e quais levaram o chute por estado.
+
 Uso:
   python scripts/popular_ddd_cobertura.py           # só registros sem DDD
   python scripts/popular_ddd_cobertura.py --force   # reprocessa todos
@@ -65,6 +75,30 @@ def load_cobertura(force: bool) -> list:
         page += 1
     return all_records
 
+def load_ddd_mode_por_estado() -> dict:
+    """DDD mais frequente já gravado em cada estado, entre os registros que já
+    têm ddd preenchido — usado como chute para o resíduo que nunca casa por
+    nome exato. Baseado na base inteira (não só nos registros desta execução),
+    então funciona mesmo quando sobram poucos nulls para processar."""
+    from collections import Counter
+    counters: dict[str, Counter] = {}
+    page = 0
+    base = f'{SB_URL}/rest/v1/comercial_bmax_cobertura'
+    while True:
+        r = requests.get(
+            f'{base}?select=estado,ddd&ddd=not.is.null&limit=1000&offset={page*1000}',
+            headers=HEADERS, timeout=20
+        )
+        if not r.ok:
+            raise RuntimeError(f'Supabase GET cobertura (ddd mode) → {r.status_code}: {r.text[:300]}')
+        data = r.json()
+        if not isinstance(data, list) or not data: break
+        for rec in data:
+            counters.setdefault(rec['estado'], Counter())[rec['ddd']] += 1
+        if len(data) < 1000: break
+        page += 1
+    return {estado: counter.most_common(1)[0][0] for estado, counter in counters.items()}
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--force', action='store_true')
@@ -111,13 +145,38 @@ def main():
             print(f'  DDD {ddd}: erro {e}')
 
     total_matches = sum(len(v) for v in ddd_to_ibges.values())
-    print(f'\nTotal: {total_matches} matches | Sem match: {nao_encontrados}')
+    print(f'\nTotal exato: {total_matches} matches | Cidades da BrasilAPI sem correspondência: {nao_encontrados}')
 
-    # Se nenhum DDD casou nenhum registro (ex: BrasilAPI fora do ar em todas as
-    # tentativas), o script terminaria "com sucesso" sem ter feito nada — melhor
-    # falhar alto e deixar o pipeline sinalizar o problema.
-    if total_matches == 0:
-        print('Nenhum match encontrado em nenhum DDD — provável falha da BrasilAPI. Abortando.')
+    # Resíduo: registros que não casaram por nome exato em nenhum DDD.
+    casados_exato = {ibge for ibges in ddd_to_ibges.values() for ibge in ibges}
+    residuo = [rec for rec in records if rec['ibge_codigo'] not in casados_exato]
+
+    if residuo:
+        print(f'\n{len(residuo)} município(s) não casaram por nome exato — tentando chute por estado...')
+        ddd_mode = load_ddd_mode_por_estado()
+        sem_chute_possivel = []
+        for rec in residuo:
+            chute = ddd_mode.get(rec['estado'])
+            if chute is None:
+                sem_chute_possivel.append(rec)
+                continue
+            ddd_to_ibges.setdefault(chute, []).append(rec['ibge_codigo'])
+            print(f"  {rec['cidade']}/{rec['estado']} → DDD {chute} (chute, DDD mais comum do estado)")
+        if sem_chute_possivel:
+            print(f"  Sem chute possível (estado sem nenhum DDD já gravado): "
+                  + ', '.join(f"{r['cidade']}/{r['estado']}" for r in sem_chute_possivel))
+
+    total_a_gravar = sum(len(v) for v in ddd_to_ibges.values())
+    print(f'\nTotal a gravar (exato + chute): {total_a_gravar} de {len(records)} município(s) pendentes')
+
+    # Só aborta se não sobrou NADA para gravar nem por chute — sinal real de
+    # BrasilAPI fora do ar (sem exato) combinado com base ainda vazia (sem
+    # histórico de ddd por estado para chutar). Um resíduo pequeno e estável
+    # de casos-limite (hífen/apóstrofo, cidade ausente da BrasilAPI) não deve
+    # mais derrubar o job todo dia — antes disso ser corrigido, o job falhava
+    # 100% das vezes mesmo com a base 97%+ completa.
+    if total_a_gravar == 0:
+        print('Nenhum registro pôde ser atualizado (nem exato, nem chute) — provável falha da BrasilAPI com base ainda sem histórico de DDD. Abortando.')
         sys.exit(1)
 
     print('Atualizando Supabase...')
