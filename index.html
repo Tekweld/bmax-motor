@@ -385,6 +385,7 @@ main{padding:30px 32px;overflow-y:auto}
 <nav class="mnav">
   <div class="mnav-logo"><span>BMax</span> PCI</div>
   <div class="mtabs">
+    <button class="mtab" onclick="nav('consulta',this)">🔍</button>
     <button class="mtab on" onclick="nav('classificar',this)">⚡</button>
     <button class="mtab"    onclick="nav('revendas',this)">🏪</button>
     <button class="mtab"    onclick="nav('tabela',this)">📊</button>
@@ -404,6 +405,7 @@ main{padding:30px 32px;overflow-y:auto}
   </div>
   <div>
     <div class="nl">Navegação</div>
+    <button class="ni" onclick="nav('consulta',this)"><span class="ni-ic">🔍</span>Consulta de Lead</button>
     <button class="ni on" onclick="nav('classificar',this)"><span class="ni-ic">⚡</span>Classificar Lead</button>
     <button class="ni"    onclick="nav('revendas',this)"><span class="ni-ic">🏪</span>Revendas BMax</button>
     <button class="ni"    onclick="nav('tabela',this)"><span class="ni-ic">📊</span>Tabela de PCIs</button>
@@ -432,6 +434,27 @@ main{padding:30px 32px;overflow-y:auto}
 </aside>
 
 <main>
+
+<!-- ══════ CONSULTA DE LEAD ══════ -->
+<div class="pg" id="pg-consulta">
+  <div class="ph">
+    <div class="ph-tag">Motor PCI · Consulta</div>
+    <h1 class="ph-title">Consulta de Lead</h1>
+    <p class="ph-sub">Busque por CNPJ, email, telefone ou nome para ver se esse cliente já está em negociação em algum funil do RD Station — antes de negociar, confira se ele já é de alguém.</p>
+  </div>
+
+  <div class="adm-card">
+    <div class="adm-card-body" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:220px">
+        <label style="font-size:12px;color:#93b4d4;font-weight:700;display:block;margin-bottom:6px">CNPJ, email, telefone ou nome</label>
+        <input id="consulta-input" type="text" placeholder="Ex: 12.345.678/0001-90" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2d5a8e;background:#0f1f3d;color:#fff;font-family:inherit;font-size:14px;box-sizing:border-box" onkeydown="if(event.key==='Enter')consultarLead()">
+      </div>
+      <button class="adm-btn adm-btn-p" onclick="consultarLead()">Buscar</button>
+    </div>
+  </div>
+
+  <div id="consulta-resultado" style="margin-top:16px"></div>
+</div>
 
 <!-- ══════ CLASSIFICAR ══════ -->
 <div class="pg on" id="pg-classificar">
@@ -976,6 +999,81 @@ const sbClient = createClient(SB_URL, SB_ANON);
 // agora são definidos só no Portal — o Motor replica, não edita. Ver
 // ADM_RESUMO_HTML mais abaixo (usado por adm_enterSection).
 const PORTAL_URL = 'https://bmax.boxersoldas.com.br';
+
+// ════════════════════════════════════════════════════
+// CONSULTA DE LEAD — checa CNPJ/email/telefone/nome contra TODOS os funis
+// do RD Station via o Portal (só ele tem o token do RD). Ajuda o vendedor/SDR
+// a saber se o cliente já é de alguém antes de negociar — e alerta bem
+// visível quando o lead já está no funil BMAX (veio de revenda).
+// ════════════════════════════════════════════════════
+function escMotor(s) {
+  return (s ?? '').toString()
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
+async function consultarLead() {
+  const input = document.getElementById('consulta-input');
+  const termo = input.value.trim();
+  const out = document.getElementById('consulta-resultado');
+  if (!termo) { out.innerHTML = '<p style="color:#93b4d4">Digite um CNPJ, email, telefone ou nome pra buscar.</p>'; return; }
+  out.innerHTML = '<p style="color:#93b4d4">⏳ Buscando em todos os funis do RD Station...</p>';
+  try {
+    const r = await fetch(`${PORTAL_URL}/api/motor/consulta-lead?q=${encodeURIComponent(termo)}`);
+    if (!r.ok) throw new Error('status ' + r.status);
+    const data = await r.json();
+    renderConsultaLead(data);
+  } catch (e) {
+    out.innerHTML = '<p style="color:#ff8a8a">Erro ao consultar o RD Station. Tente novamente em alguns segundos.</p>';
+  }
+}
+
+function renderConsultaLead(data) {
+  const out = document.getElementById('consulta-resultado');
+  if (!data.total) {
+    out.innerHTML = `<div class="adm-card"><div class="adm-card-body"><p style="color:#93b4d4">Nenhuma negociação encontrada no RD pra esse ${escMotor(data.tipoDetectado || 'termo')}.</p></div></div>`;
+    return;
+  }
+
+  const temBmax = data.resultados.some(r => r.emFunilBmax);
+  let html = '';
+  if (temBmax) {
+    html += `<div style="background:#7f1d1d;border:2px solid #ef4444;border-radius:10px;padding:16px;margin-bottom:16px;color:#fecaca;font-weight:800;font-size:15px;line-height:1.5">
+      ⚠️ Esse cliente já está no funil <u>BMAX</u> — o cadastro veio de uma REVENDA. A venda é da revenda, não da Boxer.
+    </div>`;
+  }
+  html += `<p style="color:#93b4d4;font-size:13px;margin-bottom:10px">${data.total} negociaç${data.total === 1 ? 'ão encontrada' : 'ões encontradas'}</p>`;
+
+  for (const r of data.resultados) {
+    const bmaxTag = r.emFunilBmax
+      ? '<span style="background:#ef4444;color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;margin-left:8px;vertical-align:middle">FUNIL BMAX</span>'
+      : '';
+    const contatosHtml = (r.contatos || [])
+      .map(c => {
+        const partes = [escMotor(c.nome)];
+        if (c.emails?.length) partes.push(c.emails.map(escMotor).join(', '));
+        if (c.telefones?.length) partes.push(c.telefones.map(escMotor).join(', '));
+        return partes.filter(Boolean).join(' · ');
+      })
+      .filter(Boolean).join('<br>');
+
+    html += `<div class="adm-card" style="margin-bottom:12px${r.emFunilBmax ? ';border-color:#ef4444' : ''}">
+      <div class="adm-card-header"><div class="adm-card-title">${escMotor(r.organizacao || r.nome)}${bmaxTag}</div></div>
+      <div class="adm-card-body" style="font-size:13px;line-height:1.8">
+        <div><strong>Negociação:</strong> ${escMotor(r.nome)}</div>
+        <div><strong>CNPJ:</strong> ${escMotor(r.cnpj) || '—'}</div>
+        <div><strong>Cidade/UF:</strong> ${escMotor(r.cidade) || '—'}${r.estado ? '/' + escMotor(r.estado) : ''}</div>
+        <div><strong>Funil:</strong> ${escMotor(r.funil)} — <strong>Estágio:</strong> ${escMotor(r.estagio)}</div>
+        <div><strong>Responsável:</strong> ${escMotor(r.responsavel) || '—'}</div>
+        <div><strong>Representante / Revenda:</strong> ${escMotor(r.representante) || '—'} / ${escMotor(r.revenda) || '—'}</div>
+        <div><strong>Valor:</strong> R$ ${Number(r.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        <div><strong>Criado em:</strong> ${r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—'}</div>
+        ${contatosHtml ? `<div style="margin-top:6px"><strong>Contatos:</strong><br>${contatosHtml}</div>` : ''}
+      </div>
+    </div>`;
+  }
+  out.innerHTML = html;
+}
 
 // Declaradas cedo — usadas pelo bootstrap e pelas seções admin
 let adminSession  = null;
