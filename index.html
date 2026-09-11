@@ -252,6 +252,11 @@ main{padding:30px 32px;overflow-y:auto}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:99px}
+/* .hidden nunca teve regra própria — os toggles de login-box/conteúdo admin
+   (classList.toggle('hidden', ...)) não escondiam nada de fato, ambos ficavam
+   visíveis empilhados. Achado ao verificar a tela de resumo do Motor. */
+.hidden{display:none!important}
+
 /* ── ADMIN SECTIONS ── */
 .adm-wrap{max-width:960px;margin:0 auto;padding:0}
 .adm-login-box{background:#fff;border-radius:12px;padding:32px;max-width:400px;margin:40px auto;border:1px solid #d0d8e8}
@@ -966,6 +971,11 @@ const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 const { createClient } = supabase;
 const sbClient = createClient(SB_URL, SB_ANON);
+
+// Cadastros de Vendedores/Revendas/Cobertura/Representantes BMax/Comissão
+// agora são definidos só no Portal — o Motor replica, não edita. Ver
+// ADM_RESUMO_HTML mais abaixo (usado por adm_enterSection).
+const PORTAL_URL = 'https://bmax.boxersoldas.com.br';
 
 // Declaradas cedo — usadas pelo bootstrap e pelas seções admin
 let adminSession  = null;
@@ -2931,25 +2941,55 @@ async function resetCfg() {
 // ════════════════════════════════════════════════════
 // adminSession/adminInfo são declarados no topo do script (antes do bootstrap)
 
+// Vendedores, Revendas, Cobertura, Representantes BMax e Comissão/Classificação
+// agora só têm cadastro no Portal BMax — o Motor apenas replica (lê). Quem já
+// abriu o Motor como admin (perfil 'admin' em comercial_bmax_admins, via
+// globalLogin) não precisa logar de novo aqui: as 3 seções abaixo (que antes
+// tinham formulário próprio) mostram direto o resumo + links + guia.
+const ADM_RESUMO_HTML = `
+  <div class="adm-card">
+    <div class="adm-card-header"><div class="adm-card-title">Cadastros agora são feitos no Portal BMax</div></div>
+    <div class="adm-card-body">
+      <p style="color:#93b4d4;font-size:13px;margin-bottom:16px">
+        Vendedores, Revendas, Cobertura, a lista de Representantes BMax e a Matriz de Comissão/Classificação de PCI
+        são definidos no Portal BMax e o Motor só replica (lê) — não é mais possível editar por aqui.
+        Isso evita que a mesma informação fique divergente entre os dois sistemas.
+      </p>
+      <table class="adm-tbl" style="margin-bottom:16px">
+        <thead><tr><th>O quê</th><th>Onde mexer</th></tr></thead>
+        <tbody>
+          <tr><td>Revendas BMax</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Revendas BMax</a></td></tr>
+          <tr><td>Cobertura (representante por cidade)</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Cobertura</a></td></tr>
+          <tr><td>Vendedores Boxer (VI/VT1/VT2, área de atuação)</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Vendedores</a></td></tr>
+          <tr><td>Lista de Representantes BMax (dropdown da Cobertura)</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Representantes BMax</a></td></tr>
+          <tr><td>Matriz de Comissão / Parâmetros de Classificação</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Comissão / Classificação</a></td></tr>
+          <tr><td>Quem é admin (Portal e Motor)</td><td><a href="${PORTAL_URL}/#gestao" target="_blank" style="color:#5eb0ff">Portal → Gestão → Usuarios</a></td></tr>
+        </tbody>
+      </table>
+      <p style="color:#718096;font-size:12px">
+        Dúvidas sobre como ajustar algo? A aba <strong>Ajuda</strong> dentro do Admin do Portal tem o passo a passo completo.
+      </p>
+    </div>
+  </div>`;
+
 function adm_enterSection() {
-  const logged = !!adminSession;
-  // Equipe
+  const logged = adminInfo?.perfil === 'admin';
   document.getElementById('adm-login-box').classList.toggle('hidden', logged);
   document.getElementById('adm-equipe-content').classList.toggle('hidden', !logged);
-  // Representantes
   document.getElementById('adm-rep-login-box').classList.toggle('hidden', logged);
   document.getElementById('adm-repr-content').classList.toggle('hidden', !logged);
-  // Configurações
   const cfgLogin   = document.getElementById('adm-cfg-login-box');
   const cfgContent = document.getElementById('adm-cfg-content');
   if (logged) {
     cfgLogin.innerHTML = '';
     cfgContent.classList.remove('hidden');
+    document.getElementById('adm-equipe-content').innerHTML = ADM_RESUMO_HTML;
+    document.getElementById('adm-repr-content').innerHTML = ADM_RESUMO_HTML;
+    cfgContent.innerHTML = ADM_RESUMO_HTML;
   } else {
     cfgLogin.innerHTML = document.getElementById('adm-login-box').innerHTML;
     cfgContent.classList.add('hidden');
   }
-  if (logged && !adm_reprLoaded) { adm_reprLoaded = true; adm_loadRepr(); }
 }
 
 async function adm_doLogin(form) {
