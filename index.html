@@ -1031,7 +1031,7 @@ async function consultarLead() {
 function renderConsultaLead(data) {
   const out = document.getElementById('consulta-resultado');
   if (!data.total) {
-    out.innerHTML = `<div class="adm-card"><div class="adm-card-body"><p style="color:#93b4d4">Nenhuma negociação encontrada no RD pra esse ${escMotor(data.tipoDetectado || 'termo')}.</p></div></div>`;
+    out.innerHTML = `<div class="adm-card"><div class="adm-card-body"><p style="color:#1e293b">Nenhuma negociação encontrada no RD pra esse ${escMotor(data.tipoDetectado || 'termo')}.</p></div></div>`;
     return;
   }
 
@@ -1059,7 +1059,7 @@ function renderConsultaLead(data) {
 
     html += `<div class="adm-card" style="margin-bottom:12px${r.emFunilBmax ? ';border-color:#ef4444' : ''}">
       <div class="adm-card-header"><div class="adm-card-title">${escMotor(r.organizacao || r.nome)}${bmaxTag}</div></div>
-      <div class="adm-card-body" style="font-size:13px;line-height:1.8">
+      <div class="adm-card-body" style="font-size:13px;line-height:1.8;color:#1e293b">
         <div><strong>Negociação:</strong> ${escMotor(r.nome)}</div>
         <div><strong>CNPJ:</strong> ${escMotor(r.cnpj) || '—'}</div>
         <div><strong>Cidade/UF:</strong> ${escMotor(r.cidade) || '—'}${r.estado ? '/' + escMotor(r.estado) : ''}</div>
