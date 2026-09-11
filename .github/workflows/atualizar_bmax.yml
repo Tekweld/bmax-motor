@@ -31,27 +31,19 @@ jobs:
           SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
 
-  corrigir_banco:
-    name: 2 — Corrigir classe/rep/duplicatas
-    runs-on: ubuntu-latest
-    needs: sincronizar_excel
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-python@v5.6.0
-        with:
-          python-version: '3.11'
-      - name: Instalar dependências
-        run: pip install requests python-dotenv
-      - name: Corrigir banco BMax
-        run: python scripts/corrigir_banco_bmax.py
-        env:
-          SUPABASE_URL:         ${{ secrets.SUPABASE_URL_BMAX }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
+  # Job "2 — Corrigir classe/rep/duplicatas" (scripts/corrigir_banco_bmax.py)
+  # DESATIVADO em 2026-09-11: apagou de verdade uma filial legítima da revenda
+  # "Cascavel Soldas" (mesmo nome+cidade não é mais sinônimo de duplicata —
+  # revendas podem ter múltiplas filiais) e sobrescrevia a classe (Diamante →
+  # Ouro) a partir de um `revendas_lista.json` estático, desatualizado —
+  # direto conflito com o Portal BMax ser agora a fonte única de verdade pra
+  # cadastro de revendas (ver memória do projeto). Não reativar sem reescrever
+  # a lógica de dedupe/classe pra não brigar com o Portal.
 
   enriquecer_zen:
     name: 3 — Enriquecer filiais via ZEN
     runs-on: ubuntu-latest
-    needs: corrigir_banco
+    needs: sincronizar_excel
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4.2.2
@@ -132,7 +124,7 @@ jobs:
   notificar_falha:
     name: Alertar em caso de falha
     runs-on: ubuntu-latest
-    needs: [sincronizar_excel, corrigir_banco, importar_cobertura, publicar_portal, backup_revendas]
+    needs: [sincronizar_excel, importar_cobertura, publicar_portal, backup_revendas]
     if: always() && contains(needs.*.result, 'failure')
     steps:
       - name: Enviar alerta por email (Resend)
