@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>BMax — Motor PCI</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -2893,9 +2893,20 @@ function renderTabela() {
 // CONFIGURAÇÕES
 // ════════════════════════════════════════════════════
 function applyConfig() {
-  document.getElementById('c-raio').value   = CFG.raio;
-  document.getElementById('c-nf').value     = CFG.nf;
-  document.getElementById('c-vinculo').value= CFG.vinculo;
+  // Esses 3 inputs só existem depois que a aba Configurações (admin) já foi
+  // aberta pelo menos uma vez — chamar applyConfig() logo após o login (initApp)
+  // tentava setar .value em null e travava com exceção não capturada, abortando
+  // TUDO que vinha depois no boot: renderRevTable/renderTabela/updateSb/loadCobertura
+  // nunca rodavam. Por isso "Revendas Ativas" ficava travado em "carregando..." e
+  // a tabela de revendas/PCI/cobertura não populavam, mesmo com os dados corretos
+  // no Supabase — a classificação funcionava porque ela busca os dados por conta
+  // própria, sem depender desse boot.
+  const cRaio = document.getElementById('c-raio');
+  const cNf = document.getElementById('c-nf');
+  const cVinculo = document.getElementById('c-vinculo');
+  if (cRaio) cRaio.value = CFG.raio;
+  if (cNf) cNf.value = CFG.nf;
+  if (cVinculo) cVinculo.value = CFG.vinculo;
   const hraio = document.getElementById('h-raio');
   if (hraio) hraio.textContent = CFG.raio;
   const la = document.getElementById('lbl-acima');
