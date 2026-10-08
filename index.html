@@ -1018,7 +1018,15 @@ async function consultarLead() {
   if (!termo) { out.innerHTML = '<p style="color:#93b4d4">Digite um CNPJ, email, telefone ou nome pra buscar.</p>'; return; }
   out.innerHTML = '<p style="color:#93b4d4">⏳ Buscando em todos os funis do RD Station...</p>';
   try {
-    const r = await fetch(`${PORTAL_URL}/api/motor/consulta-lead?q=${encodeURIComponent(termo)}`);
+    // Endpoint expõe nome/telefone de contato de cliente (dado pessoal) — o
+    // Portal agora exige a sessão Supabase Auth do próprio Motor pra validar
+    // que quem chama está de fato logado (antes era só CORS, que não barra
+    // chamada direta). sbClient.auth.getSession() já renova o token sozinho
+    // se estiver perto de expirar.
+    const { data: { session } } = await sbClient.auth.getSession();
+    const r = await fetch(`${PORTAL_URL}/api/motor/consulta-lead?q=${encodeURIComponent(termo)}`, {
+      headers: { Authorization: `Bearer ${session?.access_token || ''}` }
+    });
     if (!r.ok) throw new Error('status ' + r.status);
     const data = await r.json();
     renderConsultaLead(data);
