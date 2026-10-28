@@ -37,6 +37,17 @@ CRM — ele não guarda o funil do lead. Consulta de "esse cliente já é de
 alguém?" é delegada ao Portal BMax via `GET {PORTAL_URL}/api/motor/consulta-lead`
 (o Motor não tem o token do RD Station).
 
+**Consulta por CNPJ — regras compartilhadas com a Nova Negociação do Portal (28/10/2026):** a resposta
+da consulta por CNPJ traz, além dos leads com o mesmo CNPJ, (1) `cnpjInvalido` (dígito verificador errado:
+o Motor mostra aviso — CNPJ digitado errado gera cliente duplicado); (2) `unidades`: outros leads ATIVOS da
+mesma empresa (mesma raiz de CNPJ, 8 primeiros dígitos, CNPJ diferente) com funil/estágio/responsável, e
+`cidadeConsultada` (cidade do CNPJ consultado via BrasilAPI, pode vir nula). Unidade na MESMA cidade
+(`mesmaCidade`) aparece com alerta vermelho "alinhe o atendimento"; filiais em outras cidades aparecem só
+como informação (atendimentos diferentes não conflitam). A Nova Negociação do Portal aplica as mesmas
+regras (recusa CNPJ inválido e nome igual na mesma cidade; unidade na mesma cidade não bloqueia, mas grava
+nota no card e avisa quem cadastrou). Implementação: `analisarUnidadesDaEmpresa`/`cnpjValido` em
+`rd.leads.service.js` do Portal; tela em `consultaAvisosCnpjHtml()` do `index.html`.
+
 ## 2. Arquitetura
 
 - **Sem build, sem framework.** `index.html` (~4140 linhas) é HTML+CSS+JS puro
