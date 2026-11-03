@@ -22,7 +22,9 @@ DEST = Path(next((sys.argv[i+1] for i, a in enumerate(sys.argv) if a == '--dest'
 TENANT_ID  = "c0bbec8e-9949-4dcf-80b3-bd21689c33e4"
 CLIENT_ID  = "d1fb2af8-a56b-41a0-8401-e87591360016"
 SCOPE      = ["https://graph.microsoft.com/Sites.Read.All"]
-DRIVE_ID   = "b!6Kvw0SoDTUiClr8MvMu7NuwGBC9zdONMq_ED-vRKE3W43Ls7sVoDTZSN_i_i5kpD"
+# Biblioteca "Documentos" do site Fileserver (onde o BAV mantém o bsis.db). Até 27/10/2026 apontava para a do site
+# Dados (b!6Kvw...), que perdeu a pasta COMERCIAL/Gestor -> 404 (workflow diário falhava no passo 3).
+DRIVE_ID   = "b!BgDnu6n2-kKdaBXV5Eo4t5nQe1Y6HMZFhzysqbb6s6270IUto2qaQbZI_tNMIGj3"
 BSIS_PATH  = "COMERCIAL/Gestor/Salescope/bsis.db"  # caminho relativo na drive
 
 def get_token():
