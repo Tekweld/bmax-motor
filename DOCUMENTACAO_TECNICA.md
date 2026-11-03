@@ -376,7 +376,7 @@ teste automatizado.
 | `importar_cobertura_bmax.py` | Importa `scripts/cobertura_bmax.json` (gerado do Excel de IBGE) para `comercial_bmax_cobertura` | **Sim** — job 4 do diário |
 | `popular_ddd_cobertura.py` | Preenche a coluna `ddd` em `comercial_bmax_cobertura` via BrasilAPI, cruzando por nome de cidade; usa "chute" por estado quando não casa por nome exato | **Sim** — job 4 do diário, depois do anterior |
 | `backup_revendas.py` | Dump de `comercial_revendas_bmax` para JSON, salvo como artefato do GitHub Actions | **Sim** — job 6 do diário, retenção de 30 dias |
-| `baixar_bsis_sharepoint.py` | Baixa `bsis.db` (mesmo banco histórico do BAV) do SharePoint via MSAL | Só sob demanda — job 3 do diário, mas **condicionado a `workflow_dispatch`** (não roda no cron automático, só quando alguém dispara manualmente com "force_enrich") |
+| `baixar_bsis_sharepoint.py` | Baixa `bsis.db` (mesmo banco histórico do BAV) do SharePoint via MSAL, na biblioteca do site **Fileserver** (drive `b!BgDn…`; a do site Dados, usada pelo Excel, não tem `COMERCIAL/Gestor` — 404 em 03/11/2026) | Só sob demanda — job 3 do diário, mas **condicionado a `workflow_dispatch`** (não roda no cron automático, só quando alguém dispara manualmente com "force_enrich") |
 | `enriquecer_enderecos_bmax.py` | Enriquece revendas sem `zen_id`/CEP cruzando `bsis.db` (nome+cidade) para achar o ID de pessoa no ZEN, depois faz 1 chamada ZEN por match | Mesmo job condicional do anterior |
 | `enrich_revendas_bmax.py` | Pipeline standalone ZEN→geocode→Supabase, citado no README como "rode na primeira vez"; parece ser a versão anterior/manual do que os jobs `enriquecer_enderecos_bmax.py`/`sincronizar_excel_bmax.py` fazem hoje no CI | Manual (não está em nenhum workflow atual) |
 | `enriquecer_cep_zen.py` | Busca todas as filiais de cada revenda no ZEN a partir de `revendas_lista.json`, geocodifica (BrasilAPI→ViaCEP→Nominatim) e faz upsert por `zen_id` | Manual — não referenciado em workflow |
@@ -417,3 +417,7 @@ em `main`.
   reflete uma versão anterior (V1) do critério, ou há uma pequena divergência
   de contagem entre documentação e código — não achei um "PCI17" em lugar
   nenhum do JS atual.
+
+
+## Falha do workflow diário em 28/10–03/11/2026
+O e-mail "Uma ou mais etapas do workflow Atualizar BMax (diário) falharam" tinha 2 causas: (1) o secret `MSAL_TOKEN_CACHE` (Tekweld/bmax-motor) expirou — o job 1 não conseguia baixar o Excel; renovar com `gh secret set MSAL_TOKEN_CACHE` a partir do cache local do BAV (`bav-boxer/backend/data/.oauth_token_cache.json`) depois de um `acquire_token_silent` com o escopo `Sites.Read.All`; (2) `baixar_bsis_sharepoint.py` apontava para a drive errada (404). Corrigidos em 03/11/2026 (run 41650357564 passou com os 5 jobs).
