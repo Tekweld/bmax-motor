@@ -421,3 +421,12 @@ em `main`.
 
 ## Falha do workflow diário em 28/10–03/11/2026
 O e-mail "Uma ou mais etapas do workflow Atualizar BMax (diário) falharam" tinha 2 causas: (1) o secret `MSAL_TOKEN_CACHE` (Tekweld/bmax-motor) expirou — o job 1 não conseguia baixar o Excel; renovar com `gh secret set MSAL_TOKEN_CACHE` a partir do cache local do BAV (`bav-boxer/backend/data/.oauth_token_cache.json`) depois de um `acquire_token_silent` com o escopo `Sites.Read.All`; (2) `baixar_bsis_sharepoint.py` apontava para a drive errada (404). Corrigidos em 03/11/2026 (run 41650357564 passou com os 5 jobs).
+
+
+## Atualização 06/11/2026 — Diamante pelo raio de 50 km e prioridade de revenda alinhada à Política
+Decisões do André (06/11/2026), em `index.html`:
+- **`checkDiamante`**: o aviso "Revenda Diamante disponível para demonstração" agora usa a **mais próxima Diamante dentro de `CFG.raio` (50 km)**, a mesma régua do PCI, em **qualquer estado**, só para **Laser**. Antes dependia de `mesorregiao_ibge` (vazia nas 58 lojas ativas — o aviso nunca disparava) e excluía SP. O banner passou a mostrar a distância em vez da mesorregião.
+- **`revendasDentro` (qual revenda recebe o lead)**: **≤ 3 km** = prioridade absoluta (a mais próxima); **acima de 3 km: Diamante > Ouro > Prata** e, na mesma classe, a mais próxima. Substitui o "bônus de km" (Diamante 30 km, Ouro 15 km) e a constante `PROXIMIDADE_MAX = 5`.
+- **Cadastro de revendas (aba admin do Motor)**: Diamante não é mais "fora SP" e a **mesorregião virou opcional** (só orientação operacional); a validação que impedia salvar Diamante sem mesorregião foi removida.
+- Testado extraindo as funções do HTML e rodando 10 cenários (proximidade, classe, raio, produto, sem coordenadas) + validação de sintaxe do script.
+- Pendente: Política V7 com o mesmo texto (3 km, Diamante > Ouro > Prata, sem exclusividade/mesorregião).

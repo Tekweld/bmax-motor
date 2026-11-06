@@ -653,14 +653,14 @@ main{padding:30px 32px;overflow-y:auto}
         <select id="r-class" onchange="toggleDiamanteFields()">
           <option value="Ouro">🥇 Ouro (6+ critérios)</option>
           <option value="Prata">🥈 Prata (3–5 critérios)</option>
-          <option value="Diamante">💎 Diamante (Laser · fora SP)</option>
+          <option value="Diamante">💎 Diamante (Laser)</option>
           <option value="Não Aplica">✗ Não Aplica</option>
         </select>
       </div>
     </div>
     <div id="diamante-fields" class="fr c3" style="display:none">
       <div class="fi">
-        <label>Mesorregião IBGE</label>
+        <label>Mesorregião IBGE (opcional — só orientação)</label>
         <input type="text" id="r-meso" placeholder="Ex: Metropolitana de Curitiba">
       </div>
       <div class="fi">
@@ -1626,20 +1626,16 @@ function toggleDiamanteFields() {
   document.getElementById('diamante-fields').style.display = v === 'Diamante' ? 'grid' : 'none';
 }
 
+// Revenda Diamante para apoiar a demonstração de Laser: a mais próxima DENTRO do raio (CFG.raio, 50 km — a mesma régua do PCI),
+// em qualquer estado. Mesorregião não participa (decisão do André, 06/11/2026).
 function checkDiamante(pci) {
-  if (!leadGeo || leadGeo.state === 'SP') return null;
-  if (ans.produto !== 'laser') return null;
-  const diamantes = revendas.filter(r => r.ativo !== false && r.classe === 'Diamante' && r.mesorregiao_ibge);
-  if (!diamantes.length) return null;
-  const leadMeso = leadGeo.mesorregiao || null;
-  if (leadMeso) {
-    const match = diamantes.find(d => d.mesorregiao_ibge.toLowerCase() === leadMeso.toLowerCase());
-    if (match) return match;
-  }
-  const leadState = leadGeo.state;
-  const sameState = diamantes.filter(d => d.estado === leadState);
-  if (sameState.length === 1) return sameState[0];
-  return sameState.length ? sameState[0] : (diamantes.length === 1 ? diamantes[0] : null);
+  if (ans.produto !== 'laser' || !leadCoords) return null;
+  const dentro = Object.entries(distMap)
+    .filter(([, d]) => d.classe === 'Diamante' && d.km <= CFG.raio)
+    .sort((x, y) => x[1].km - y[1].km);
+  if (!dentro.length) return null;
+  const r = revendas.find(x => String(x.id) === String(dentro[0][0]));
+  return r ? { ...r, _km: dentro[0][1].km } : null;
 }
 
 function renderDiamanteBanner(diamanteRev) {
@@ -1652,7 +1648,7 @@ function renderDiamanteBanner(diamanteRev) {
       </div>
       <div style="font-size:13px;line-height:1.7">
         <div>🏪 <strong>${diamanteRev.nome}</strong> — ${diamanteRev.cidade||''}${diamanteRev.estado?'/'+diamanteRev.estado:''}</div>
-        <div style="margin-top:4px">📍 Mesorregião: <strong>${diamanteRev.mesorregiao_ibge||'—'}</strong></div>
+        <div style="margin-top:4px">📍 A <strong>${diamanteRev._km != null ? diamanteRev._km.toFixed(1) + ' km' : '—'}</strong> do lead (raio de ${CFG.raio} km)</div>
         ${demo}
         <div style="margin-top:8px;padding:10px 14px;background:rgba(37,187,238,.06);border-radius:8px;font-size:12px;color:var(--acc);line-height:1.6">
           <strong>Ação:</strong> Solicitar apoio de demonstração Laser ao <strong>Gerente Industrial</strong>, que acionará a Revenda Diamante.<br>
@@ -2181,8 +2177,10 @@ function temRevenda() {
 }
 
 function revendasDentro() {
-  const BONUS_KM = { Diamante: 30, Ouro: 15, Prata: 0, 'Não Aplica': 0 };
-  const PROXIMIDADE_MAX = 5;
+  // Política BMax (cap. 4): proximidade imediata (≤3 km) tem prioridade absoluta, a mais próxima vence;
+  // acima disso vale a classe — Diamante > Ouro > Prata — e, dentro da mesma classe, a mais próxima.
+  const PROXIMIDADE_MAX = 3;
+  const RANK = { Diamante: 3, Ouro: 2, Prata: 1 };
   return Object.values(distMap)
     .filter(d => d.km <= CFG.raio)
     .sort((a,b) => {
@@ -2191,9 +2189,9 @@ function revendasDentro() {
       if (aProx && !bProx) return -1;
       if (!aProx && bProx) return 1;
       if (aProx && bProx) return a.km - b.km;
-      const efA = a.km - (BONUS_KM[a.classe] || 0);
-      const efB = b.km - (BONUS_KM[b.classe] || 0);
-      return efA - efB;
+      const ra = RANK[a.classe] || 0, rb = RANK[b.classe] || 0;
+      if (ra !== rb) return rb - ra;
+      return a.km - b.km;
     });
 }
 
@@ -2714,7 +2712,6 @@ async function saveRev() {
     ativo:    true,
   };
   if (!r.nome) { toast('Informe o nome da revenda.', 'err'); return; }
-  if (r.classe === 'Diamante' && !r.mesorregiao_ibge) { toast('Mesorregião IBGE é obrigatória para Diamante.', 'err'); return; }
   r.editado_em  = new Date().toISOString();
   r.editado_por = adminSession?.user?.email || 'desconhecido';
 
