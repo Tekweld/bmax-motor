@@ -435,4 +435,4 @@ Decisões do André (06/11/2026), em `index.html`:
 ## Atualização 06/11/2026 (2) — alinhamento ao arquivo mestre
 - **Rótulos de classe** no cadastro de revendas: "Ouro (7 critérios)" e "Prata (5–6 critérios)" (antes 6+ e 3–5).
 - **Comissão majorada padrão** (`_EXC_CLASSES`): PCI 2 e PCI 3 passam a 2,2% a 3,1% (regra do somatório: representante + vendedor da classe). O Motor usa primeiro o que está no banco (`comissao_complementos`, já atualizado) e só cai nesse padrão se o banco não responder.
-- Pendente: usar o **representante da revenda** quando há revenda a ≤ 50 km (hoje o Motor só olha a cobertura por município).
+- **Representante é por município** (tabela de cobertura): o Motor continua usando a cobertura. Lacunas restantes: 163 municípios de MG e 34 de SP.
