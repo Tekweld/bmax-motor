@@ -14,8 +14,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # DESATIVADO em 2026-11-17 (passos 1 e 4): o Portal BMax é a fonte única de cadastro de revendas,
+  # representantes e cobertura. Este job regravava rep/classe/cidade/estado a partir do Excel (por nome) e
+  # o passo 4 regravava a cobertura de scripts/cobertura_bmax.json (desatualizado: "Chico" em 350 municípios),
+  # brigando com as edições do Portal. Não reativar sem reescrever para ler do Portal/banco.
   sincronizar_excel:
-    name: 1 — Sincronizar Excel → Supabase
+    name: 1 — Sincronizar Excel → Supabase (DESATIVADO)
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
@@ -43,7 +48,6 @@ jobs:
   enriquecer_zen:
     name: 3 — Enriquecer filiais via ZEN
     runs-on: ubuntu-latest
-    needs: sincronizar_excel
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4.2.2
@@ -65,9 +69,9 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY_BMAX }}
 
   importar_cobertura:
-    name: 4 — Importar cobertura + DDDs
+    name: 4 — Importar cobertura + DDDs (DESATIVADO)
+    if: false   # ver nota no topo: Portal é a fonte única da cobertura
     runs-on: ubuntu-latest
-    needs: sincronizar_excel
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-python@v5.6.0
@@ -89,7 +93,6 @@ jobs:
   publicar_portal:
     name: 5 — Publicar portal (Cloudflare Pages)
     runs-on: ubuntu-latest
-    needs: sincronizar_excel
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Publicar index.html no Cloudflare Pages
@@ -101,7 +104,6 @@ jobs:
   backup_revendas:
     name: 6 — Backup diário de revendas
     runs-on: ubuntu-latest
-    needs: sincronizar_excel
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-python@v5.6.0
@@ -124,7 +126,7 @@ jobs:
   notificar_falha:
     name: Alertar em caso de falha
     runs-on: ubuntu-latest
-    needs: [sincronizar_excel, importar_cobertura, publicar_portal, backup_revendas]
+    needs: [publicar_portal, backup_revendas]
     if: always() && contains(needs.*.result, 'failure')
     steps:
       - name: Enviar alerta por email (Resend)
